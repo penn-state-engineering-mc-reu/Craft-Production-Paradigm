@@ -6,7 +6,9 @@ function loadRollOverMesh() {
   let index = allModels.indexOf(currentObj);
   loader.load(allModels[index].directory, function (geometry) {
     geometry.computeBoundingBox();
-    let material = new THREE.MeshPhongMaterial({ color: colors[index], shininess: 30, specular: 0x111111 });
+    let modelColor = tinycolor(colors[index]);
+    let material = new THREE.MeshPhongMaterial({transparent: true, opacity: modelColor.getAlpha(),
+      color: modelColor.toHexString(), shininess: 30, specular: 0x111111});
     rollOverMesh = new THREE.Mesh(geometry, material);
     scene.add(rollOverMesh);
     rollOverMesh.scale.set(currentObj.scale, currentObj.scale, currentObj.scale);
@@ -227,8 +229,11 @@ function placeLego(intersect, cb) {
  * @param {THREE.Vector3} size 
  */
 function generateObjFromModel(geometry, modelObj, size) {
+  let modelColor = tinycolor(colors[allModels.indexOf(currentObj)]);
+
   geometry.computeBoundingBox();
-  let material = new THREE.MeshPhongMaterial({color: colors[allModels.indexOf(currentObj)], shininess: 30, specular: 0x111111});
+  let material = new THREE.MeshPhongMaterial({transparent: true, opacity: modelColor.getAlpha(),
+    color: modelColor.toHexString(), shininess: 30, specular: 0x111111});
   modelObj.mesh = new THREE.Mesh(geometry, material);
   modelObj.mesh.rotation.x = rollOverMesh.rotation.x;
   modelObj.mesh.rotation.y = rollOverMesh.rotation.y;
