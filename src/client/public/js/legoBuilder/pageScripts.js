@@ -92,7 +92,7 @@ function checkOrders() {
     success: (data) => {
       orderInformation = data;
       // Need to find the oldest order that hasn't been finished or canceled
-      removeOrdersAtManuf(orderInformation);
+      orderInformation = filterOrders(orderInformation);
       let i = 0;
       if (orderInformation.length != 0) {
         while(orderInformation[i].status != 'In Progress') {
@@ -112,13 +112,10 @@ function checkOrders() {
   setTimeout(checkOrders, 10000);
 }
 
-function removeOrdersAtManuf(orders) {
-  orders.forEach((elem, i) => {
-    // don't want other stages to see orders when it is at manufacturer
-    if (elem.stage == "Manufacturer")
-      orders.splice(i, 1);
-  });
-  return orders;
+function filterOrders(orders) {
+  return (orders.filter((elem) => {
+    return (elem.stage === "Assembler");
+  }));
 }
 
 function sendGroup() {
