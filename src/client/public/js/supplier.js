@@ -4,6 +4,43 @@ const names = ["1x1", "2x2", "2x3x2", "1x2 Pin",
               "Rim 3", "1x2", "1x4", "1x2 Plate",
               "4x6 Plate", "6x8 Plate", "2x10 Plate", "Windshield",
               "Steering Wheel", "Lego Man"];
+
+const TR_COLOR_ALPHA = 0.5;
+const STANDARD_LEGO_COLORS = {
+  defaultBrickColor: "rgb(163,162,164)" /* 194, Medium stone grey */,
+  colorPalette: [
+    ["rgb(245,205,47)" /* 24, Bright yellow */, "rgb(253,234,140)" /* 226, Cool yellow */],
+    ["rgb(218,133,64)" /* 106, Bright orange */, "rgb(232,171,45)" /* 191, Flame yellowish orange */],
+    ["rgb(196,40,27)" /* 21, Bright red */, "rgb(123,46,47)" /* 154, Dark red */],
+    ["rgb(205,98,152)" /* 221, Bright purple */, "rgb(228,173,200)" /* 222, Light purple */, "rgb(146,57,120)" /* 124, Bright reddish violet */,
+      "rgb(52,43,117)" /* 268, Medium lilac */],
+    ["rgb(13,105,171)" /* 23, Bright blue */, "rgb(159,195,233)" /* 212, Light Royal blue */, "rgb(110,153,201)" /* 102, Medium blue */,
+      "rgb(32,58,86)" /* 140, Earth blue */],
+    ["rgb(116,134,156)" /* 135, Sand blue */],
+    ["rgb(40,127,70)" /* 28, Dark green */, "rgb(75,151,74)" /* 37, Bright green */, "rgb(120,144,129)" /* 151, Sand green */,
+      "rgb(39,70,44)" /* 141, Earth green */],
+    ["rgb(164,189,70)" /* 119, Br. yellowish green */],
+    ["rgb(105,64,39)" /* 192, Reddish brown */, "rgb(215,197,153)" /* 5, Brick yellow */, "rgb(149,138,115)" /* 138, Sand yellow */,
+      "rgb(51,0,0)" /* 308, Dark brown */],
+    ["rgb(231,139,62)" /* 312, Medium nougat */, "rgb(204,142,104)" /* 18, Nougat */, "rgb(245,193,137)" /* 283, Light nougat */,
+      "rgb(160,95,52)" /* 38, Dark orange */],
+    ["rgb(242,243,242)" /* 1, White */, "rgb(229,228,222)" /* 208, Light stone grey */, "rgb(163,162,164)" /* 194, Medium stone grey */,
+      "rgb(99,95,97)" /* 199, Dark stone grey */],
+    ["rgb(27,42,52)" /* 26, Black */],
+    [`rgba(247,241,141,${TR_COLOR_ALPHA})` /* 44, Tr. Yellow */, `rgba(248,241,132,${TR_COLOR_ALPHA})` /* 49, Tr. Flu. Green */],
+      /* TODO: Find 182 */
+    [`rgba(217,133,108,${TR_COLOR_ALPHA})` /* 47, Tr. Flu. Reddish orange */],
+    [`rgba(228,173,200,${TR_COLOR_ALPHA})` /* 113, Tr. Medi. reddish violet */, `rgba(205,84,75,${TR_COLOR_ALPHA})` /* 41, Tr. Red */],
+    [`rgba(207,226,247,${TR_COLOR_ALPHA})` /* 143, Tr. Flu. Blue */, `rgba(193,223,240,${TR_COLOR_ALPHA})` /* 42, Tr. Lg blue */,
+      `rgba(123,182,232,${TR_COLOR_ALPHA})` /* 43, Tr. Blue */, `rgba(165,165,203,${TR_COLOR_ALPHA})` /* 126, Tr. Bright bluish violet */],
+    [`rgba(132,182,141,${TR_COLOR_ALPHA})` /* 48, Tr. Green */],
+      /* TODO: Find 311 */
+    [`rgba(191,183,177,${TR_COLOR_ALPHA})` /* 111, Tr. Brown */],
+    [`rgba(236,236,236,${TR_COLOR_ALPHA})` /* 40, Transparent */]
+  ]
+}; // Based on http://www.brothers-brick.com/downloads/2010-LEGO-color-palette.pdf, with color values generated from
+   // http://www.peeron.com/cgi-bin/invcgis/colorguide.cgi.
+
 let pieceOrders = [];
 let manufacturingPieces = [];
 let orderInformation = {};
@@ -27,7 +64,7 @@ function getPin() {
 function initArray() {
   for (let i = 0; i < names.length; i++) {
     pieceOrders[i] = 0; 
-    colors[i] = '#d0d3d4';
+    colors[i] = STANDARD_LEGO_COLORS.defaultBrickColor;
   }
 }
 
@@ -60,28 +97,6 @@ function initButtons() {
  * Refreshes the buttons when the supply grid gets regenerated
  */
 function initGridButtons() {
-  const STANDARD_LEGO_COLORS = [
-    ["#f5cd2f" /* 24, Bright yellow */, "#fdea8c" /* 226, Cool yellow */],
-    ["#da8540" /* 106, Bright orange */, "#e8ab2d" /* 191, Flame yellowish orange */],
-    ["#c4281b" /* 21, Bright red */, "#7b2e2f" /* 154, Dark red */],
-    ["#cd6298" /* 221, Bright purple */, "#e4adc8" /* 222, Light purple */, "#923978" /* 124, Bright reddish violet */,
-      "#342b75" /* 268, Medium lilac */],
-    ["#0d69ab" /* 23, Bright blue */, "#9fc3e9" /* 212, Light Royal blue */, "#6e99c9" /* 102, Medium blue */,
-      "#203a56" /* 140, Earth blue */],
-    ["#74869c" /* 135, Sand blue */],
-    ["#287f46" /* 28, Dark green */, "#4b974a" /* 37, Bright green */, "#789081" /* 151, Sand green */,
-      "#27462c" /* 141, Earth green */],
-    ["#a4bd46" /* 119, Br. yellowish green */],
-    ["#694027" /* 192, Reddish brown */, "#d7c599" /* 5, Brick yellow */, "#958a73" /* 138, Sand yellow */,
-      "#330000" /* 308, Dark brown */ ],
-    ["#e78b3e" /* 312, Medium nougat */, "#cc8e68" /* 18, Nougat */, "#f5c189" /* 283, Light nougat */,
-      "#a05f34" /* 38, Dark orange */],
-    ["#f2f3f2" /* 1, White */, "#e5e4de" /* 208, Light stone grey */, "#a3a2a4" /* 194, Medium stone grey */,
-      "#635f61" /* 199, Dark stone grey */],
-    ["#1b2a34" /* 26, Black */]
-  ]; // Based on http://www.brothers-brick.com/downloads/2010-LEGO-color-palette.pdf, with color values generated from
-     // http://www.peeron.com/cgi-bin/invcgis/colorguide.cgi.
-
   for (let i = 0; i < names.length; i++) {
     let num = '#' + i;
     $(num + '-plus').click(e => {
@@ -98,10 +113,11 @@ function initGridButtons() {
     $('.' + i + '-picker').spectrum({
       showPalette: true,
       showPaletteOnly: true,
-      palette: STANDARD_LEGO_COLORS,
-      color: "#a3a2a4" /* 194, Medium stone grey */,
+      showAlpha: true,
+      palette: STANDARD_LEGO_COLORS.colorPalette,
+      color: STANDARD_LEGO_COLORS.defaultBrickColor,
       change: color => {
-        colors[i] = color.toHexString();;
+        colors[i] = color.toRgbString();
       }
     });
   }
