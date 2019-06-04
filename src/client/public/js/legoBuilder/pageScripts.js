@@ -42,7 +42,7 @@ function initButtons() {
   $('#pieces').click(e => {openSupplyModal()});
 
   $('#send-model').click(e => {
-    if (!$.isEmptyObject(group)) {
+    if (!$.isEmptyObject(objects)) {
       sendGroup();
     }
   });
@@ -144,7 +144,12 @@ function sendGroup() {
       
         elemsToRemove.forEach(elem => {
           scene.remove(elem);
-        })
+        });
+
+        objects.length = 0;
+        collisionObjects = collisionObjects.filter((elem) => {
+          return (elem.name === 'plane');
+        });
       },
       error: (xhr, status, error) => {
         console.log('Group Error: ' + error);
