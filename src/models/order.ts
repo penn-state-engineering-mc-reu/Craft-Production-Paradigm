@@ -12,7 +12,7 @@ export default class Order {
   // 4 Stages of Production
   // Customer -> Manufacturer -> Supplier -> Assembler -> Customer
   private stage: string;
-  private modelType: string;
+  private modelID: number;
   private manufacturerReq: Array<number>;
   private supplyOrders: Array<number>;
   private assembledModel: object;
@@ -23,7 +23,7 @@ export default class Order {
     this.createDate = new Date().getTime();
     this.status = "In Progress";
     this.stage = "Manufacturer";
-    this.modelType = '';
+    this.modelID = -1;
     this.lastModified = this.createDate;
     this.finishedTime = -1;
     this.manufacturerReq = new Array<number>();
@@ -62,9 +62,9 @@ export default class Order {
     this.stage = stage;
   }
 
-  public setModelType(type: string): void {
+  public setModelID(type: number): void {
     this.setLastModified();
-    this.modelType = type;
+    this.modelID = type;
   }
 
   // Allows me to easily convert the object and store it into the mongoDB database
@@ -77,7 +77,7 @@ export default class Order {
       "finishedTime": this.finishedTime,
       "status": this.status,
       "stage": this.stage,
-      "modelType": this.modelType,
+      "modelID": this.modelID,
       "manufacturerReq": this.manufacturerReq,
       "supplyOrders": this.supplyOrders,
       "colors": this.colors,

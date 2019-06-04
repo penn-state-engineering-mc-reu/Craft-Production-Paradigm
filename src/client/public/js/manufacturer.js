@@ -122,17 +122,12 @@ function openModal() {
 }
 
 function updateOrder() {
-  switch(currentOrder.modelType) {
-    case 'super': $('#order-image').attr('src', '/../images/race.jpg');        break;
-    case 'race': $('#order-image').attr('src', '/../images/lego_car.jpg');     break;
-    case 'RC': $('#order-image').attr('src', '/../images/rc.jpg');             break;
-    case 'yellow': $('#order-image').attr('src', '/../images/yellow_car.jpg'); break;
-  }
+  $('#order-image').attr('src', `/../images/Option ${currentOrder.modelID}.PNG`);
   let html = '<p>Date Ordered: ' + new Date(currentOrder.createDate).toString() + '</p>';
   html += '<p>Last Modified: ' + new Date(currentOrder.lastModified).toString() + '</p>';
   if (currentOrder.status === 'Completed')
     html += '<p>Finished: ' + new Date(currentOrder.finishedTime).toString() + '</p>';
-  html += '<p>Model Type: ' + currentOrder.modelType + '</p>';
+  html += '<p>Model ID: ' + currentOrder.modelID + '</p>';
   html += '<p>Stage: ' + currentOrder.stage + '</p>';
   html += '<p>Status: ' + currentOrder.status + '</p><br>';
   $('#order-info').html(html);
@@ -149,7 +144,8 @@ function generateSupplyGrid() {
     for (let j = 0; j < 4; j++) {
       if (i * 4 + j < names.length) {
         html += '<div class="four wide column">';
-        html += '<p>' + names[i * 4 + j] + '</p>';
+        html += '<p align="left">' + names[i * 4 + j] + '</p>';
+        html += `<p> <img src= "/../images/Lego pieces/${names[i * 4 + j]}.jpg"> </p>`;
         // Start off each piece with an order of 0
         html += '<div class="row"><div class="ui statistic"><div id="' + (i * 4 + j) + '-value' + '"class="value">0</div></div></div>'
         // Adds the plus and minus buttons to each piece
