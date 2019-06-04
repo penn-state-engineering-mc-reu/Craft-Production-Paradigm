@@ -144,7 +144,8 @@ function generateSupplyGrid() {
     for (let j = 0; j < 4; j++) {
       if (i * 4 + j < names.length) {
         html += '<div class="four wide column">';
-        html += '<p>' + names[i * 4 + j] + '</p>';
+        html += '<p align="left">' + names[i * 4 + j] + '</p>';
+        html += `<p> <img src= "/../images/Lego pieces/${names[i * 4 + j]}.jpg"> </p>`;
         // Start off each piece with an order of 0
         html += '<div class="row"><div class="ui statistic"><div id="' + (i * 4 + j) + '-value' + '"class="value">0</div></div></div>'
         // Adds the plus and minus buttons to each piece
