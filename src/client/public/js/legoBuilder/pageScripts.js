@@ -14,8 +14,10 @@ $(document).ready(() => {
   initButtons();
   checkOrders();
   for (let i = 0; i < names.length; i++) colors[i] = "#d0d3d4";
-  setTimeout(checkPieces, 1000);
-  setTimeout(getColors, 3000);
+  checkPieces();
+  getColors();
+  setInterval(checkPieces, 3000);
+  setInterval(getColors, 3000);
 });
 
 // gets the pin from the url
