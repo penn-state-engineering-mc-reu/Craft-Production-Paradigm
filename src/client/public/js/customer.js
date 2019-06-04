@@ -65,13 +65,7 @@ function getPin() {
 }
 
 function changeCarType(number) {
-  let dom = $('#car-type');
-  switch(number) {
-    case 1: dom.html('super');  break;
-    case 2: dom.html('race');   break;
-    case 3: dom.html('RC');     break;
-    case 4: dom.html('yellow'); break;
-  }
+  let dom = $('#car-type').html(number.toString());
 }
 
 function sendOrder() {
@@ -132,12 +126,7 @@ function checkOrders() {
 }
 
 function updateOrder() {
-  switch(currentOrder.modelType) {
-    case 'super': $('#order-image').attr('src', '/../images/race.jpg');        break;
-    case 'race': $('#order-image').attr('src', '/../images/lego_car.jpg');     break;
-    case 'RC': $('#order-image').attr('src', '/../images/rc.jpg');             break;
-    case 'yellow': $('#order-image').attr('src', '/../images/yellow_car.jpg'); break;
-  }
+  $('#order-image').attr('src', `/../images/Option ${currentOrder.modelID}.PNG`);
   let html = '<p>Date Ordered: ' + new Date(currentOrder.createDate).toString() + '</p>';
   html += '<p>Last Modified: ' + new Date(currentOrder.lastModified).toString() + '</p>';
   if (currentOrder.status === 'Completed') {
@@ -147,7 +136,7 @@ function updateOrder() {
   else {
     $('#view-model').addClass('disabled');
   }
-  html += '<p>Model Type: ' + currentOrder.modelType + '</p>';
+  html += '<p>Model ID: ' + currentOrder.modelID + '</p>';
   html += '<p>Stage: ' + currentOrder.stage + '</p>';
   html += '<p>Status: ' + currentOrder.status + '</p><br>';
   $('#order-info').html(html);

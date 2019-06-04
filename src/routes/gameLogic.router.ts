@@ -7,11 +7,11 @@ const controller: GameLogicController = new GameLogicController();
 
 router.post('/sendOrder', (req: Request, res: Response) => {
   let pin: number = parseInt(req.body.pin);
-  let model: string = req.body.model;
+  let modelID: number = parseInt(req.body.model);
   let generated: boolean = req.body.generated;
   let max: number = parseInt(req.body.max);
   let skew: number = parseFloat(req.body.skew);
-  controller.placeOrder(pin, model, generated, max, skew);
+  controller.placeOrder(pin, modelID, generated, max, skew);
   res.status(200).send('OK');
 });
 

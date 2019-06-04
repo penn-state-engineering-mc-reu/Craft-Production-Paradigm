@@ -74,17 +74,12 @@ function openModal() {
 }
 
 function updateOrder() {
-  switch(currentOrder.modelType) {
-    case 'super': $('#order-image').attr('src', '/../images/race.jpg');        break;
-    case 'race': $('#order-image').attr('src', '/../images/lego_car.jpg');     break;
-    case 'RC': $('#order-image').attr('src', '/../images/rc.jpg');             break;
-    case 'yellow': $('#order-image').attr('src', '/../images/yellow_car.jpg'); break;
-  }
+  $('#order-image').attr('src', `/../images/Option ${currentOrder.modelID}.PNG`);
   let html = '<p>Date Ordered: ' + new Date(currentOrder.createDate).toString() + '</p>';
   html += '<p>Last Modified: ' + new Date(currentOrder.lastModified).toString() + '</p>';
   if (currentOrder.status === 'Completed')
     html += '<p>Finished: ' + new Date(currentOrder.finishedTime).toString() + '</p>';
-  html += '<p>Model Type: ' + currentOrder.modelType + '</p>';
+  html += '<p>Model ID: ' + currentOrder.modelID + '</p>';
   html += '<p>Status: ' + currentOrder.status + '</p><br>';
   $('#order-info').html(html);
 }
