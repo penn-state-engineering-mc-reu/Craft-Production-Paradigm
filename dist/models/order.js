@@ -7,7 +7,7 @@ class Order {
         this.createDate = new Date().getTime();
         this.status = "In Progress";
         this.stage = "Manufacturer";
-        this.modelType = '';
+        this.modelID = -1;
         this.lastModified = this.createDate;
         this.finishedTime = -1;
         this.manufacturerReq = new Array();
@@ -41,9 +41,9 @@ class Order {
         this.setLastModified();
         this.stage = stage;
     }
-    setModelType(type) {
+    setModelID(type) {
         this.setLastModified();
-        this.modelType = type;
+        this.modelID = type;
     }
     // Allows me to easily convert the object and store it into the mongoDB database
     toJSON() {
@@ -55,7 +55,7 @@ class Order {
             "finishedTime": this.finishedTime,
             "status": this.status,
             "stage": this.stage,
-            "modelType": this.modelType,
+            "modelID": this.modelID,
             "manufacturerReq": this.manufacturerReq,
             "supplyOrders": this.supplyOrders,
             "colors": this.colors,

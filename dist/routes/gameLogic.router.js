@@ -14,11 +14,11 @@ const router = express_1.Router();
 const controller = new GameLogicController_1.GameLogicController();
 router.post('/sendOrder', (req, res) => {
     let pin = parseInt(req.body.pin);
-    let model = req.body.model;
+    let modelID = parseInt(req.body.model);
     let generated = req.body.generated;
     let max = parseInt(req.body.max);
     let skew = parseFloat(req.body.skew);
-    controller.placeOrder(pin, model, generated, max, skew);
+    controller.placeOrder(pin, modelID, generated, max, skew);
     res.status(200).send('OK');
 });
 router.get('/getOrders/:id', (req, res) => __awaiter(this, void 0, void 0, function* () {

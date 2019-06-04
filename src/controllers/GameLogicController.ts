@@ -13,13 +13,13 @@ export class GameLogicController {
     this.db = new GameLogicDatabaseConnector();
   }
 
-  public placeOrder(pin: number, modelType: string, generated: boolean, max: number, skew: number): void {
+  public placeOrder(pin: number, modelID: number, generated: boolean, max: number, skew: number): void {
     if (generated == true) {
       this.generateOrders(pin, max, skew);
     }
     else {
       let order = new Order(pin);
-      order.setModelType(modelType);
+      order.setModelID(modelID);
       order.setStage('Manufacturer');
       this.db.addOrder(order.toJSON());
     }
@@ -28,14 +28,8 @@ export class GameLogicController {
   private generateOrders(pin: number, max:number, skew: number): void {
     for (let i: number = 0; i < max; i++) {
       let order = new Order(pin);
-      let type: string = '';
-      switch(Math.ceil(this.normalDistribution(skew))) {
-        case 1: type = 'super'; break;
-        case 2: type = 'race'; break;
-        case 3: type = 'RC'; break;
-        case 4: type = 'yellow'; break;
-      }
-      order.setModelType(type);
+      let ID: number = Math.ceil(this.normalDistribution(skew));
+      order.setModelID(ID);
       order.setStage('Manufacturer');
       this.db.addOrder(order.toJSON());
     }
