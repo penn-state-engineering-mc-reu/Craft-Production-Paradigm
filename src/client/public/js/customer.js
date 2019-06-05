@@ -109,8 +109,19 @@ function checkOrders() {
     success: (data) => {
       orderInformation = data;
       if (orderInformation.length != 0) {
-        if (currentOrder == null || jQuery.isEmptyObject(currentOrder))
+        if (currentOrder != null && !(jQuery.isEmptyObject(currentOrder)))
+        {
+          let findObj = orderInformation.find((elem) => {
+            return elem._id === currentOrder._id;
+          });
+
+          currentOrder = (findObj ? findObj : orderInformation[0]);
+        }
+        else
+        {
           currentOrder = orderInformation[0];
+        }
+
         updateOrder();
         $('#order').removeClass('disabled');
       }
