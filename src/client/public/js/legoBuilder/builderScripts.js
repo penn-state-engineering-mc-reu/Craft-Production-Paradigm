@@ -222,6 +222,7 @@ function placeLego(intersect, cb) {
 
     // If the piece can't be placed on another, I don't want it to create and add the modelObj to the scene
     if (placementPossible) {
+      scene.add(modelObj.mesh);
       generateCollisionCube(modelObj, size);
     }
 
@@ -247,7 +248,7 @@ function generateObjFromModel(geometry, modelObj, size) {
   modelObj.mesh.rotation.y = rollOverMesh.rotation.y;
   modelObj.mesh.rotation.z = rollOverMesh.rotation.z;
   modelObj.mesh.scale.set(currentObj.scale,currentObj.scale,currentObj.scale);
-  scene.add(modelObj.mesh);
+
   // group.add(modelObj.mesh);
   let box = new THREE.Box3().setFromObject(modelObj.mesh);
   size.size = new THREE.Vector3();
