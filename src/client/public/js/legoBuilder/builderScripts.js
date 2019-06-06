@@ -38,9 +38,16 @@ function loadRollOverMesh() {
  * ================================================================
  */
 
+function getNormalizedMousePosition(event)
+{
+  let canvasPosition = $(renderer.domElement).position();
+  // mouse.set((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / (window.innerHeight + (window.innerHeight * .15))) * 2 + 1);
+  return new THREE.Vector2((event.clientX / window.innerWidth) * 2 - 1, - ( (event.clientY - canvasPosition.top) / window.innerHeight ) * 2 + 1);
+}
+
 function onDocumentMouseMove(event) {
   event.preventDefault();
-  mouse.set((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / (window.innerHeight + (window.innerHeight * .15))) * 2 + 1);
+  mouse = getNormalizedMousePosition(event);
   raycaster.setFromCamera(mouse, camera);
   var intersects = raycaster.intersectObjects(collisionObjects);
   pieceIndex = names.indexOf(currentRollOverModel);
@@ -55,6 +62,7 @@ function onDocumentMouseMove(event) {
       // this is to avoid lingering rollOverMeshes when you cycle through different pieces
       if (scene.children.indexOf(rollOverMesh) == -1) scene.add(rollOverMesh);
       else {
+        // rollOverMesh.position.copy(intersects[0].point);
         let dim = rollOverMesh.userData.dimensions;
         var intersect = intersects[0];
         if (intersect.object.name == 'plane')  {
@@ -117,7 +125,7 @@ function onDocumentKeyUp(event) {
 
 function onDocumentMouseDown(event) {
   event.preventDefault();
-  mouse.set((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / (window.innerHeight + (window.innerHeight * .15))) * 2 + 1);
+  mouse = getNormalizedMousePosition(event);
   raycaster.setFromCamera(mouse, camera);
   var intersects = raycaster.intersectObjects(collisionObjects);
   var objIntersect = raycaster.intersectObjects(objects);
@@ -140,7 +148,7 @@ function onDocumentMouseDown(event) {
           pieces[index] = parseInt(pieces[index]) + 1;
           // It's about as stupid as it looks
           // this is because the intersection object is the collision object
-          group.remove(intersect.object.children[0]);
+          // group.remove(intersect.object.children[0]);
           updatePieces();
         }
       }
@@ -214,6 +222,7 @@ function placeLego(intersect, cb) {
 
     // If the piece can't be placed on another, I don't want it to create and add the modelObj to the scene
     if (placementPossible) {
+      scene.add(modelObj.mesh);
       generateCollisionCube(modelObj, size);
     }
 
@@ -239,8 +248,8 @@ function generateObjFromModel(geometry, modelObj, size) {
   modelObj.mesh.rotation.y = rollOverMesh.rotation.y;
   modelObj.mesh.rotation.z = rollOverMesh.rotation.z;
   modelObj.mesh.scale.set(currentObj.scale,currentObj.scale,currentObj.scale);
-  scene.add(modelObj.mesh);
-  group.add(modelObj.mesh);
+
+  // group.add(modelObj.mesh);
   let box = new THREE.Box3().setFromObject(modelObj.mesh);
   size.size = new THREE.Vector3();
   box.getSize(size.size);
