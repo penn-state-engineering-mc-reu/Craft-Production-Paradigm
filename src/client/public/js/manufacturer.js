@@ -69,7 +69,9 @@ function checkOrders() {
     cache: false,
     timeout: 5000,
     success: (data) => {
-      orderInformation = data;
+      orderInformation = data.filter((elem) => {
+        return elem.stage === "Manufacturer";
+      });
       // Need to find the oldest order that hasn't been finished or canceled
       let i = 0;
       if (orderInformation.length != 0) {
