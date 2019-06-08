@@ -77,6 +77,8 @@ function onDocumentMouseMove(event) {
           let intersectY = intersect.object.userData.dimensions.y;
           rollOverMesh.position.y = intersectY + (intersect.point.y - intersectY) + determineModelYTranslation();
         }
+
+        moveToSnappedPosition(rollOverMesh);
       }
     }
     else {
@@ -102,8 +104,8 @@ function onDocumentKeyDown(event) {
     case 65: vector.set(10, 0, 0); break;  // A
     case 83: vector.set(0, -10, 0); break; // S
     case 68: vector.set(-10, 0, 0); break; // D
-    case 81: rollOverMesh.rotation.z += Math.PI / 2; render(); break; // Q
-    case 69: rollOverMesh.rotation.z -= Math.PI / 2; render(); break; // E
+    case 81: rollOverMesh.rotation.z += Math.PI / 2; moveToSnappedPosition(rollOverMesh); render(); break; // Q
+    case 69: rollOverMesh.rotation.z -= Math.PI / 2; moveToSnappedPosition(rollOverMesh); render(); break; // E
     case 32: controls.reset(); break;   // Space
   }
   camera.position.add(vector);
@@ -198,6 +200,8 @@ function placeLego(intersect, cb) {
       if (mName[0] != 'Rim' && mName[0] != 'Tire') {
         modelObj.position.copy(intersect.point).add(intersect.face.normal);
         modelObj.position.y += determineModelYTranslation();
+
+        moveToSnappedPosition(modelObj);
       }
       else {
         placementPossible = false;
@@ -217,12 +221,16 @@ function placeLego(intersect, cb) {
       }
       else {
         placementPossible = determineModelPosition(modelObj, intersect, size, dim);
+
+        if(placementPossible) {
+          moveToSnappedPosition(modelObj);
+        }
       }
     }
 
     // If the piece can't be placed on another, I don't want it to create and add the modelObj to the scene
     if (placementPossible) {
-      scene.add(modelObj.mesh);
+      scene.add(modelObj);
       generateCollisionCube(modelObj, size);
     }
 
@@ -353,7 +361,40 @@ function determineModelPosition(modelObj, intersect, size, dim) {
     return false;
   }
 
+  /*const gridSize = new THREE.Vector2(24, 24),
+        gridOffset = new THREE.Vector2(12, 12);
+
+  var snappedPosition = getGridSnapPosition2D(new THREE.Vector2(modelObj.position.x, modelObj.position.z), gridSize, gridOffset);
+  modelObj.position.setX(snappedPosition.x);
+  modelObj.position.setZ(snappedPosition.y);*/
+
   return true;
+}
+
+function getGridSnapPosition2D(origPos, gridSize, snapOffset)
+{
+  return new THREE.Vector2(
+    Math.round(origPos.x / gridSize.x) * gridSize.x + snapOffset.x,
+    Math.round(origPos.y / gridSize.y) * gridSize.y + snapOffset.y
+  );
+}
+
+function moveToSnappedPosition(objToMove)
+{
+  const gridSize = new THREE.Vector2(24, 24),
+    gridOffset = new THREE.Vector2(0, 0);
+
+  let boundingBoxMinPos = (new THREE.Vector3()).copy(objToMove.geometry.boundingBox.min);
+  boundingBoxMinPos.multiplyVectors(boundingBoxMinPos, objToMove.scale).applyEuler(objToMove.rotation);
+
+  let origCornerPos = new THREE.Vector2(
+    objToMove.position.x + boundingBoxMinPos.x,
+    objToMove.position.z + boundingBoxMinPos.z
+  );
+
+  let snappedCornerPos = getGridSnapPosition2D(origCornerPos, gridSize, gridOffset);
+  objToMove.position.x += (snappedCornerPos.x - origCornerPos.x);
+  objToMove.position.z += (snappedCornerPos.y - origCornerPos.y);
 }
 
 /**

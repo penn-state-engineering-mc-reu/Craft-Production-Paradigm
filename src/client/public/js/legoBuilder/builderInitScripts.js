@@ -98,7 +98,7 @@ function addSceneLights() {
 }
 
 function createGridAndPlane() {
-  var gridHelper = new THREE.GridHelper(1000, 40);
+  var gridHelper = new THREE.GridHelper(960, 40);
   scene.add(gridHelper);
   var geometry = new THREE.PlaneBufferGeometry(planeDimensions, planeDimensions);
   geometry.rotateX(-Math.PI / 2);
