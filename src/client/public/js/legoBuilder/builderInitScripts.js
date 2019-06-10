@@ -18,7 +18,9 @@ var camera, scene, renderer, controls;
 var plane, cube;
 var mouse, raycaster, isCtrlDown = false, isShiftDown = false;
 var rollOverMesh, material, collisionBox;
-var planeDimensions = 1000;
+const TILE_LENGTH = 24,
+      NUM_GRID_TILES = 40;
+const PLANE_LENGTH = TILE_LENGTH * NUM_GRID_TILES;
 var objects = [], collisionObjects = [];
 var currentObj = twoByTwo;
 // var group = new THREE.Group();
@@ -98,9 +100,9 @@ function addSceneLights() {
 }
 
 function createGridAndPlane() {
-  var gridHelper = new THREE.GridHelper(1000, 40);
+  var gridHelper = new THREE.GridHelper(PLANE_LENGTH, NUM_GRID_TILES);
   scene.add(gridHelper);
-  var geometry = new THREE.PlaneBufferGeometry(planeDimensions, planeDimensions);
+  var geometry = new THREE.PlaneBufferGeometry(PLANE_LENGTH, PLANE_LENGTH);
   geometry.rotateX(-Math.PI / 2);
   plane = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({visible: false}));
   plane.name = 'plane';
