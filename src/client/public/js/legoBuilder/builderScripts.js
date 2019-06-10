@@ -371,6 +371,14 @@ function determineModelPosition(modelObj, intersect, size, dim) {
   return true;
 }
 
+/**
+ * This function snaps origPos to a 2D grid with element size vector gridSize, offsetting the result snapOffset
+ * from the nearest grid node; it returns the snapped position vector.
+ * @param {THREE.Vector2} origPos
+ * @param {THREE.Vector2} gridSize
+ * @param {THREE.Vector2} snapOffset
+ * @returns {THREE.Vector2}
+ */
 function getGridSnapPosition2D(origPos, gridSize, snapOffset)
 {
   return new THREE.Vector2(
@@ -379,10 +387,14 @@ function getGridSnapPosition2D(origPos, gridSize, snapOffset)
   );
 }
 
+/**
+ * This function moves objToMove to a grid-snapped position.
+ * @param {THREE.Object3D} objToMove
+ */
 function moveToSnappedPosition(objToMove)
 {
-  const gridSize = new THREE.Vector2(24, 24),
-    gridOffset = new THREE.Vector2(0, 0);
+  const GRID_OFFSET = new THREE.Vector2(0, 0),
+        TILE_DIMENSIONS = new THREE.Vector2(TILE_LENGTH, TILE_LENGTH);
 
   let boundingBoxMinPos = (new THREE.Vector3()).copy(objToMove.geometry.boundingBox.min);
   boundingBoxMinPos.multiplyVectors(boundingBoxMinPos, objToMove.scale).applyEuler(objToMove.rotation);
@@ -392,7 +404,7 @@ function moveToSnappedPosition(objToMove)
     objToMove.position.z + boundingBoxMinPos.z
   );
 
-  let snappedCornerPos = getGridSnapPosition2D(origCornerPos, gridSize, gridOffset);
+  let snappedCornerPos = getGridSnapPosition2D(origCornerPos, TILE_DIMENSIONS, GRID_OFFSET);
   objToMove.position.x += (snappedCornerPos.x - origCornerPos.x);
   objToMove.position.z += (snappedCornerPos.y - origCornerPos.y);
 }
