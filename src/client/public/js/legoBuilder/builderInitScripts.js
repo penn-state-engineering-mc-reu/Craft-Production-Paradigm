@@ -52,7 +52,7 @@ function init() {
 // Initializes the camera -- Allows to use mouse wheel to zoom
 function initCamera() {
   //camera = new THREE.PerspectiveCamera(60, window.innerWidth / (window.innerHeight + (window.innerHeight * .1)), 1, 10000);
-  camera = new THREE.PerspectiveCamera(60, $('canvas').attr('width') / $('canvas').attr('height'), 1, 10000);
+  camera = new THREE.PerspectiveCamera(60, $(renderer.domElement).width() / $(renderer.domElement).height(), 1, 10000);
   camera.position.set(0, 500, 800);
   camera.lookAt(new THREE.Vector3());
   controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -66,6 +66,14 @@ function initCamera() {
   controls.dampingFactor = 0.75;
   controls.minDistance = 200;
 	controls.maxDistance = 2000;
+}
+
+function computeRendererSize()
+{
+  return {
+    width: window.innerWidth,
+    height: (window.innerHeight - $(renderer.domElement).offset().top)
+  };
 }
 
 // Adds header information at the top of the page
@@ -95,8 +103,10 @@ function addSceneLights() {
   scene.add(directionalLight);
   renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(window.innerWidth, window.innerHeight);
   container.appendChild(renderer.domElement);
+
+  let initialRendererSize = computeRendererSize();
+  renderer.setSize(initialRendererSize.width, initialRendererSize.height);
 }
 
 function createGridAndPlane() {
@@ -111,9 +121,11 @@ function createGridAndPlane() {
 }
 
 function onWindowResize() {
-  camera.aspect = window.innerWidth / (window.innerHeight + (window.innerHeight * .1));
+  let newRendererSize = computeRendererSize();
+
+  camera.aspect = newRendererSize.width / newRendererSize.height;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight - window.innerHeight * .1);
+  renderer.setSize(newRendererSize.width, newRendererSize.height);
 }
 
 function render() { renderer.render(scene, camera); }

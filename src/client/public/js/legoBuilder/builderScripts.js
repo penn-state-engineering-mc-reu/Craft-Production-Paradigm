@@ -40,9 +40,10 @@ function loadRollOverMesh() {
 
 function getNormalizedMousePosition(event)
 {
-  let canvasPosition = $(renderer.domElement).position();
+  let canvasPosition = $(renderer.domElement).offset();
+  let canvasHeight = $(renderer.domElement).height();
   // mouse.set((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / (window.innerHeight + (window.innerHeight * .15))) * 2 + 1);
-  return new THREE.Vector2((event.clientX / window.innerWidth) * 2 - 1, - ( (event.clientY - canvasPosition.top) / window.innerHeight ) * 2 + 1);
+  return new THREE.Vector2((event.clientX / window.innerWidth) * 2 - 1, - ( (event.clientY - canvasPosition.top) / canvasHeight ) * 2 + 1);
 }
 
 function onDocumentMouseMove(event) {
