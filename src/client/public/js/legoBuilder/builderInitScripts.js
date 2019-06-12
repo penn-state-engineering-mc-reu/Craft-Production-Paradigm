@@ -147,18 +147,24 @@ function createGridAndPlane() {
 
 function createEnvironment()
 {
-  let loader = new THREE.STLLoader();
-  loader.load('../objects/environment/workbench.stl', function(geometry) {
+  let modelLoader = new THREE.STLLoader();
+  modelLoader.load('../objects/environment/workbench.stl', function(geometry) {
     geometry.scale(30, 30, 30);
     geometry.computeBoundingBox();
 
     let material = new THREE.MeshPhongMaterial({
-      color: '#aaaaaa',
+      color: '#8b5a2b',
       shininess: 30,
-      specular: 0x111111
+      specular: '#ffb245'
     });
 
+    /*let testGeom = new THREE.PlaneBufferGeometry(200, 200, 1, 1);
+    let testMesh = new THREE.Mesh(testGeom, material);
+    scene.add(testMesh);*/
+
+    // assignUVs(geometry);
     let workbenchMesh = new THREE.Mesh(geometry, material);
+
     let bboxSize = new THREE.Vector3();
     geometry.boundingBox.getSize(bboxSize);
     workbenchMesh.position.copy(new THREE.Vector3(-(bboxSize.x / 2), 925, -1000));
