@@ -36,6 +36,7 @@ function init() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0xf0f0f0);
   createGridAndPlane();
+  createEnvironment();
   //objects.push(plane);
   raycaster = new THREE.Raycaster();
   mouse = new THREE.Vector2();
@@ -109,15 +110,70 @@ function addSceneLights() {
   renderer.setSize(initialRendererSize.width, initialRendererSize.height);
 }
 
+function makeGrid(startX, startZ, endX, endZ, elemSizeX, elemSizeZ)
+{
+  let geometry = new THREE.Geometry();
+
+  for(let i = 0; (startX + (i - 0.5) * elemSizeX) < endX; i++)
+  {
+    let thisX = startX + (i * elemSizeX);
+    geometry.vertices.push(new THREE.Vector3(thisX, 0, startZ));
+    geometry.vertices.push(new THREE.Vector3(thisX, 0, endZ));
+  }
+
+  for(let i = 0; (startZ + (i - 0.5) * elemSizeZ) < endZ; i++)
+  {
+    let thisZ = startZ + (i * elemSizeZ);
+    geometry.vertices.push(new THREE.Vector3(startX, 0, thisZ));
+    geometry.vertices.push(new THREE.Vector3(endX, 0, thisZ));
+  }
+
+  return new THREE.LineSegments(geometry, new THREE.LineBasicMaterial({
+    color: "#000000",
+    linewidth: 1
+  }))
+}
+
 function createGridAndPlane() {
-  var gridHelper = new THREE.GridHelper(PLANE_LENGTH, NUM_GRID_TILES);
+  var gridHelper = makeGrid(-1920, -240, 1920, 240, 24, 24);// new THREE.GridHelper(PLANE_LENGTH, NUM_GRID_TILES);
   scene.add(gridHelper);
-  var geometry = new THREE.PlaneBufferGeometry(PLANE_LENGTH, PLANE_LENGTH);
+  var geometry = new THREE.PlaneBufferGeometry(1920 * 2, 240 * 2);
   geometry.rotateX(-Math.PI / 2);
   plane = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({visible: false}));
   plane.name = 'plane';
   scene.add(plane);
   collisionObjects.push(plane);
+}
+
+function createEnvironment()
+{
+  let modelLoader = new THREE.STLLoader();
+  modelLoader.load('../objects/environment/workbench.stl', function(geometry) {
+    geometry.scale(30, 30, 30);
+    geometry.computeBoundingBox();
+
+    let material = new THREE.MeshPhongMaterial({
+      color: '#8b5a2b',
+      shininess: 30,
+      specular: '#ffb245'
+    });
+
+    /*let testGeom = new THREE.PlaneBufferGeometry(200, 200, 1, 1);
+    let testMesh = new THREE.Mesh(testGeom, material);
+    scene.add(testMesh);*/
+
+    // assignUVs(geometry);
+    let workbenchMesh = new THREE.Mesh(geometry, material);
+
+    let bboxSize = new THREE.Vector3();
+    geometry.boundingBox.getSize(bboxSize);
+    workbenchMesh.position.copy(new THREE.Vector3(-(bboxSize.x / 2), 925, -1000));
+    workbenchMesh.userData.envObject = true;
+
+    scene.add(workbenchMesh);
+  }, undefined, function(ex) {
+    console.trace(ex);
+  });
 }
 
 function onWindowResize() {
