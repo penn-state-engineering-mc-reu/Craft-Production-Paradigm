@@ -145,12 +145,27 @@ function createGridAndPlane() {
   collisionObjects.push(plane);
 }
 
+function addBinRow(binMesh, startX, yPos, zPos, spacing, numBins)
+{
+  binMesh.geometry.computeBoundingBox();
+  let posMultiplier = (binMesh.geometry.boundingBox.max.x - binMesh.geometry.boundingBox.min.x) + spacing;
+
+  for(let i = 0; i < numBins; i++)
+  {
+    let thisMesh = binMesh.clone();
+    thisMesh.position.copy(new THREE.Vector3(startX + i * posMultiplier, yPos, zPos));
+    thisMesh.userData.envObject = true;
+
+    scene.add(thisMesh);
+  }
+}
+
 function createEnvironment()
 {
   let modelLoader = new THREE.STLLoader();
-  modelLoader.load('../objects/environment/workbench.stl', function(geometry) {
-    geometry.scale(30, 30, 30);
-    geometry.computeBoundingBox();
+  modelLoader.load('../objects/environment/workbench.stl', function(workbenchGeometry) {
+    workbenchGeometry.scale(30, 30, 30);
+    workbenchGeometry.computeBoundingBox();
 
     let material = new THREE.MeshPhongMaterial({
       color: '#8b5a2b',
@@ -162,15 +177,31 @@ function createEnvironment()
     let testMesh = new THREE.Mesh(testGeom, material);
     scene.add(testMesh);*/
 
-    // assignUVs(geometry);
-    let workbenchMesh = new THREE.Mesh(geometry, material);
+    // assignUVs(workbenchGeometry);
+    let workbenchMesh = new THREE.Mesh(workbenchGeometry, material);
 
     let bboxSize = new THREE.Vector3();
-    geometry.boundingBox.getSize(bboxSize);
+    workbenchGeometry.boundingBox.getSize(bboxSize);
     workbenchMesh.position.copy(new THREE.Vector3(-(bboxSize.x / 2), 925, -1000));
     workbenchMesh.userData.envObject = true;
 
     scene.add(workbenchMesh);
+
+    modelLoader.load('../objects/environment/part_bin.stl', function(binGeometry) {
+      let binStartX = -(bboxSize.x / 2) + 175;
+      let binZ = -1450;
+
+      let binMaterial = new THREE.MeshPhongMaterial({
+        color: "#0000ff",
+        shininess: 5,
+        specular: "#d6d0ff"
+      });
+
+      let binTemplateMesh = new THREE.Mesh(binGeometry, binMaterial);
+
+      addBinRow(binTemplateMesh, binStartX, 0, binZ, 50, 12);
+      addBinRow(binTemplateMesh, binStartX, 925, binZ, 50, 10);
+    });
   }, undefined, function(ex) {
     console.trace(ex);
   });
