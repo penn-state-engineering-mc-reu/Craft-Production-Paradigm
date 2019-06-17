@@ -219,59 +219,98 @@ function createEnvironment()
     envGroup.add(roomGroup);
 
     let workbenchCorner = (new THREE.Vector3()).copy(cornerWorkbenchPos).add(workbenchGeometry.boundingBox.min);
-    const wallParams = [
-      {
-        position: new THREE.Vector3(workbenchCorner.x, workbenchCorner.y, workbenchCorner.z + 8000),
-        rotation: new THREE.Euler(0, (Math.PI / 2), 0),
-        size: new THREE.Vector2(16000, 8000)
-      },
-      {
-        position: new THREE.Vector3(workbenchCorner.x + 16000, workbenchCorner.y, workbenchCorner.z),
-        rotation: new THREE.Euler(0, 0, 0),
-        size: new THREE.Vector2(32000, 8000)
-      },
-      {
-        position: new THREE.Vector3(workbenchCorner.x + 32000, workbenchCorner.y, workbenchCorner.z + 8000),
-        rotation: new THREE.Euler(0, -(Math.PI / 2), 0),
-        size: new THREE.Vector2(16000, 8000)
-      },
-      {
-        position: new THREE.Vector3(workbenchCorner.x + 16000, workbenchCorner.y, workbenchCorner.z + 16000),
-        rotation: new THREE.Euler(0, Math.PI, 0),
-        size: new THREE.Vector2(32000, 8000)
-      }
-    ];
 
-    let wallTexLoader = new THREE.TextureLoader();
-    wallTexLoader.load('../images/Wall_Texture.jpg', (texture => {
-      const imageWorldSize = new THREE.Vector2(1000, 1000);
-      texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    let texLoader = new THREE.TextureLoader();
+    texLoader.load('../images/Door_Texture.jpg', (doorTexture => {
+      const roomHeight = 8000;
+      const doorWidth = (doorTexture.image.width / doorTexture.image.height) * roomHeight;
 
-      wallParams.forEach((elem) => {
-        let thisWallTexture = texture.clone();
-        thisWallTexture.repeat = new THREE.Vector2(
-          elem.size.x / imageWorldSize.x,
-          elem.size.y / imageWorldSize.y
-        );
+      let doorGeometry = new THREE.PlaneBufferGeometry(doorWidth, roomHeight);
+      let doorMaterial = new THREE.MeshBasicMaterial({
+        map: doorTexture
+      });
+      let doorMesh = new THREE.Mesh(doorGeometry, doorMaterial);
+      doorMesh.position.set(workbenchCorner.x + (doorWidth / 2), workbenchCorner.y + (roomHeight / 2), workbenchCorner.z + 16000);
+      doorMesh.rotateY(Math.PI);
+      roomGroup.add(doorMesh);
 
-        let thisWallMaterial = new THREE.MeshBasicMaterial({
-          map: thisWallTexture
+      const wallParams = [
+        {
+          position: new THREE.Vector3(workbenchCorner.x, workbenchCorner.y, workbenchCorner.z + 8000),
+          rotation: new THREE.Euler(0, (Math.PI / 2), 0),
+          size: new THREE.Vector2(16000, roomHeight)
+        },
+        {
+          position: new THREE.Vector3(workbenchCorner.x + 16000, workbenchCorner.y, workbenchCorner.z),
+          rotation: new THREE.Euler(0, 0, 0),
+          size: new THREE.Vector2(32000, roomHeight)
+        },
+        {
+          position: new THREE.Vector3(workbenchCorner.x + 32000, workbenchCorner.y, workbenchCorner.z + 8000),
+          rotation: new THREE.Euler(0, -(Math.PI / 2), 0),
+          size: new THREE.Vector2(16000, roomHeight)
+        },
+        {
+          position: new THREE.Vector3(workbenchCorner.x + 16000 + (doorWidth / 2), workbenchCorner.y, workbenchCorner.z + 16000),
+          rotation: new THREE.Euler(0, Math.PI, 0),
+          size: new THREE.Vector2(32000 - doorWidth, roomHeight)
+        }
+      ];
+
+      texLoader.load('../images/Wall_Texture.jpg', (wallTemplateTexture => {
+        const imageWorldSize = new THREE.Vector2(1000, 1000);
+        wallTemplateTexture.wrapS = wallTemplateTexture.wrapT = THREE.RepeatWrapping;
+
+        wallParams.forEach((elem) => {
+          let thisWallTexture = wallTemplateTexture.clone();
+          thisWallTexture.repeat = new THREE.Vector2(
+            elem.size.x / imageWorldSize.x,
+            elem.size.y / imageWorldSize.y
+          );
+
+          let thisWallMaterial = new THREE.MeshBasicMaterial({
+            map: thisWallTexture
+          });
+          thisWallTexture.needsUpdate = true;
+          let thisWallGeometry = new THREE.PlaneBufferGeometry(elem.size.x, elem.size.y);
+
+          let thisWallMesh = new THREE.Mesh(thisWallGeometry, thisWallMaterial);
+          thisWallMesh.position.copy(elem.position);
+          thisWallMesh.position.y += (elem.size.y / 2);
+          thisWallMesh.setRotationFromEuler(elem.rotation);
+
+          roomGroup.add(thisWallMesh);
         });
-        thisWallTexture.needsUpdate = true;
-        let thisWallGeometry = new THREE.PlaneBufferGeometry(elem.size.x, elem.size.y);
-
-        let thisWallMesh = new THREE.Mesh(thisWallGeometry, thisWallMaterial);
-        thisWallMesh.position.copy(elem.position);
-        thisWallMesh.position.y += (elem.size.y / 2);
-        thisWallMesh.setRotationFromEuler(elem.rotation);
-
-        roomGroup.add(thisWallMesh);
+      }), undefined, function (ex) {
+        console.trace(ex);
       });
     }), undefined, function(ex) {
       console.trace(ex);
     });
 
+    texLoader.load('../images/Floor_Texture.jpg', (floorTexture) => {
+      const floorImageWorldSize = new THREE.Vector2(1500, 1500);
+      const floorSize = new THREE.Vector2(32000, 16000);
 
+      floorTexture.repeat.set(
+        floorSize.x / floorImageWorldSize.x,
+        floorSize.y / floorImageWorldSize.y
+      );
+      floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
+      floorTexture.needsUpdate = true;
+
+      let floorGeometry = new THREE.PlaneBufferGeometry(floorSize.x, floorSize.y);
+      let floorMaterial = new THREE.MeshBasicMaterial({
+        map: floorTexture
+      });
+
+      let floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
+      floorMesh.position.set(workbenchCorner.x + 16000, workbenchCorner.y, workbenchCorner.z + 8000);
+      floorMesh.rotateX(-(Math.PI / 2));
+      roomGroup.add(floorMesh);
+    }, undefined, function(ex) {
+      console.trace(ex);
+    });
 
   }, undefined, function(ex) {
     console.trace(ex);
