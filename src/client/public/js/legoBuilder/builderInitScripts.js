@@ -192,8 +192,8 @@ function createEnvironment()
     workbenchGroup.name = 'WorkbenchGroup';
     envGroup.add(workbenchGroup);
 
-    const workbenchYPos = 925;
-    addMeshRow(workbenchTemplateMesh, workbenchGroup, -(bboxSize.x / 2), workbenchYPos, -1000, 200, 3);
+    const cornerWorkbenchPos = new THREE.Vector3(-(bboxSize.x / 2), 925, -1000);
+    addMeshRow(workbenchTemplateMesh, workbenchGroup, cornerWorkbenchPos.x, cornerWorkbenchPos.y, cornerWorkbenchPos.z, 200, 3);
     // scene.add(workbenchTemplateMesh);
 
     modelLoader.load('../objects/environment/part_bin.stl', function(binGeometry) {
@@ -208,9 +208,71 @@ function createEnvironment()
 
       let binTemplateMesh = new THREE.Mesh(binGeometry, binMaterial);
 
-      addMeshRow(binTemplateMesh, workbenchGroup.children[0], binStartX, -workbenchYPos, binZ, 50, 12);
+      addMeshRow(binTemplateMesh, workbenchGroup.children[0], binStartX, -cornerWorkbenchPos.y, binZ, 50, 12);
       addMeshRow(binTemplateMesh, workbenchGroup.children[0], binStartX, 0, binZ, 50, 10);
+    }, undefined, function(ex) {
+      console.trace(ex);
     });
+
+    let roomGroup = new THREE.Group();
+    roomGroup.name = "RoomGroup";
+    envGroup.add(roomGroup);
+
+    let workbenchCorner = (new THREE.Vector3()).copy(cornerWorkbenchPos).add(workbenchGeometry.boundingBox.min);
+    const wallParams = [
+      {
+        position: new THREE.Vector3(workbenchCorner.x, workbenchCorner.y, workbenchCorner.z + 8000),
+        rotation: new THREE.Euler(0, (Math.PI / 2), 0),
+        size: new THREE.Vector2(16000, 8000)
+      },
+      {
+        position: new THREE.Vector3(workbenchCorner.x + 16000, workbenchCorner.y, workbenchCorner.z),
+        rotation: new THREE.Euler(0, 0, 0),
+        size: new THREE.Vector2(32000, 8000)
+      },
+      {
+        position: new THREE.Vector3(workbenchCorner.x + 32000, workbenchCorner.y, workbenchCorner.z + 8000),
+        rotation: new THREE.Euler(0, -(Math.PI / 2), 0),
+        size: new THREE.Vector2(16000, 8000)
+      },
+      {
+        position: new THREE.Vector3(workbenchCorner.x + 16000, workbenchCorner.y, workbenchCorner.z + 16000),
+        rotation: new THREE.Euler(0, Math.PI, 0),
+        size: new THREE.Vector2(32000, 8000)
+      }
+    ];
+
+    let wallTexLoader = new THREE.TextureLoader();
+    wallTexLoader.load('../images/Wall_Texture.jpg', (texture => {
+      const imageWorldSize = new THREE.Vector2(1000, 1000);
+      texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+
+      wallParams.forEach((elem) => {
+        let thisWallTexture = texture.clone();
+        thisWallTexture.repeat = new THREE.Vector2(
+          elem.size.x / imageWorldSize.x,
+          elem.size.y / imageWorldSize.y
+        );
+
+        let thisWallMaterial = new THREE.MeshBasicMaterial({
+          map: thisWallTexture
+        });
+        thisWallTexture.needsUpdate = true;
+        let thisWallGeometry = new THREE.PlaneBufferGeometry(elem.size.x, elem.size.y);
+
+        let thisWallMesh = new THREE.Mesh(thisWallGeometry, thisWallMaterial);
+        thisWallMesh.position.copy(elem.position);
+        thisWallMesh.position.y += (elem.size.y / 2);
+        thisWallMesh.setRotationFromEuler(elem.rotation);
+
+        roomGroup.add(thisWallMesh);
+      });
+    }), undefined, function(ex) {
+      console.trace(ex);
+    });
+
+
+
   }, undefined, function(ex) {
     console.trace(ex);
   });
