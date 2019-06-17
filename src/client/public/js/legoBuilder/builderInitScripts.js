@@ -53,7 +53,7 @@ function init() {
 // Initializes the camera -- Allows to use mouse wheel to zoom
 function initCamera() {
   //camera = new THREE.PerspectiveCamera(60, window.innerWidth / (window.innerHeight + (window.innerHeight * .1)), 1, 10000);
-  camera = new THREE.PerspectiveCamera(60, $(renderer.domElement).width() / $(renderer.domElement).height(), 1, 10000);
+  camera = new THREE.PerspectiveCamera(60, $(renderer.domElement).width() / $(renderer.domElement).height(), 1, 100000);
   camera.position.set(0, 500, 800);
   camera.lookAt(new THREE.Vector3());
   controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -66,7 +66,7 @@ function initCamera() {
   controls.enableDamping = false;
   controls.dampingFactor = 0.75;
   controls.minDistance = 200;
-	controls.maxDistance = 2000;
+	controls.maxDistance = 10000;
 }
 
 function computeRendererSize()
@@ -145,18 +145,17 @@ function createGridAndPlane() {
   collisionObjects.push(plane);
 }
 
-function addBinRow(binMesh, startX, yPos, zPos, spacing, numBins)
+function addMeshRow(templateMesh, newMeshParent, startX, yPos, zPos, spacing, numMeshes)
 {
-  binMesh.geometry.computeBoundingBox();
-  let posMultiplier = (binMesh.geometry.boundingBox.max.x - binMesh.geometry.boundingBox.min.x) + spacing;
+  templateMesh.geometry.computeBoundingBox();
+  let posMultiplier = (templateMesh.geometry.boundingBox.max.x - templateMesh.geometry.boundingBox.min.x) + spacing;
 
-  for(let i = 0; i < numBins; i++)
+  for(let i = 0; i < numMeshes; i++)
   {
-    let thisMesh = binMesh.clone();
+    let thisMesh = templateMesh.clone();
     thisMesh.position.copy(new THREE.Vector3(startX + i * posMultiplier, yPos, zPos));
-    thisMesh.userData.envObject = true;
 
-    scene.add(thisMesh);
+    newMeshParent.add(thisMesh);
   }
 }
 
@@ -178,18 +177,28 @@ function createEnvironment()
     scene.add(testMesh);*/
 
     // assignUVs(workbenchGeometry);
-    let workbenchMesh = new THREE.Mesh(workbenchGeometry, material);
+    let workbenchTemplateMesh = new THREE.Mesh(workbenchGeometry, material);
 
     let bboxSize = new THREE.Vector3();
     workbenchGeometry.boundingBox.getSize(bboxSize);
-    workbenchMesh.position.copy(new THREE.Vector3(-(bboxSize.x / 2), 925, -1000));
-    workbenchMesh.userData.envObject = true;
+    // workbenchTemplateMesh.position.copy(new THREE.Vector3(-(bboxSize.x / 2), 925, -1000));
+    // workbenchTemplateMesh.userData.envObject = true;
 
-    scene.add(workbenchMesh);
+    let envGroup = new THREE.Group();
+    envGroup.name = 'Environment';
+    scene.add(envGroup);
+
+    let workbenchGroup = new THREE.Group();
+    workbenchGroup.name = 'WorkbenchGroup';
+    envGroup.add(workbenchGroup);
+
+    const workbenchYPos = 925;
+    addMeshRow(workbenchTemplateMesh, workbenchGroup, -(bboxSize.x / 2), workbenchYPos, -1000, 200, 3);
+    // scene.add(workbenchTemplateMesh);
 
     modelLoader.load('../objects/environment/part_bin.stl', function(binGeometry) {
-      let binStartX = -(bboxSize.x / 2) + 175;
-      let binZ = -1450;
+      let binStartX = 175; // -(bboxSize.x / 2) + 175;
+      let binZ = -450;
 
       let binMaterial = new THREE.MeshPhongMaterial({
         color: "#0000ff",
@@ -199,8 +208,8 @@ function createEnvironment()
 
       let binTemplateMesh = new THREE.Mesh(binGeometry, binMaterial);
 
-      addBinRow(binTemplateMesh, binStartX, 0, binZ, 50, 12);
-      addBinRow(binTemplateMesh, binStartX, 925, binZ, 50, 10);
+      addMeshRow(binTemplateMesh, workbenchGroup.children[0], binStartX, -workbenchYPos, binZ, 50, 12);
+      addMeshRow(binTemplateMesh, workbenchGroup.children[0], binStartX, 0, binZ, 50, 10);
     });
   }, undefined, function(ex) {
     console.trace(ex);
