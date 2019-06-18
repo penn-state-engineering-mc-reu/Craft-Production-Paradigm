@@ -124,7 +124,20 @@ function sendGroup() {
   let exporter = new THREE.GLTFExporter();
   let options = {
     onlyVisible: false
-  }
+  };
+
+  let objGroup = new THREE.Group();
+  objects.forEach((elem) => {
+    objGroup.children.push(elem);
+  });
+  let boundingBox = (new THREE.Box3()).setFromObject(objGroup);
+  let midPoint = (new THREE.Vector3()).copy(boundingBox.min).add(boundingBox.max).multiplyScalar(0.5);
+  let negatedMidPoint = (new THREE.Vector3()).copy(midPoint).multiplyScalar(-1);
+
+  objects.forEach((elem) => {
+    elem.position.add(negatedMidPoint);
+  });
+
   exporter.parse(objects, gltf => {
     console.log(gltf);
     let postData = {'model': JSON.stringify(gltf)};
@@ -138,7 +151,7 @@ function sendGroup() {
         console.log(data);
         let elemsToRemove = []
         scene.children.forEach(elem => {
-          if (elem.type == 'Mesh' && elem.name != 'plane')
+          if (elem.type === 'Mesh' && elem.name !== 'plane' && elem.name !== 'Environment')
             elemsToRemove.push(elem);
         });
       
@@ -152,6 +165,10 @@ function sendGroup() {
         });
       },
       error: (xhr, status, error) => {
+        objects.forEach((elem) => {
+          elem.position.add(midPoint);
+        });
+
         console.log('Group Error: ' + error);
       }
     });
