@@ -151,7 +151,7 @@ function sendGroup() {
         console.log(data);
         let elemsToRemove = []
         scene.children.forEach(elem => {
-          if (elem.type === 'Mesh' && elem.name !== 'plane' && !(elem.userData.envObject))
+          if (elem.type === 'Mesh' && elem.name !== 'plane' && elem.name !== 'Environment')
             elemsToRemove.push(elem);
         });
       
