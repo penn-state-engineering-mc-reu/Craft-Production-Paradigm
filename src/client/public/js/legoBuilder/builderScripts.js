@@ -394,8 +394,7 @@ function getGridSnapPosition2D(origPos, gridSize, snapOffset)
  */
 function moveToSnappedPosition(objToMove)
 {
-  const GRID_OFFSET = new THREE.Vector2(0, 0),
-        TILE_DIMENSIONS = new THREE.Vector2(TILE_LENGTH, TILE_LENGTH);
+  const GRID_OFFSET = new THREE.Vector2(0, 0);
 
   let boundingBoxMinPos = (new THREE.Vector3()).copy(objToMove.geometry.boundingBox.min);
   boundingBoxMinPos.multiplyVectors(boundingBoxMinPos, objToMove.scale).applyEuler(objToMove.rotation);
