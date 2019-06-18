@@ -91,7 +91,7 @@ function onDocumentMouseMove(event) {
       });
     }
   }
-  render(); 
+  // render();
 }
 
 // handles all the keyboard presses
@@ -105,8 +105,8 @@ function onDocumentKeyDown(event) {
     case 65: vector.set(10, 0, 0); break;  // A
     case 83: vector.set(0, -10, 0); break; // S
     case 68: vector.set(-10, 0, 0); break; // D
-    case 81: rollOverMesh.rotation.z += Math.PI / 2; moveToSnappedPosition(rollOverMesh); render(); break; // Q
-    case 69: rollOverMesh.rotation.z -= Math.PI / 2; moveToSnappedPosition(rollOverMesh); render(); break; // E
+    case 81: rollOverMesh.rotation.z += Math.PI / 2; moveToSnappedPosition(rollOverMesh); /* render(); */ break; // Q
+    case 69: rollOverMesh.rotation.z -= Math.PI / 2; moveToSnappedPosition(rollOverMesh); /* render(); */ break; // E
     case 32: controls.reset(); break;   // Space
   }
   camera.position.add(vector);
@@ -164,7 +164,7 @@ function onDocumentMouseDown(event) {
         }
       });
     }
-    render();
+    // render();
   }
 }
 
