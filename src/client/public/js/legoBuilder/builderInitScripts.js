@@ -18,9 +18,7 @@ var camera, scene, renderer, controls;
 var plane, cube;
 var mouse, raycaster, isCtrlDown = false, isShiftDown = false;
 var rollOverMesh, material, collisionBox;
-const TILE_LENGTH = 24,
-      NUM_GRID_TILES = 40;
-const PLANE_LENGTH = TILE_LENGTH * NUM_GRID_TILES;
+const TILE_DIMENSIONS = new THREE.Vector2(24, 24);
 var objects = [], collisionObjects = [];
 var currentObj = twoByTwo;
 // var group = new THREE.Group();
@@ -35,8 +33,11 @@ $(function() {
 function init() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0xf0f0f0);
-  createGridAndPlane();
-  createEnvironment();
+  createEnvironment(() => {
+    createGridAndPlane(scene.getObjectByName('Environment').getObjectByName('Room')
+      .getObjectByName('Workbenches').children[0]);
+  });
+
   //objects.push(plane);
   raycaster = new THREE.Raycaster();
   mouse = new THREE.Vector2();
@@ -134,12 +135,20 @@ function makeGrid(startX, startZ, endX, endZ, elemSizeX, elemSizeZ)
   }))
 }
 
-function createGridAndPlane() {
-  var gridHelper = makeGrid(-1920, -240, 1920, 240, 24, 24);// new THREE.GridHelper(PLANE_LENGTH, NUM_GRID_TILES);
+function createGridAndPlane(workbenchObj) {
+  workbenchObj.geometry.computeBoundingBox();
+  let minCorner = (new THREE.Vector3()).copy(workbenchObj.position).add(workbenchObj.geometry.boundingBox.min),
+      maxCorner = (new THREE.Vector3()).copy(workbenchObj.position).add(workbenchObj.geometry.boundingBox.max);
+  let startX = Math.trunc(minCorner.x / TILE_DIMENSIONS.x) * TILE_DIMENSIONS.x,
+      endX = Math.trunc(maxCorner.x / TILE_DIMENSIONS.x) * TILE_DIMENSIONS.x,
+      endZ = Math.trunc(maxCorner.z / TILE_DIMENSIONS.y) * TILE_DIMENSIONS.y,
+      startZ = endZ - (TILE_DIMENSIONS.y * 24);
+  let gridHelper = makeGrid(startX, startZ, endX, endZ, TILE_DIMENSIONS.x, TILE_DIMENSIONS.y);// new THREE.GridHelper(PLANE_LENGTH, NUM_GRID_TILES);
   scene.add(gridHelper);
-  var geometry = new THREE.PlaneBufferGeometry(1920 * 2, 240 * 2);
+  let geometry = new THREE.PlaneBufferGeometry(endX - startX, endZ - startZ);
   geometry.rotateX(-Math.PI / 2);
   plane = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({visible: false}));
+  plane.position.set((startX + endX) / 2, 0, (startZ + endZ) / 2);
   plane.name = 'plane';
   scene.add(plane);
   collisionObjects.push(plane);
@@ -159,7 +168,7 @@ function addMeshRow(templateMesh, newMeshParent, startX, yPos, zPos, spacing, nu
   }
 }
 
-function createEnvironment()
+function createEnvironment(onCompleted)
 {
   let modelLoader = new THREE.STLLoader();
   modelLoader.load('../objects/environment/workbench.stl', function(workbenchGeometry) {
@@ -188,9 +197,13 @@ function createEnvironment()
     envGroup.name = 'Environment';
     scene.add(envGroup);
 
+    let roomGroup = new THREE.Group();
+    roomGroup.name = 'Room';
+    envGroup.add(roomGroup);
+
     let workbenchGroup = new THREE.Group();
-    workbenchGroup.name = 'WorkbenchGroup';
-    envGroup.add(workbenchGroup);
+    workbenchGroup.name = 'Workbenches';
+    roomGroup.add(workbenchGroup);
 
     const cornerWorkbenchPos = new THREE.Vector3(-(bboxSize.x / 2), 925, -1000);
     addMeshRow(workbenchTemplateMesh, workbenchGroup, cornerWorkbenchPos.x, cornerWorkbenchPos.y, cornerWorkbenchPos.z, 200, 3);
@@ -213,10 +226,6 @@ function createEnvironment()
     }, undefined, function(ex) {
       console.trace(ex);
     });
-
-    let roomGroup = new THREE.Group();
-    roomGroup.name = "RoomGroup";
-    envGroup.add(roomGroup);
 
     let workbenchCorner = (new THREE.Vector3()).copy(cornerWorkbenchPos).add(workbenchGeometry.boundingBox.min);
 
@@ -280,6 +289,8 @@ function createEnvironment()
           thisWallMesh.setRotationFromEuler(elem.rotation);
 
           roomGroup.add(thisWallMesh);
+
+          onCompleted();
         });
       }), undefined, function (ex) {
         console.trace(ex);
