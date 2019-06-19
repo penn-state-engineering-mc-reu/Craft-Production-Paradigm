@@ -40,6 +40,7 @@ function initButtons() {
 
   $('#order').click(e => {openModal()});
   $('#pieces').click(e => {openSupplyModal()});
+  $('#controls').click(e => {displayControls()});
 
   $('#send-model').click(e => {
     if (!$.isEmptyObject(objects)) {
@@ -68,6 +69,10 @@ function getModel(name) {
 //                                    Order Functions
 //======================================================================================================
 
+function displayControls(){
+$('#control-list').modal('show');
+
+}
 function openModal() {
   if (jQuery.isEmptyObject(orderInformation))
     $('#no-orders').modal('show');
