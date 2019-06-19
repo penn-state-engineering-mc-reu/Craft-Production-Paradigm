@@ -31,6 +31,9 @@ function initButtons() {
   for (let i = 0; i < names.length; i++) {
     let num = '#' + i;
     $(num + '-plus').click(e => {
+      $('#error-message').addClass('hidden');
+      $('#send-manufacturing-order').removeClass('disabled');
+
       let currentNum = parseInt($(num + '-value').html());
       $(num + '-value').html(currentNum < 10 ? ++currentNum : 10);
       pieceOrder[i] = currentNum;
@@ -39,6 +42,16 @@ function initButtons() {
       let currentNum = parseInt($(num + '-value').html());
       $(num + '-value').html(currentNum == 0 ? 0 : --currentNum);
       pieceOrder[i] = currentNum;
+
+      let partSum = 0;
+      pieceOrder.forEach((elem) => {
+        partSum += elem;
+      });
+      if(partSum <= 0)
+      {
+        $('#error-message').removeClass('hidden');
+        $('#send-manufacturing-order').addClass('disabled');
+      }
     });
   }
 
