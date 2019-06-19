@@ -61,6 +61,12 @@
 					<p>I hope you know which pieces are needed.</p>
 				</div>
 			</div>
+			<div class="ui negative message" id="error-message">
+				<div class="ui centered header">
+					No Parts Selected
+				</div>
+				<p style="text-align: center;">Please select parts to send a part order.</p>
+			</div>
 			<div class="actions">
 				<div id="left" class="ui red button">
 					<i class="angle double left icon"></i>
@@ -71,8 +77,8 @@
 				<div class="ui black deny button">
 					Close Window
 				</div>
-				<div id="send-manufacturing-order" class="ui positive right labeled icon button">
-					Send Parts Order To Supplier
+				<div id="send-manufacturing-order" class="ui disabled positive right labeled icon button">
+					Send Part Order To Supplier
 					<i class="checkmark icon"></i>
 				</div>
 			</div>
