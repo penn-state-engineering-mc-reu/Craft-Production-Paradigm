@@ -289,9 +289,9 @@ function createEnvironment(onCompleted)
           thisWallMesh.setRotationFromEuler(elem.rotation);
 
           roomGroup.add(thisWallMesh);
-
-          onCompleted();
         });
+
+        onCompleted();
       }), undefined, function (ex) {
         console.trace(ex);
       });

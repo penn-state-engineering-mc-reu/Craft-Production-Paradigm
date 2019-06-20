@@ -1,5 +1,6 @@
 'use strict'
 let currentRollOverModel = "";
+let placementOffset = new THREE.Vector3();
 
 function loadRollOverMesh() {
   let loader = new THREE.STLLoader();
@@ -29,6 +30,7 @@ function loadRollOverMesh() {
     rollOverMesh.name = 'rollOverMesh';
 
     rollOverMesh.position.y += determineModelYTranslation();
+    placementOffset.set(0, 0, 0);
   });
 }
 
@@ -46,10 +48,15 @@ function getNormalizedMousePosition(event)
   return new THREE.Vector2((event.clientX / window.innerWidth) * 2 - 1, - ( (event.clientY - canvasPosition.top) / canvasHeight ) * 2 + 1);
 }
 
-function onDocumentMouseMove(event) {
+function onDocumentMouseMove(event)
+{
   event.preventDefault();
   mouse = getNormalizedMousePosition(event);
-  raycaster.setFromCamera(mouse, camera);
+  updateRolloverMesh(mouse);
+}
+
+function updateRolloverMesh(mousePos) {
+  raycaster.setFromCamera(mousePos, camera);
   var intersects = raycaster.intersectObjects(collisionObjects);
   pieceIndex = names.indexOf(currentRollOverModel);
   if (pieceIndex != -1) {
@@ -80,6 +87,7 @@ function onDocumentMouseMove(event) {
         }
 
         moveToSnappedPosition(rollOverMesh);
+        rollOverMesh.position.add(placementOffset);
       }
     }
     else {
@@ -97,19 +105,20 @@ function onDocumentMouseMove(event) {
 // handles all the keyboard presses
 // TODO: Handle multiple keypresses
 function onDocumentKeyDown(event) {
-  var vector = new THREE.Vector3();
   switch (event.keyCode) {
     case 16: isShiftDown = true; break; // Shift
     case 17: isCtrlDown = true; break;  // Ctrl
-    case 87: vector.set(0, 10, 0); break;  // W
-    case 65: vector.set(10, 0, 0); break;  // A
-    case 83: vector.set(0, -10, 0); break; // S
-    case 68: vector.set(-10, 0, 0); break; // D
-    case 81: rollOverMesh.rotation.z += Math.PI / 2; moveToSnappedPosition(rollOverMesh); /* render(); */ break; // Q
-    case 69: rollOverMesh.rotation.z -= Math.PI / 2; moveToSnappedPosition(rollOverMesh); /* render(); */ break; // E
-    case 32: controls.reset(); break;   // Space
+    case 87: placementOffset.add(new THREE.Vector3(0, 0, -TILE_DIMENSIONS.y)); break;  // W
+    case 65: placementOffset.add(new THREE.Vector3(-TILE_DIMENSIONS.x, 0, 0)); break;  // A
+    case 83: placementOffset.add(new THREE.Vector3(0, 0, TILE_DIMENSIONS.y)); break; // S
+    case 68: placementOffset.add(new THREE.Vector3(TILE_DIMENSIONS.x, 0, 0)); break; // D
+    case 81: rollOverMesh.rotation.z += Math.PI / 2; /* render(); */ break; // Q
+    case 69: rollOverMesh.rotation.z -= Math.PI / 2; /* render(); */ break; // E
+      // Manually updating the camera's world matrix seems to be necessary for raytracing (used during the rollover mesh
+      // update) when the camera is moved/rotated in the same frame.
+    case 32: controls.reset(); camera.updateMatrixWorld(); break;   // Space
   }
-  camera.position.add(vector);
+  updateRolloverMesh(mouse);
 }
 
 function onDocumentKeyUp(event) {
@@ -153,14 +162,24 @@ function onDocumentMouseDown(event) {
           // this is because the intersection object is the collision object
           // group.remove(intersect.object.children[0]);
           updatePieces();
+          updateRolloverMesh(mouse);
         }
       }
     }
     else if (isShiftDown && pieces[pieceIndex] > 0) {
-      placeLego(intersect, placement => {
+      placeLego(intersect, (placement, modelMesh, collisionMesh) => {
         if (placement) {
           pieces[pieceIndex] = parseInt(pieces[pieceIndex]) - 1;
+          placementOffset.set(0, 0, 0);
           updatePieces();
+
+          // Manually updating the world matrices seems to be necessary for raytracing (used during the rollover mesh
+          // update) for objects created in the same frame.
+          modelMesh.updateMatrixWorld();
+          collisionMesh.updateMatrixWorld();
+          updateRolloverMesh(mouse);
+          // TODO: Update rollover mesh
+          // setTimeout(() => {updateRolloverMesh(mouse);}, 500);
         }
       });
     }
@@ -203,6 +222,7 @@ function placeLego(intersect, cb) {
         modelObj.position.y += determineModelYTranslation();
 
         moveToSnappedPosition(modelObj);
+        modelObj.position.add(placementOffset);
       }
       else {
         placementPossible = false;
@@ -222,20 +242,18 @@ function placeLego(intersect, cb) {
       }
       else {
         placementPossible = determineModelPosition(modelObj, intersect, size, dim);
-
-        if(placementPossible) {
-          moveToSnappedPosition(modelObj);
-        }
       }
     }
 
+
+    let collisionCube;
     // If the piece can't be placed on another, I don't want it to create and add the modelObj to the scene
     if (placementPossible) {
       scene.add(modelObj);
-      generateCollisionCube(modelObj, size);
+      collisionCube = generateCollisionCube(modelObj, size);
     }
 
-    cb(placementPossible);
+    cb(placementPossible, modelObj, collisionCube);
   });
 }
 
@@ -304,6 +322,8 @@ function generateCollisionCube(modelObj, size) {
 
   cube.children.push(modelObj);
   objects.push(modelObj);
+
+  return cube;
 }
 
 /**
