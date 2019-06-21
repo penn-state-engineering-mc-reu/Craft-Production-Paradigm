@@ -63,7 +63,7 @@
               </div>
             </div>
           </div>
-					<button class="disabled ui massive green button" id="order">View Orders Placed</button>
+					<button class="ui massive green button" id="order">View Orders Placed</button>
         </div>
       </div>
     </div>
@@ -94,9 +94,19 @@
 
     <div class="ui modal" id="ready-order">
 			<div class="header">
-				Order Information
+                <span id="order-info-text">Order Information</span>
+                <div class="header-lr-filler"></div>
+                <div id="filter-options">
+                    <span id="filter-options-text">Filter orders:</span>
+                    <input id="in-progress" type="checkbox">
+                    <label for="in-progress">In progress</label>
+                    <input id="ready-for-inspection" type="checkbox" checked>
+                    <label for="ready-for-inspection">Ready for inspection</label>
+                    <input id="sent-to-customer" type="checkbox">
+                    <label for="sent-to-customer">Sent to customer</label>
+                </div>
 			</div>
-			<div class="image content">
+			<div id="order-display" class="image content">
 				<div class="ui image order-image-container">
 					<img id="order-image" src="">
 				</div>
@@ -105,6 +115,12 @@
 					<span id="order-info"></span>
 				</div>
 			</div>
+            <div id="no-order-message" class="ui hidden negative message">
+                <div class="ui centered header">
+                    No Orders Available
+                </div>
+                <p style="text-align: center;">No orders are available that match the selected filters.</p>
+            </div>
 			<div class="actions">
 				<div id="left" class="ui red button">
 					<i class="angle double left icon"></i>
