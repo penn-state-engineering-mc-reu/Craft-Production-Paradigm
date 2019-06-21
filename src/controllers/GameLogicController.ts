@@ -94,7 +94,11 @@ export class GameLogicController {
   public updateManufacturerRequest(pin: string, orderId: string, request: Array<number>): number {
     return this.db.updateManufacturerRequest(pin, orderId, request);
   }
-  
+
+  public acceptOrder(pin: string, orderId: string): number {
+    return this.db.acceptOrder(pin, orderId);
+  }
+
   public rejectOrder(pin: string, orderId: string): number {
     return this.db.rejectOrder(pin, orderId);
   }

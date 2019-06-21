@@ -126,6 +126,17 @@ export class GameLogicDatabaseConnector extends DatabaseConnector {
     return 400;
   }
 
+  public acceptOrder(pin: string, orderId: string)
+  {
+    try {
+      let update: Object = {$set: {status: 'Completed', stage: 'Sent to Customer'}};
+      this.orderCollection.update({pin: parseInt(pin), _id: orderId}, update);
+      return 200;
+    } catch(e) {
+      return 400;
+    }
+  }
+
   /**
    * If the user doesn't approve the model, the game will turn back to the supplier stage
    * @param pin 

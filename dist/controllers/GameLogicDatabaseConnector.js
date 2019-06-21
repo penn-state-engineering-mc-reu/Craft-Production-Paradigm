@@ -139,6 +139,16 @@ class GameLogicDatabaseConnector extends database_1.default {
         }
         return 400;
     }
+    acceptOrder(pin, orderId) {
+        try {
+            let update = { $set: { status: 'Completed', stage: 'Sent to Customer' } };
+            this.orderCollection.update({ pin: parseInt(pin), _id: orderId }, update);
+            return 200;
+        }
+        catch (e) {
+            return 400;
+        }
+    }
     /**
      * If the user doesn't approve the model, the game will turn back to the supplier stage
      * @param pin
