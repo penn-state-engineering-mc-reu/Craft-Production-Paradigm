@@ -128,6 +128,12 @@ function onDocumentKeyUp(event) {
   }
 }
 
+function onRendererMouseWheel(event)
+{
+  camera.updateMatrixWorld();
+  updateRolloverMesh(mouse);
+}
+
 /**
  * ================================================================
  *        CREATION AND DELETION OF THE MODELS IN THE SCENE

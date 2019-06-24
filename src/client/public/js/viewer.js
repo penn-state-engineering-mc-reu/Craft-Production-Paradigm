@@ -186,6 +186,10 @@ function initButtons() {
   });
 
   $('#accept').click(e => {
-    $('#finish').modal('toggle');
+    $.ajax({
+      type: 'POST',
+      url: GameAPI.rootURL + '/gameLogic/acceptOrder/' + getPin() + '/' + getOrderId(),
+      success: (data) => {$('#finish').modal('toggle');}
+    });
   });
 }

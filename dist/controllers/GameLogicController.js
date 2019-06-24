@@ -100,6 +100,9 @@ class GameLogicController {
     updateManufacturerRequest(pin, orderId, request) {
         return this.db.updateManufacturerRequest(pin, orderId, request);
     }
+    acceptOrder(pin, orderId) {
+        return this.db.acceptOrder(pin, orderId);
+    }
     rejectOrder(pin, orderId) {
         return this.db.rejectOrder(pin, orderId);
     }

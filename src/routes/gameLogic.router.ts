@@ -54,6 +54,10 @@ router.post('/updateManufacturerRequest/:id/:orderId', (req: Request, res: Respo
   res.send(controller.updateManufacturerRequest(req.params.id, req.params.orderId, req.body.request));
 });
 
+router.post('/acceptOrder/:id/:orderId', (req: Request, res: Response) => {
+  res.send(controller.acceptOrder(req.params.id, req.params.orderId));
+});
+
 router.post('/rejectOrder/:id/:orderId', (req: Request, res: Response) => {
   res.send(controller.rejectOrder(req.params.id, req.params.orderId));
 });
