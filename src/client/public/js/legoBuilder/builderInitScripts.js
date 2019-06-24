@@ -48,6 +48,7 @@ function init() {
   document.addEventListener('mousedown', onDocumentMouseDown, false);
   document.addEventListener('keydown', onDocumentKeyDown, false);
   document.addEventListener('keyup', onDocumentKeyUp, false);
+  renderer.domElement.addEventListener('wheel', onRendererMouseWheel, false);
   window.addEventListener('resize', onWindowResize, false);
 }
 
