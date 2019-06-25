@@ -18,6 +18,11 @@ export class GameLogicDatabaseConnector extends DatabaseConnector {
     this.orderCollection.insert(order);
   }
 
+  public async getOrder(pin: string, orderID: string): Promise<object>
+  {
+    return await this.orderCollection.findOne({pin: parseInt(pin), _id: orderID});
+  }
+
   /**
    * Gets all of the orders that are part of the same session
    * @param pin 
@@ -152,4 +157,6 @@ export class GameLogicDatabaseConnector extends DatabaseConnector {
       return 400;
     }
   }
+
+
 }
