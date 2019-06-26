@@ -15,6 +15,10 @@ router.post('/sendOrder', (req: Request, res: Response) => {
   res.status(200).send('OK');
 });
 
+router.get('/getOrder/:id/:orderID', async (req: Request, res: Response) => {
+  res.send(await controller.getOrder(req.params.id, req.params.orderID));
+});
+
 router.get('/getOrders/:id', async (req: Request, res: Response) => {
   res.send(await controller.getOrders(req.params.id));
 });

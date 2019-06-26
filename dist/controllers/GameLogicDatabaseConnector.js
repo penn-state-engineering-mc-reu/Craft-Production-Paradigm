@@ -24,6 +24,11 @@ class GameLogicDatabaseConnector extends database_1.default {
     addOrder(order) {
         this.orderCollection.insert(order);
     }
+    getOrder(pin, orderID) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.orderCollection.findOne({ pin: parseInt(pin), _id: orderID });
+        });
+    }
     /**
      * Gets all of the orders that are part of the same session
      * @param pin
