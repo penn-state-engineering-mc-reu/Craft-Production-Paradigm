@@ -13,6 +13,7 @@
       crossorigin="anonymous"></script>
     <script src="/../semantic/dist/semantic.min.js"></script>
 	<script src="/../js/gameAPI.js"></script>
+	<script src="/../js/partProperties.js"></script>
 		<script src="/../js/manufacturer.js"></script>
   </head>
   <body>
@@ -20,12 +21,34 @@
       <div class="nine wide column">
         <div class="ui centered grid">
           <div class="row">
-            <h1 id="header" class="ui header">
-              <i class="industry icon"></i>
-              Manufacturer
-            </h1>
-          </div>
-					<button class="ui massive yellow button" id="order">Orders From Customer</button>
+			<div class="ui centered grid">
+			  <div class="row">
+				<h1 id="header" class="ui header">
+				  <i class="industry icon"></i>
+				  Manufacturer
+				</h1>
+			  </div>
+			  <div class="row">
+				<button class="ui massive yellow button" id="order">Orders From Customer</button>
+			  </div>
+				<div class="total-cost-weight">
+					<div class="ui celled centered grid total-cost-weight-grid">
+						<div class="row total-cost">
+							<div class="ui centered grid total-cost-grid">
+								<p>Total Cost:</p>
+								<p id="total-cost-text">$XX.XX</p>
+							</div>
+						</div>
+						<div class="row total-weight">
+							<div class="ui centered grid total-weight-grid">
+								<p>Total Weight (g):</p>
+								<p id="total-weight-text">XX</p>
+							</div>
+						</div>
+					</div>
+				</div>
+		    </div>
+		  </div>
           <div id="supply-grid" class="ui celled grid">
 					</div>
         </div>
