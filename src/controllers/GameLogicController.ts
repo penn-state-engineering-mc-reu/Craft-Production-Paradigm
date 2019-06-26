@@ -58,6 +58,11 @@ export class GameLogicController {
     return num;
 }
 
+  public async getOrder(pin: string, orderID: string): Promise<object>
+  {
+    return await this.db.getOrder(pin, orderID);
+  }
+
   public async getOrders(pin: string): Promise<Array<object>> {
     return await this.db.getOrders(pin);
   }
