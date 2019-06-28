@@ -49,14 +49,14 @@
 {
   padding: 10px;
   color: white;
-  background-color: #009578;
+  background-color: #02b100;
   border: 1px solid #000;
   border-radius: 5px;
   cursor: pointer;
 }
 #file-button:hover
 {
-  background-color: #00b28f;
+  background-color: #21ba45;
 }
 #custom-text
 {
