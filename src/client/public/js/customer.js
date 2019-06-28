@@ -61,6 +61,19 @@ function initButtons() {
 
   $('#generate').click(e => {
     generated = true;
+    let randNum = Math.floor(Math.random() * 4) + 1;
+    if(randNum == 1){
+      changeCarType(1);
+    }
+    else if(randNum == 2){
+      changeCarType(2);
+    }
+    else if(randNum == 3){
+      changeCarType(3);
+    }
+    else if(randNum == 4){
+      changeCarType(4);
+    }
     sendOrder();
   });
 
