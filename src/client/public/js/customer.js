@@ -7,6 +7,7 @@ $(document).ready(() => {
   checkOrders();
   initImages();
   initButtons();
+  chooseFile();
 });
 
 function initImages() {
