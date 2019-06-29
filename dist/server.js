@@ -8,3 +8,4 @@ app_1.default.set('port', port);
 app_1.default.listen(app_1.default.get('port'), () => {
     console.log(`Listening at http://psu-research-api.heroku.com:${port}/`);
 });
+//# sourceMappingURL=server.js.map

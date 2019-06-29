@@ -51,9 +51,9 @@ $(document).ready(() => {
   generateSupplyGrid();
   initArray();
   initButtons();
-  $('#order').click(e => openModal());
   $('#request').click(e => openManufacturingModal());
-  checkOrders();
+  checkRequestedPieces();
+  setInterval(checkRequestedPieces, 3000);
 });
 
 // gets the pin from the url
@@ -70,17 +70,6 @@ function initArray() {
 
 function initButtons() {
   initGridButtons();
-  $('#left').click(e => {
-    let index = orderInformation.indexOf(currentOrder);
-    currentOrder = --index < 0 ? orderInformation[orderInformation.length - 1] : orderInformation[index];
-    updateOrder();
-  });
-
-  $('#right').click(e => {
-    let index = orderInformation.indexOf(currentOrder);
-    currentOrder = ++index == orderInformation.length ? orderInformation[0] : orderInformation[index];
-    updateOrder();
-  });
 
   $('#send-supply-order').click(e => {
     if (checkSupplyMatchesManufacturer()) {
@@ -133,14 +122,14 @@ function checkSupplyMatchesManufacturer() {
 
 function sendSupplyOrder() {
   let postData = {
-    "id": currentOrder._id,
     "order": pieceOrders,
     "colors": colors
-  }
+  };
 
   $.ajax({
     type: 'POST',
-    data: postData,
+    data: JSON.stringify(postData),
+    contentType: 'application/json',
     url: GameAPI.rootURL + '/gameLogic/sendSupplyOrder/' + getPin(),
     success: (data) => {
       console.log('Order sent!');
@@ -152,44 +141,6 @@ function sendSupplyOrder() {
       console.log(error);
     }
   });
-}
-
-/**
- * Function that runs constantly to update the orders
- */
-function checkOrders() {
-  $.ajax({
-    type: 'GET',
-    url: GameAPI.rootURL + '/gameLogic/getOrders/' + getPin(),
-    cache: false,
-    timeout: 5000,
-    success: (data) => {
-      orderInformation = data;
-      orderInformation = filterOrders(orderInformation);
-      // Need to find the oldest order that hasn't been finished or canceled
-      let i = 0;
-      if (orderInformation.length != 0) {
-        while(orderInformation[i].status != 'In Progress') {
-          i++;
-          if (i >= orderInformation.length) break;
-        } 
-        currentOrder = orderInformation[i] === undefined ? orderInformation[0] : orderInformation[i];
-      }
-      updateOrder();
-    },
-    error: (xhr, status, error) => {
-      console.log('Error: ' + error);
-    }
-  });
-
-  checkRequestedPieces();
-  setTimeout(checkOrders, 3000);
-}
-
-function filterOrders(orders) {
-  return (orders.filter((elem) => {
-    return (elem.stage === "Supplier");
-  }));
 }
 
 /**
@@ -209,12 +160,10 @@ function openManufacturingModal() {
 function checkRequestedPieces() {
   $.ajax({
   type: 'GET',
-  url: GameAPI.rootURL + '/gameLogic/getManufacturerRequest/' + getPin() + '/' + currentOrder._id,
+  url: GameAPI.rootURL + '/gameLogic/getManufacturerRequest/' + getPin(),
   success: (data) => {
-    if (data.length != 0) {
-      manufacturingPieces = data;
-      populateRequestData(manufacturingPieces);
-    }
+    manufacturingPieces = data;
+    populateRequestData(manufacturingPieces);
   },
   error: (xhr, status, error) => {
     console.log(error);
@@ -230,27 +179,6 @@ function populateRequestData(data) {
     }
   });
   $('#requested-pieces').html(html);
-}
-
- function openModal() {
-  if (jQuery.isEmptyObject(orderInformation)) {
-    $('#no-orders').modal('show');
-  }
-  else {
-    $('#ready-order').modal('show');
-  }
-}
-
-function updateOrder() {
-  $('#order-image').attr('src', `/../images/Option ${currentOrder.modelID}.PNG`);
-  let html = '<p>Date Ordered: ' + new Date(currentOrder.createDate).toString() + '</p>';
-  html += '<p>Last Modified: ' + new Date(currentOrder.lastModified).toString() + '</p>';
-  if (currentOrder.status === 'Completed')
-    html += '<p>Finished: ' + new Date(currentOrder.finishedTime).toString() + '</p>';
-  html += '<p>Model ID: ' + currentOrder.modelID + '</p>';
-  html += '<p>Stage: ' + currentOrder.stage + '</p>';
-  html += '<p>Status: ' + currentOrder.status + '</p><br>';
-  $('#order-info').html(html);
 }
 
 /**

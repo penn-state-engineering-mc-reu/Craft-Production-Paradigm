@@ -13,10 +13,7 @@ export default class Order {
   // Customer -> Manufacturer -> Supplier -> Assembler -> Customer
   private stage: string;
   private modelID: number;
-  private manufacturerReq: Array<number>;
-  private supplyOrders: Array<number>;
   private assembledModel: object;
-  private colors: Array<any>;
   constructor(pin: number) {
     this.pin = pin;
     this._id = this.generateId();
@@ -26,10 +23,7 @@ export default class Order {
     this.modelID = -1;
     this.lastModified = this.createDate;
     this.finishedTime = -1;
-    this.manufacturerReq = new Array<number>();
-    this.supplyOrders = new Array<number>();
     this.assembledModel = {};
-    this.colors = new Array<any>();
   }
 
   private setLastModified(): void {
@@ -78,9 +72,6 @@ export default class Order {
       "status": this.status,
       "stage": this.stage,
       "modelID": this.modelID,
-      "manufacturerReq": this.manufacturerReq,
-      "supplyOrders": this.supplyOrders,
-      "colors": this.colors,
       "assembledModel": this.assembledModel
     };
 

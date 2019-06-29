@@ -67,12 +67,12 @@ export class GameLogicController {
     return await this.db.getOrders(pin);
   }
 
-  public addSupplyOrder(pin: string, orderId: string, order: Array<number>, colors: Array<string>): void {
-    this.db.addSupplyOrder(pin, orderId, order, colors);
+  public addSupplyOrder(pin: string, order: Array<number>, colors: Array<string>): void {
+    this.db.addSupplyOrder(pin, order, colors);
   }
 
-  public async getSupplyOrder(pin: string, orderId: string): Promise<Array<number>> {
-    return await this.db.getSupplyOrder(pin, orderId);
+  public async getSupplyOrder(pin: string): Promise<Array<number>> {
+    return await this.db.getSupplyOrder(pin);
   }
 
   public async getColors(pin: string, orderId: string): Promise<Array<any>> {
@@ -92,12 +92,12 @@ export class GameLogicController {
     return await this.db.getAssembledModel(pin, orderId);
   }
 
-  public async getManufacturerRequest(pin: string, orderId: string): Promise<Array<number>> {
-    return await this.db.getManufacturerRequest(pin, orderId);
+  public async getManufacturerRequest(pin: string): Promise<Array<number>> {
+    return await this.db.getManufacturerRequest(pin);
   }
 
-  public updateManufacturerRequest(pin: string, orderId: string, request: Array<number>): number {
-    return this.db.updateManufacturerRequest(pin, orderId, request);
+  public updateManufacturerRequest(pin: string, request: Array<number>): number {
+    return this.db.updateManufacturerRequest(pin, request);
   }
 
   public acceptOrder(pin: string, orderId: string): number {

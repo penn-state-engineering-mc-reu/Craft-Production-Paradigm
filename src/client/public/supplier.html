@@ -29,7 +29,6 @@
             </h1>
 					</div>
 					<button class="ui massive green button" id="request">Manufacturer Request</button>
-					<button class="ui massive yellow button" id="order">Orders From Customer</button>
           <div id="supply-grid" class="ui celled grid">
 					</div>
         </div>
@@ -47,42 +46,6 @@
 						<i class="checkmark icon"></i>
 						Okay
 					</div>
-				</div>
-			</div>
-		</div>
-
-		<div class="ui modal" id="ready-order">
-			<div class="header">
-				Order Information
-			</div>
-			<div class="image content">
-				<div class="ui image order-image-container">
-					<img id="order-image" src="">
-				</div>
-				<div class="description">
-					<div class="ui header">Order Sent From the Customer</div>
-					<span id="order-info"></span>
-				</div>
-			</div>
-			<div class="ui hidden negative message" id="error-message">
-				<div class="ui centered header">
-					Supply Order Doesn't Match Manufacturer Order
-				</div>
-				<p style="text-align: center;">You can have more pieces in the supply order but you must at least include the pieces requested!</p>
-			</div>
-			<div class="actions">
-				<div id="left" class="ui red button">
-					<i class="angle double left icon"></i>
-				</div>
-				<div id="right" class="ui red button">
-					<i class="angle double right icon"></i>
-				</div>
-				<div class="ui black deny button">
-					Close Window
-				</div>
-				<div id="send-supply-order" class="ui green right labeled icon button">
-					Send Pieces To Assembler
-					<i class="checkmark icon"></i>
 				</div>
 			</div>
 		</div>
@@ -112,10 +75,20 @@
 						<div id="requested-pieces" class="ui bulleted list">
 						</div>
 				</div>
+				<div class="ui hidden negative message" id="error-message">
+					<div class="ui centered header">
+						Supply Order Doesn't Match Manufacturer Order
+					</div>
+					<p style="text-align: center;">You can have more pieces in the supply order but you must at least include the pieces requested!</p>
+				</div>
 			</div>
 			<div class="actions">
 				<div class="ui black deny button">
 					Close Window
+				</div>
+				<div id="send-supply-order" class="ui green right labeled icon button">
+					Send Pieces To Assembler
+					<i class="checkmark icon"></i>
 				</div>
 			</div>
 		</div>

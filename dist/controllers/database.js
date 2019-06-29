@@ -21,3 +21,4 @@ class DatabaseConnector {
     }
 }
 exports.default = DatabaseConnector;
+//# sourceMappingURL=database.js.map

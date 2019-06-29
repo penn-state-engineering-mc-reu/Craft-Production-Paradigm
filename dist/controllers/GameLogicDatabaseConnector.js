@@ -46,15 +46,19 @@ class GameLogicDatabaseConnector extends database_1.default {
     // This happens at the supplier stage
     // I don't know why I have two functions that essentially do the same thing (idgaf at this point)
     // fixed: they no longer do the same thing
-    addSupplyOrder(pin, orderId, order, colors) {
-        let time = new Date().getTime();
-        let update = { $set: { supplyOrders: order, colors: colors, lastModified: time, stage: 'Assembler' } };
-        this.orderCollection.update({ pin: parseInt(pin), _id: orderId }, update);
+    addSupplyOrder(pin, order, colors) {
+        this.getSupplyOrder(pin).then((existingOrder) => {
+            existingOrder.forEach((elem, index) => {
+                order[index] += elem;
+            });
+            let update = { $set: { supplyOrders: order, manufacturerReq: new Array(), colors: colors } };
+            this.gameCollection.updateOne({ pin: parseInt(pin) }, update);
+        });
     }
-    getSupplyOrder(pin, orderId) {
+    getSupplyOrder(pin) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                let orders = yield this.orderCollection.findOne({ pin: parseInt(pin), _id: orderId }, { fields: { supplyOrders: 1, _id: 0 } });
+                let orders = yield this.gameCollection.findOne({ pin: parseInt(pin) }, { fields: { supplyOrders: 1, _id: 0 } });
                 return orders.supplyOrders;
             }
             catch (e) {
@@ -118,10 +122,10 @@ class GameLogicDatabaseConnector extends database_1.default {
             }
         });
     }
-    getManufacturerRequest(pin, orderId) {
+    getManufacturerRequest(pin) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                let request = yield this.orderCollection.findOne({ pin: parseInt(pin), _id: orderId }, { fields: { manufacturerReq: 1, _id: 0 } });
+                let request = yield this.gameCollection.findOne({ pin: parseInt(pin) }, { fields: { manufacturerReq: 1, _id: 0 } });
                 return request.manufacturerReq;
             }
             catch (e) {
@@ -135,11 +139,15 @@ class GameLogicDatabaseConnector extends database_1.default {
      * @param orderId
      * @param request
      */
-    updateManufacturerRequest(pin, orderId, request) {
+    updateManufacturerRequest(pin, request) {
+        console.log(`Updating manufacturer request for ${pin} with ${request} (Array of ${typeof (request[0])})`);
         if (request != null && request != undefined) {
-            let time = new Date().getTime();
-            let update = { $set: { manufacturerReq: request, stage: 'Supplier', lastModified: time } };
-            this.orderCollection.update({ pin: parseInt(pin), _id: orderId }, update);
+            this.getManufacturerRequest(pin).then((existingRequest) => {
+                existingRequest.forEach((elem, index) => {
+                    request[index] += elem;
+                });
+                this.gameCollection.updateOne({ pin: parseInt(pin) }, { $set: { manufacturerReq: request } });
+            });
             return 200;
         }
         return 400;
@@ -172,3 +180,4 @@ class GameLogicDatabaseConnector extends database_1.default {
     }
 }
 exports.GameLogicDatabaseConnector = GameLogicDatabaseConnector;
+//# sourceMappingURL=GameLogicDatabaseConnector.js.map

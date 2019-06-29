@@ -10,8 +10,12 @@ exports.GameScheme = new Schema({
     maxPlayers: { type: Number, min: 2, max: 4 },
     activePlayers: { type: Number, min: 0, max: 4 },
     positions: { type: Schema.Types.Mixed },
+    manufacturerReq: { type: [Number] },
+    supplyOrders: { type: [Number] },
+    colors: { type: [String] },
     createdDate: {
         type: Date,
         default: Date.now
     }
 });
+//# sourceMappingURL=game.js.map

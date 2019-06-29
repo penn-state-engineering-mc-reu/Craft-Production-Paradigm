@@ -105,13 +105,13 @@ function sendPiecesOrder() {
   let postData = {'request': pieceOrder};
   $.ajax({
     type: 'POST',
-    data: postData,
+    data: JSON.stringify(postData),
     url: GameAPI.rootURL + '/gameLogic/updateManufacturerRequest/' + getPin() + '/' + currentOrder._id,
+    contentType: 'application/json',
     success: (data) => {
       initArray();
-      generateSupplyGrid();
+      $('.value').text('0');
       updateCostWeight();
-      initButtons();
     },
     error: (xhr, status, error) => {
       console.log(error);

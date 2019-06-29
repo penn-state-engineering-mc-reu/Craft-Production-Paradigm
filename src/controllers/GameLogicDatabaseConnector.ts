@@ -38,15 +38,20 @@ export class GameLogicDatabaseConnector extends DatabaseConnector {
   // This happens at the supplier stage
   // I don't know why I have two functions that essentially do the same thing (idgaf at this point)
   // fixed: they no longer do the same thing
-  public addSupplyOrder(pin: string, orderId: string, order: Array<number>, colors: Array<string>): void {
-    let time: number = new Date().getTime();
-    let update: Object = {$set: {supplyOrders: order, colors: colors, lastModified: time, stage: 'Assembler'}};
-    this.orderCollection.update({pin: parseInt(pin), _id: orderId}, update);
+  public addSupplyOrder(pin: string, order: Array<number>, colors: Array<string>): void {
+    this.getSupplyOrder(pin).then((existingOrder: Array<number>) => {
+      existingOrder.forEach((elem, index) => {
+        order[index] += elem;
+      });
+
+      let update: Object = {$set: {supplyOrders: order, manufacturerReq: new Array<number>(), colors: colors}};
+      this.gameCollection.updateOne({pin: parseInt(pin)}, update);
+    });
   }
 
-  public async getSupplyOrder(pin: string, orderId: string): Promise<Array<number>> {
+  public async getSupplyOrder(pin: string): Promise<Array<number>> {
     try {
-      let orders = await this.orderCollection.findOne({pin: parseInt(pin), _id: orderId}, {fields: {supplyOrders: 1, _id: 0}});
+      let orders = await this.gameCollection.findOne({pin: parseInt(pin)}, {fields: {supplyOrders: 1, _id: 0}});
       return orders.supplyOrders;
     } catch(e) {
       return new Array<number>();
@@ -106,9 +111,9 @@ export class GameLogicDatabaseConnector extends DatabaseConnector {
     }
   }
 
-  public async getManufacturerRequest(pin: string, orderId: string): Promise<Array<number>> {
+  public async getManufacturerRequest(pin: string): Promise<Array<number>> {
     try {
-      let request = await this.orderCollection.findOne({pin: parseInt(pin), _id: orderId}, {fields: {manufacturerReq: 1, _id: 0}});
+      let request = await this.gameCollection.findOne({pin: parseInt(pin)}, {fields: {manufacturerReq: 1, _id: 0}});
       return request.manufacturerReq;
     } catch(e) {
       return new Array<number>();
@@ -121,11 +126,17 @@ export class GameLogicDatabaseConnector extends DatabaseConnector {
    * @param orderId 
    * @param request 
    */
-  public updateManufacturerRequest(pin: string, orderId: string, request: Array<number>): number {
+  public updateManufacturerRequest(pin: string, request: Array<number>): number {
+    console.log(`Updating manufacturer request for ${pin} with ${request} (Array of ${typeof (request[0])})`);
     if (request != null && request != undefined) {
-      let time: number = new Date().getTime();
-      let update: Object = {$set: {manufacturerReq: request, stage: 'Supplier', lastModified: time}};
-      this.orderCollection.update({pin: parseInt(pin), _id: orderId}, update);
+      this.getManufacturerRequest(pin).then((existingRequest: Array<number>) => {
+        existingRequest.forEach((elem: number, index: number) => {
+          request[index] += elem;
+        });
+
+        this.gameCollection.updateOne({pin: parseInt(pin)}, {$set: {manufacturerReq: request}});
+      });
+
       return 200;
     }
     return 400;

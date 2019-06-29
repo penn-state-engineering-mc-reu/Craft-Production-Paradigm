@@ -10,10 +10,7 @@ class Order {
         this.modelID = -1;
         this.lastModified = this.createDate;
         this.finishedTime = -1;
-        this.manufacturerReq = new Array();
-        this.supplyOrders = new Array();
         this.assembledModel = {};
-        this.colors = new Array();
     }
     setLastModified() {
         this.lastModified = new Date().getTime();
@@ -56,12 +53,10 @@ class Order {
             "status": this.status,
             "stage": this.stage,
             "modelID": this.modelID,
-            "manufacturerReq": this.manufacturerReq,
-            "supplyOrders": this.supplyOrders,
-            "colors": this.colors,
             "assembledModel": this.assembledModel
         };
         return jsonObj;
     }
 }
 exports.default = Order;
+//# sourceMappingURL=order.js.map

@@ -28,11 +28,11 @@ router.get('/getOrders/:id', (req, res) => __awaiter(this, void 0, void 0, funct
     res.send(yield controller.getOrders(req.params.id));
 }));
 router.post('/sendSupplyOrder/:id', (req, res) => {
-    controller.addSupplyOrder(req.params.id, req.body.id, req.body.order, req.body.colors);
+    controller.addSupplyOrder(req.params.id, req.body.order, req.body.colors);
     res.status(200).send('OK');
 });
 router.get('/getSupplyOrder/:id/:orderId', (req, res) => __awaiter(this, void 0, void 0, function* () {
-    res.send(yield controller.getSupplyOrder(req.params.id, req.params.orderId));
+    res.send(yield controller.getSupplyOrder(req.params.id));
 }));
 router.get('/colors/:id/:orderId', (req, res) => __awaiter(this, void 0, void 0, function* () {
     let result = yield controller.getColors(req.params.id, req.params.orderId);
@@ -48,11 +48,11 @@ router.post('/sendAssembledModel/:id/:orderId', (req, res) => {
 router.get('/getAssembledModel/:id/:orderId', (req, res) => __awaiter(this, void 0, void 0, function* () {
     res.send(yield controller.getAssembledModel(req.params.id, req.params.orderId));
 }));
-router.get('/getManufacturerRequest/:id/:orderId', (req, res) => __awaiter(this, void 0, void 0, function* () {
-    res.send(yield controller.getManufacturerRequest(req.params.id, req.params.orderId));
+router.get('/getManufacturerRequest/:id', (req, res) => __awaiter(this, void 0, void 0, function* () {
+    res.send(yield controller.getManufacturerRequest(req.params.id));
 }));
 router.post('/updateManufacturerRequest/:id/:orderId', (req, res) => {
-    res.send(controller.updateManufacturerRequest(req.params.id, req.params.orderId, req.body.request));
+    res.send(controller.updateManufacturerRequest(req.params.id, req.body.request));
 });
 router.post('/acceptOrder/:id/:orderId', (req, res) => {
     res.send(controller.acceptOrder(req.params.id, req.params.orderId));
@@ -61,3 +61,4 @@ router.post('/rejectOrder/:id/:orderId', (req, res) => {
     res.send(controller.rejectOrder(req.params.id, req.params.orderId));
 });
 exports.GameLogicRouter = router;
+//# sourceMappingURL=gameLogic.router.js.map

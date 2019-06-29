@@ -24,12 +24,12 @@ router.get('/getOrders/:id', async (req: Request, res: Response) => {
 });
 
 router.post('/sendSupplyOrder/:id', (req: Request, res: Response) => {
-  controller.addSupplyOrder(req.params.id, req.body.id, req.body.order, req.body.colors);
+  controller.addSupplyOrder(req.params.id, req.body.order, req.body.colors);
   res.status(200).send('OK');
 });
 
 router.get('/getSupplyOrder/:id/:orderId', async (req: Request, res: Response) => {
-  res.send(await controller.getSupplyOrder(req.params.id, req.params.orderId));
+  res.send(await controller.getSupplyOrder(req.params.id));
 });
 
 router.get('/colors/:id/:orderId', async(req: Request, res: Response) => {
@@ -50,12 +50,12 @@ router.get('/getAssembledModel/:id/:orderId', async (req: Request, res: Response
   res.send(await controller.getAssembledModel(req.params.id, req.params.orderId));
 });
 
-router.get('/getManufacturerRequest/:id/:orderId', async (req: Request, res: Response) => {
-  res.send(await controller.getManufacturerRequest(req.params.id, req.params.orderId));
+router.get('/getManufacturerRequest/:id', async (req: Request, res: Response) => {
+  res.send(await controller.getManufacturerRequest(req.params.id));
 });
 
 router.post('/updateManufacturerRequest/:id/:orderId', (req: Request, res: Response) => {
-  res.send(controller.updateManufacturerRequest(req.params.id, req.params.orderId, req.body.request));
+  res.send(controller.updateManufacturerRequest(req.params.id, req.body.request));
 });
 
 router.post('/acceptOrder/:id/:orderId', (req: Request, res: Response) => {

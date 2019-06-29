@@ -72,12 +72,12 @@ class GameLogicController {
             return yield this.db.getOrders(pin);
         });
     }
-    addSupplyOrder(pin, orderId, order, colors) {
-        this.db.addSupplyOrder(pin, orderId, order, colors);
+    addSupplyOrder(pin, order, colors) {
+        this.db.addSupplyOrder(pin, order, colors);
     }
-    getSupplyOrder(pin, orderId) {
+    getSupplyOrder(pin) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db.getSupplyOrder(pin, orderId);
+            return yield this.db.getSupplyOrder(pin);
         });
     }
     getColors(pin, orderId) {
@@ -97,13 +97,13 @@ class GameLogicController {
             return yield this.db.getAssembledModel(pin, orderId);
         });
     }
-    getManufacturerRequest(pin, orderId) {
+    getManufacturerRequest(pin) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db.getManufacturerRequest(pin, orderId);
+            return yield this.db.getManufacturerRequest(pin);
         });
     }
-    updateManufacturerRequest(pin, orderId, request) {
-        return this.db.updateManufacturerRequest(pin, orderId, request);
+    updateManufacturerRequest(pin, request) {
+        return this.db.updateManufacturerRequest(pin, request);
     }
     acceptOrder(pin, orderId) {
         return this.db.acceptOrder(pin, orderId);
@@ -113,3 +113,4 @@ class GameLogicController {
     }
 }
 exports.GameLogicController = GameLogicController;
+//# sourceMappingURL=GameLogicController.js.map
