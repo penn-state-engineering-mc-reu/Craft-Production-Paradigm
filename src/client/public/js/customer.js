@@ -1,4 +1,5 @@
 let orderInformation = {};
+let filteredOrderInformation = {};
 let currentOrder = {};
 let generated = false;
 
@@ -6,6 +7,7 @@ $(document).ready(() => {
   checkOrders();
   initImages();
   initButtons();
+  chooseFile();
 });
 
 function initImages() {
@@ -27,6 +29,26 @@ function initImages() {
   });
 }
 
+function filterOrders(orderInfo, includeInProgress, includeInspection, includeSent)
+{
+  return orderInfo.filter((elem) => {
+    return ((includeInProgress && elem.status === 'In Progress')
+      || (includeInspection && elem.status === 'Completed' && elem.stage === 'Inspection')
+      || (includeSent && elem.status === 'Completed' && elem.stage === 'Sent to Customer')
+    );
+  });
+}
+
+function updateFilteredOrdersFromPage()
+{
+  let filterOptionNodes = $('#filter-options').children('input');
+  filteredOrderInformation = filterOrders(orderInformation,
+    filterOptionNodes.filter('#in-progress')[0].checked,
+    filterOptionNodes.filter('#ready-for-inspection')[0].checked,
+    filterOptionNodes.filter('#sent-to-customer')[0].checked
+  );
+}
+
 function initButtons() {
   $('#view-model').click((e) => {
     if (!$('#view-model').hasClass('disabled'))
@@ -39,6 +61,19 @@ function initButtons() {
 
   $('#generate').click(e => {
     generated = true;
+    let randNum = Math.floor(Math.random() * 4) + 1;
+    if(randNum == 1){
+      changeCarType(1);
+    }
+    else if(randNum == 2){
+      changeCarType(2);
+    }
+    else if(randNum == 3){
+      changeCarType(3);
+    }
+    else if(randNum == 4){
+      changeCarType(4);
+    }
     sendOrder();
   });
 
@@ -47,15 +82,21 @@ function initButtons() {
   });
 
   $('#left').click(e => {
-    let index = orderInformation.indexOf(currentOrder);
-    currentOrder = --index < 0 ? orderInformation[orderInformation.length - 1] : orderInformation[index];
-    updateOrder();
+    let index = filteredOrderInformation.indexOf(currentOrder);
+    currentOrder = --index < 0 ? filteredOrderInformation[filteredOrderInformation.length - 1] : filteredOrderInformation[index];
+    updateOrderUI();
   });
 
   $('#right').click(e => {
-    let index = orderInformation.indexOf(currentOrder);
-    currentOrder = ++index == orderInformation.length ? orderInformation[0] : orderInformation[index];
-    updateOrder();
+    let index = filteredOrderInformation.indexOf(currentOrder);
+    currentOrder = ++index == filteredOrderInformation.length ? filteredOrderInformation[0] : filteredOrderInformation[index];
+    updateOrderUI();
+  });
+
+  $('#filter-options').children('input').change(() => {
+    updateFilteredOrdersFromPage();
+    updateCurrentOrderInfo();
+    updateOrderUI();
   });
 }
 
@@ -108,23 +149,9 @@ function checkOrders() {
     timeout: 5000,
     success: (data) => {
       orderInformation = data;
-      if (orderInformation.length != 0) {
-        if (currentOrder != null && !(jQuery.isEmptyObject(currentOrder)))
-        {
-          let findObj = orderInformation.find((elem) => {
-            return elem._id === currentOrder._id;
-          });
-
-          currentOrder = (findObj ? findObj : orderInformation[0]);
-        }
-        else
-        {
-          currentOrder = orderInformation[0];
-        }
-
-        updateOrder();
-        $('#order').removeClass('disabled');
-      }
+      updateFilteredOrdersFromPage();
+      updateCurrentOrderInfo();
+      updateOrderUI();
     },
     error: (xhr, status, error) => {
       console.log('Error: ' + error);
@@ -136,19 +163,65 @@ function checkOrders() {
   setTimeout(checkOrders, 3000);
 }
 
-function updateOrder() {
-  $('#order-image').attr('src', `/../images/Option ${currentOrder.modelID}.PNG`);
-  let html = '<p>Date Ordered: ' + new Date(currentOrder.createDate).toString() + '</p>';
-  html += '<p>Last Modified: ' + new Date(currentOrder.lastModified).toString() + '</p>';
-  if (currentOrder.status === 'Completed') {
-    html += '<p>Finished: ' + new Date(currentOrder.finishedTime).toString() + '</p>';
-    $('#view-model').removeClass('disabled');
+function updateCurrentOrderInfo()
+{
+  if(filteredOrderInformation.length === 0)
+  {
+    currentOrder = null;
   }
   else {
-    $('#view-model').addClass('disabled');
+    if (currentOrder != null && !(jQuery.isEmptyObject(currentOrder))) {
+      let findObj = filteredOrderInformation.find((elem) => {
+        return elem._id === currentOrder._id;
+      });
+
+      currentOrder = (findObj ? findObj : filteredOrderInformation[0]);
+    } else {
+      currentOrder = filteredOrderInformation[0];
+    }
   }
-  html += '<p>Model ID: ' + currentOrder.modelID + '</p>';
-  html += '<p>Stage: ' + currentOrder.stage + '</p>';
-  html += '<p>Status: ' + currentOrder.status + '</p><br>';
-  $('#order-info').html(html);
+}
+
+function updateOrderUI() {
+  if(currentOrder === null)
+  {
+    $('#order-display').hide();
+    $('#no-order-message').removeClass('hidden');
+    $('#left,#right').addClass('disabled');
+  }
+  else {
+    $('#order-display').show();
+    $('#no-order-message').addClass('hidden');
+    $('#left,#right').removeClass('disabled');
+
+    $('#order-image').attr('src', `/../images/Option ${currentOrder.modelID}.PNG`);
+    let html = '<p>Date Ordered: ' + new Date(currentOrder.createDate).toString() + '</p>';
+    html += '<p>Last Modified: ' + new Date(currentOrder.lastModified).toString() + '</p>';
+    if (currentOrder.status === 'Completed') {
+      html += '<p>Finished: ' + new Date(currentOrder.finishedTime).toString() + '</p>';
+      $('#view-model').removeClass('disabled');
+    } else {
+      $('#view-model').addClass('disabled');
+    }
+    html += '<p>Model ID: ' + currentOrder.modelID + '</p>';
+    html += '<p>Stage: ' + currentOrder.stage + '</p>';
+    html += '<p>Status: ' + currentOrder.status + '</p><br>';
+    $('#order-info').html(html);
+  }
+}
+function chooseFile(){
+  const realFileBtn = document.getElementById("real-file");
+  const customBtn = document.getElementById("file-button");
+  const customTxt = document.getElementById("custom-text");
+  customBtn.addEventListener("click", function(){
+    realFileBtn.click();
+  });
+  realFileBtn.addEventListener("change",function(){
+    if(realFileBtn.value){
+      customTxt.innerHTML = realFileBtn.value.match(/[\/\\]([\w\d\s\.\-\(\)]+)$/)[1];
+    }
+    else {
+      customTxt.innerHTML = "No file chosen.";
+    }
+  });
 }

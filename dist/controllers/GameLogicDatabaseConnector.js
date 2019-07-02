@@ -24,6 +24,11 @@ class GameLogicDatabaseConnector extends database_1.default {
     addOrder(order) {
         this.orderCollection.insert(order);
     }
+    getOrder(pin, orderID) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.orderCollection.findOne({ pin: parseInt(pin), _id: orderID });
+        });
+    }
     /**
      * Gets all of the orders that are part of the same session
      * @param pin
@@ -138,6 +143,16 @@ class GameLogicDatabaseConnector extends database_1.default {
             return 200;
         }
         return 400;
+    }
+    acceptOrder(pin, orderId) {
+        try {
+            let update = { $set: { status: 'Completed', stage: 'Sent to Customer' } };
+            this.orderCollection.update({ pin: parseInt(pin), _id: orderId }, update);
+            return 200;
+        }
+        catch (e) {
+            return 400;
+        }
     }
     /**
      * If the user doesn't approve the model, the game will turn back to the supplier stage

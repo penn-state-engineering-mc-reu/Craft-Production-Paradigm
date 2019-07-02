@@ -172,20 +172,39 @@ function loadModel(modelData) {
 }
 
 function initButtons() {
-  $('#complete').click(e => {
-    e.preventDefault();
-    window.location.href = '/customer/' + getPin();
-  });
+  $.ajax({
+    type: 'GET',
+    url: GameAPI.rootURL + '/gameLogic/getOrder/' + getPin() + '/' + getOrderId(),
+    success: (data) => {
+      // TODO: Server-side validation for this
+      if(data.stage === 'Inspection')
+      {
+        $('#complete').click(e => {
+          e.preventDefault();
+          window.location.href = '/customer/' + getPin();
+        });
 
-  $('#reject').click(e => {
-    $.ajax({
-      type: 'POST',
-      url: GameAPI.rootURL + '/gameLogic/rejectOrder/' + getPin() + '/' + getOrderId(),
-      success: (data) => {window.location.href = '/customer/' + getPin();}
-    })
-  });
+        $('#reject').click(e => {
+          $.ajax({
+            type: 'POST',
+            url: GameAPI.rootURL + '/gameLogic/rejectOrder/' + getPin() + '/' + getOrderId(),
+            success: (data) => {
+              window.location.href = '/customer/' + getPin();
+            }
+          })
+        });
 
-  $('#accept').click(e => {
-    $('#finish').modal('toggle');
-  });
+        $('#accept').click(e => {
+          $.ajax({
+            type: 'POST',
+            url: GameAPI.rootURL + '/gameLogic/acceptOrder/' + getPin() + '/' + getOrderId(),
+            success: (data) => {
+              $('#finish').modal('toggle');
+            }
+          });
+        });
+
+        $('#buttons').show();
+      }
+    }});
 }

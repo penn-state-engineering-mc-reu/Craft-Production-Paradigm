@@ -18,6 +18,11 @@ export class GameLogicDatabaseConnector extends DatabaseConnector {
     this.orderCollection.insert(order);
   }
 
+  public async getOrder(pin: string, orderID: string): Promise<object>
+  {
+    return await this.orderCollection.findOne({pin: parseInt(pin), _id: orderID});
+  }
+
   /**
    * Gets all of the orders that are part of the same session
    * @param pin 
@@ -126,6 +131,17 @@ export class GameLogicDatabaseConnector extends DatabaseConnector {
     return 400;
   }
 
+  public acceptOrder(pin: string, orderId: string)
+  {
+    try {
+      let update: Object = {$set: {status: 'Completed', stage: 'Sent to Customer'}};
+      this.orderCollection.update({pin: parseInt(pin), _id: orderId}, update);
+      return 200;
+    } catch(e) {
+      return 400;
+    }
+  }
+
   /**
    * If the user doesn't approve the model, the game will turn back to the supplier stage
    * @param pin 
@@ -141,4 +157,6 @@ export class GameLogicDatabaseConnector extends DatabaseConnector {
       return 400;
     }
   }
+
+
 }

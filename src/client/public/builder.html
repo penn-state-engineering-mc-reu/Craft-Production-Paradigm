@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<title>Assembler - Manufacturing Simulation</title>
+		<title>Assembler - Lean Manufacturing Simulation</title>
     <link rel="stylesheet" type="text/css" href="/../semantic/dist/semantic.min.css">
     <script
       src="https://code.jquery.com/jquery-3.1.1.min.js"
@@ -12,6 +12,15 @@
 		<script src="/../semantic/dist/semantic.min.js"></script>
 		<link rel="stylesheet" type="text/css" href="/../css/builder.css">
 		<link rel="stylesheet" type="text/css" href="/../css/orderInformation.css">
+		<style>
+        #controls
+        {
+            position: absolute;
+            width: 200px;
+            height: 61.69px;
+            left: 705px;
+        }
+		</style>
 	</head>
 	<body>
     <div>
@@ -20,6 +29,7 @@
 					<div class="ui buttons">
 						<button class="ui massive yellow button" id="order">Order From Customer</button>
 						<button class="ui massive green button" id="pieces">Available Pieces</button>
+						<button class="ui massive green button" id="controls"><i class="question circle outline icon"></i>Controls</button>
 					</div>
 				</div>
 			</div>
@@ -52,7 +62,6 @@
 			<div id="header-info">
 					Powered by: <a href="http://threejs.org" target="_blank" rel="noopener">three.js</a>
 					<br>
-					<strong>shift + click</strong>: add Lego, <strong>ctrl + click</strong>: remove Lego
 			</div>
 		</div>
 		<!-- All the libraries I need to run the three.js stuff properly -->
@@ -148,6 +157,33 @@
 				<div id="supply-grid" class="ui celled grid">
 
 				</div>
+			</div>
+			<div class="actions">
+				<div class="ui black deny button">
+					Close Window
+				</div>
+			</div>
+		</div>
+		<div class="ui modal" id="control-list">
+			<div class="header">
+				Controls
+			</div>
+			<div class="content">
+				<p><strong>Shift and Left Click:</strong> place lego</p>
+				<p><strong>Ctrl and Left Click:</strong> delete lego</p>
+				<p><strong>Space:</strong> recenter camera</p>
+				<p><strong>Q:</strong> rotate counterclockwise 90 degrees</p>
+				<p><strong>E:</strong> rotate clockwise 90 degrees</p>
+				<p><strong>Up arrow key:</strong> move camera forward</p>
+				<p><strong>Down arrow key:</strong> move camera backward</p>
+				<p><strong>Left arrow key:</strong> move camera left</p>
+				<p><strong>Right arrow key:</strong> move camera right</p>
+				<p><strong>Left click and hold:</strong> spin camera</p>
+				<p><strong>Right click and hold:</strong> move camera right,left,forward,or backward</p>
+				<p><strong>W:</strong> Move lego up in the Z direction</p>
+				<p><strong>S:</strong> move lego down in the Z direction</p>
+				<p><strong>A:</strong> move lego left in the X direction</p>
+				<p><strong>D:</strong> move lego right in the X direction</p>
 			</div>
 			<div class="actions">
 				<div class="ui black deny button">
