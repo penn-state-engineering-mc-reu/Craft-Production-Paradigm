@@ -66,15 +66,13 @@ class GameLogicDatabaseConnector extends database_1.default {
             }
         });
     }
-    getColors(pin, orderId) {
+    getColors(pin) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                let query = { pin: parseInt(pin), _id: orderId };
+                let query = { pin: parseInt(pin) };
                 let fields = { fields: { colors: 1, _id: 0 } };
-                let result = yield this.orderCollection.findOne(query, fields);
-                if ((yield result) == null)
-                    return yield result;
-                return yield result.colors;
+                let result = yield this.gameCollection.findOne(query, fields);
+                return (result !== null ? result.colors : (new Array()));
             }
             catch (e) {
                 console.log(e);
@@ -83,11 +81,11 @@ class GameLogicDatabaseConnector extends database_1.default {
         });
     }
     // this is used in the assembler stage
-    updatePieces(pin, orderId, pieces) {
+    updatePieces(pin, pieces) {
         if (pieces != null && pieces != undefined) {
             let time = new Date().getTime();
             let update = { $set: { supplyOrders: pieces, lastModified: time } };
-            this.orderCollection.update({ pin: parseInt(pin), _id: orderId }, update);
+            this.gameCollection.updateOne({ pin: parseInt(pin) }, update);
             return 200;
         }
         return 400;

@@ -58,13 +58,12 @@ export class GameLogicDatabaseConnector extends DatabaseConnector {
     }
   }
 
-  public async getColors(pin: string, orderId: string): Promise<Array<any>> {
+  public async getColors(pin: string): Promise<Array<any>> {
     try {
-      let query = {pin: parseInt(pin), _id: orderId};
-      let fields = {fields: {colors: 1, _id: 0}}
-      let result = await this.orderCollection.findOne(query, fields);
-      if (await result == null) return await result;
-      return await result.colors;
+      let query = {pin: parseInt(pin)};
+      let fields = {fields: {colors: 1, _id: 0}};
+      let result = await this.gameCollection.findOne(query, fields);
+      return (result !== null ? result.colors : (new Array<any>()));
     } catch(e) {
       console.log(e);
       return new Array<any>();
@@ -72,11 +71,11 @@ export class GameLogicDatabaseConnector extends DatabaseConnector {
   }
 
   // this is used in the assembler stage
-  public updatePieces(pin: string, orderId: string, pieces: Array<number>): number {
+  public updatePieces(pin: string, pieces: Array<number>): number {
     if (pieces != null && pieces != undefined) {
       let time: number = new Date().getTime();
       let update: Object = {$set: {supplyOrders: pieces, lastModified: time}};
-      this.orderCollection.update({pin: parseInt(pin), _id: orderId}, update);
+      this.gameCollection.updateOne({pin: parseInt(pin)}, update);
       return 200;
     }
     return 400;

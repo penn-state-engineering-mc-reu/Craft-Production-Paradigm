@@ -235,7 +235,8 @@ function updatePieces() {
   if (pieces != null && pieces != undefined) {
     $.ajax({
       type: 'POST',
-      data: postData,
+      data: JSON.stringify(postData),
+      contentType: 'application/json',
       url: GameAPI.rootURL + '/gameLogic/updatePieces/' + getPin() + '/' + currentOrder._id,
       success: (data) => {
         //console.log(data);

@@ -35,11 +35,11 @@ router.get('/getSupplyOrder/:id/:orderId', (req, res) => __awaiter(this, void 0,
     res.send(yield controller.getSupplyOrder(req.params.id));
 }));
 router.get('/colors/:id/:orderId', (req, res) => __awaiter(this, void 0, void 0, function* () {
-    let result = yield controller.getColors(req.params.id, req.params.orderId);
+    let result = yield controller.getColors(req.params.id);
     res.send(result);
 }));
 router.post('/updatePieces/:id/:orderId', (req, res) => {
-    res.send(controller.updatePieces(req.params.id, req.params.orderId, req.body.pieces));
+    res.send(controller.updatePieces(req.params.id, req.body.pieces));
 });
 router.post('/sendAssembledModel/:id/:orderId', (req, res) => {
     console.log('Assembled model has been sent');

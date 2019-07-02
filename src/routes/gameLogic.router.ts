@@ -33,12 +33,12 @@ router.get('/getSupplyOrder/:id/:orderId', async (req: Request, res: Response) =
 });
 
 router.get('/colors/:id/:orderId', async(req: Request, res: Response) => {
-  let result = await controller.getColors(req.params.id, req.params.orderId);
+  let result = await controller.getColors(req.params.id);
   res.send(result);
 });
 
 router.post('/updatePieces/:id/:orderId', (req: Request, res: Response) => {
-  res.send(controller.updatePieces(req.params.id, req.params.orderId, req.body.pieces));
+  res.send(controller.updatePieces(req.params.id, req.body.pieces));
 });
 
 router.post('/sendAssembledModel/:id/:orderId', (req: Request, res: Response) => {

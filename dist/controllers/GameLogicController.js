@@ -80,14 +80,14 @@ class GameLogicController {
             return yield this.db.getSupplyOrder(pin);
         });
     }
-    getColors(pin, orderId) {
+    getColors(pin) {
         return __awaiter(this, void 0, void 0, function* () {
-            let result = yield this.db.getColors(pin, orderId);
+            let result = yield this.db.getColors(pin);
             return result;
         });
     }
-    updatePieces(pin, orderId, pieces) {
-        return this.db.updatePieces(pin, orderId, pieces);
+    updatePieces(pin, pieces) {
+        return this.db.updatePieces(pin, pieces);
     }
     updateAssembledModel(pin, orderId, model) {
         return this.db.updateAssembledModel(pin, orderId, model);

@@ -134,6 +134,7 @@ function sendSupplyOrder() {
     success: (data) => {
       console.log('Order sent!');
       $('#ready-order').modal('toggle');
+      initArray();
       generateSupplyGrid();
       initGridButtons();
     },
