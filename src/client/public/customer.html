@@ -58,16 +58,20 @@
           <div class="row">
             <h3 class="ui header">Choose a file</h3>
           </div>
-		 <div class="row image-picker">
+		 <div class="row">
+             <form id="custom-order-form" action="" method="post" style="width: 100%;">
                 <div class="ui celled centered grid image-picker grid">
-
-                    <p><input type="file" id="real-file" hidden="hidden">
+                    <p>
                         <button type="button" id="file-button">CHOOSE A FILE</button>
                         <span id="custom-text">No file chosen.</span>
                     </p>
                 </div>
-            </div>
-					<button class="ui massive green button" id="order">View Orders Placed</button>
+                <input type="file" name="custom-order-image" id="real-file" hidden="hidden">
+                <textarea name="custom-order-desc" placeholder="Describe this item..." style="width: 100%; height: 100px;"></textarea>
+                 <button type="submit" id="custom-order-submit" name="custom-order-submit" class="ui large green button">Send Order</button>
+             </form>
+         </div>
+         <button class="ui massive green button" id="order">View Orders Placed</button>
         </div>
       </div>
     </div>

@@ -224,4 +224,21 @@ function chooseFile(){
       customTxt.innerHTML = "No file chosen.";
     }
   });
+
+  let orderForm = $('#custom-order-form');
+  orderForm.attr('action', `${GameAPI.rootURL}/customer/customOrder`).on('submit', (event) => {
+    event.preventDefault();
+    let formInfo = new FormData(orderForm[0]);
+
+    orderForm.children('#custom-order-submit').addClass('loading');
+    $.post({
+      url: orderForm.attr('action'),
+      data: formInfo,
+      processData: false,
+      contentType: 'multipart/form-data',
+      complete: (data) => {
+        orderForm.children('#custom-order-submit').removeClass('loading');
+      }
+    });
+  });
 }
