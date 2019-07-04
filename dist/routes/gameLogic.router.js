@@ -9,18 +9,24 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
+const multer = require("multer");
+let fileUpload = multer();
 const GameLogicController_1 = require("../controllers/GameLogicController");
 const router = express_1.Router();
 const controller = new GameLogicController_1.GameLogicController();
-router.post('/sendOrder', (req, res) => {
+router.post('/sendOrder', fileUpload.single('custom-order-image'), (req, res) => __awaiter(this, void 0, void 0, function* () {
     let pin = parseInt(req.body.pin);
-    let modelID = parseInt(req.body.model);
-    let generated = req.body.generated;
-    let max = parseInt(req.body.max);
-    let skew = parseFloat(req.body.skew);
-    controller.placeOrder(pin, modelID, generated, max, skew);
+    if (req.body.model) {
+        let modelID = parseInt(req.body.model);
+        yield controller.placeOrder(pin, modelID);
+    }
+    else {
+        let modelDesc = req.body['custom-order-desc'];
+        let modelImageData = req.file;
+        yield controller.placeCustomOrder(pin, modelDesc, modelImageData.buffer);
+    }
     res.status(200).send('OK');
-});
+}));
 router.get('/getOrder/:id/:orderID', (req, res) => __awaiter(this, void 0, void 0, function* () {
     res.send(yield controller.getOrder(req.params.id, req.params.orderID));
 }));
@@ -61,3 +67,4 @@ router.post('/rejectOrder/:id/:orderId', (req, res) => {
     res.send(controller.rejectOrder(req.params.id, req.params.orderId));
 });
 exports.GameLogicRouter = router;
+//# sourceMappingURL=gameLogic.router.js.map

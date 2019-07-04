@@ -3,6 +3,7 @@
  */
 
 import DatabaseConnector from './database';
+import {InsertOneWriteOpResult} from "mongodb";
 
 export class GameLogicDatabaseConnector extends DatabaseConnector {
   constructor() {
@@ -14,8 +15,8 @@ export class GameLogicDatabaseConnector extends DatabaseConnector {
    * @param pin 
    * @param order JSON Object that holds all the order details
    */
-  public addOrder(order: object): void {
-    this.orderCollection.insert(order);
+  public async addOrder(order: object): Promise<InsertOneWriteOpResult> {
+    return this.orderCollection.insertOne(order);
   }
 
   public async getOrder(pin: string, orderID: string): Promise<object>

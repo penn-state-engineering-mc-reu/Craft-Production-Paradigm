@@ -22,7 +22,9 @@ class GameLogicDatabaseConnector extends database_1.default {
      * @param order JSON Object that holds all the order details
      */
     addOrder(order) {
-        this.orderCollection.insert(order);
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.orderCollection.insertOne(order);
+        });
     }
     getOrder(pin, orderID) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -172,3 +174,4 @@ class GameLogicDatabaseConnector extends database_1.default {
     }
 }
 exports.GameLogicDatabaseConnector = GameLogicDatabaseConnector;
+//# sourceMappingURL=GameLogicDatabaseConnector.js.map

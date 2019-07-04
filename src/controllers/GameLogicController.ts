@@ -6,6 +6,7 @@
 import {Request, Response} from 'express';
 import {GameLogicDatabaseConnector} from '../controllers/GameLogicDatabaseConnector';
 import Order from '../models/order'
+import {OrderImage} from "../models/orderImage";
 
 export class GameLogicController {
   private db: GameLogicDatabaseConnector;
@@ -13,18 +14,21 @@ export class GameLogicController {
     this.db = new GameLogicDatabaseConnector();
   }
 
-  public placeOrder(pin: number, modelID: number, generated: boolean, max: number, skew: number): void {
-    if (generated == true) {
-      this.generateOrders(pin, max, skew);
-    }
-    else {
-      let order = new Order(pin);
-      order.setModelID(modelID);
-      order.setStage('Manufacturer');
-      this.db.addOrder(order.toJSON());
-    }
+  public async placeOrder(pin: number, modelID: number): Promise<void> {
+    let order = new Order(pin);
+    order.setModelID(modelID);
+    order.setStage('Manufacturer');
+    await this.db.addOrder(await order.toJSON());
   }
 
+  public async placeCustomOrder(pin: number, orderDesc: string, imageData: Buffer): Promise<void>
+  {
+    let order = new Order(pin);
+    order.setCustomOrder(orderDesc, new OrderImage(imageData));
+    await this.db.addOrder(await order.toJSON());
+  }
+
+  /*
   private generateOrders(pin: number, max:number, skew: number): void {
     for (let i: number = 0; i < max; i++) {
       let order = new Order(pin);
@@ -34,6 +38,7 @@ export class GameLogicController {
       this.db.addOrder(order.toJSON());
     }
   }
+  */
 
   /**
    * Found on StackOverflow
@@ -42,7 +47,7 @@ export class GameLogicController {
    * @param max 
    * @param skew 
    */
-  private normalDistribution(skew: number): number {
+/*  private normalDistribution(skew: number): number {
     const min: number = 0;
     const max: number = 4;
     var u = 0, v = 0;
@@ -56,7 +61,7 @@ export class GameLogicController {
     num *= max - min; // Stretch to fill range
     num += min; // offset to min
     return num;
-}
+  }*/
 
   public async getOrder(pin: string, orderID: string): Promise<object>
   {

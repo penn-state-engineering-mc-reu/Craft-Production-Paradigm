@@ -1,7 +1,22 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
+class CustomOrderInfo {
+    constructor(desc, image) {
+        this.orderDesc = desc;
+        this.orderImage = image;
+    }
+}
 class Order {
     constructor(pin) {
+        this.customOrderInfo = null;
         this.pin = pin;
         this._id = this.generateId();
         this.createDate = new Date().getTime();
@@ -44,24 +59,34 @@ class Order {
     setModelID(type) {
         this.setLastModified();
         this.modelID = type;
+        this.customOrderInfo = null;
+    }
+    setCustomOrder(desc, image) {
+        this.setLastModified();
+        this.customOrderInfo = new CustomOrderInfo(desc, image);
     }
     // Allows me to easily convert the object and store it into the mongoDB database
     toJSON() {
-        let jsonObj = {
-            "_id": this._id,
-            "pin": this.pin,
-            "createDate": this.createDate,
-            "lastModified": this.lastModified,
-            "finishedTime": this.finishedTime,
-            "status": this.status,
-            "stage": this.stage,
-            "modelID": this.modelID,
-            "manufacturerReq": this.manufacturerReq,
-            "supplyOrders": this.supplyOrders,
-            "colors": this.colors,
-            "assembledModel": this.assembledModel
-        };
-        return jsonObj;
+        return __awaiter(this, void 0, void 0, function* () {
+            let jsonObj = {
+                "_id": this._id,
+                "pin": this.pin,
+                "createDate": this.createDate,
+                "lastModified": this.lastModified,
+                "finishedTime": this.finishedTime,
+                "status": this.status,
+                "stage": this.stage,
+                "modelID": this.modelID,
+                "orderDesc": (this.customOrderInfo ? this.customOrderInfo.orderDesc : null),
+                "imageData": (this.customOrderInfo ? yield this.customOrderInfo.orderImage.toBuffer() : null),
+                "manufacturerReq": this.manufacturerReq,
+                "supplyOrders": this.supplyOrders,
+                "colors": this.colors,
+                "assembledModel": this.assembledModel
+            };
+            return jsonObj;
+        });
     }
 }
 exports.default = Order;
+//# sourceMappingURL=order.js.map

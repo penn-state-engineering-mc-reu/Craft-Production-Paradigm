@@ -1,7 +1,6 @@
 let orderInformation = {};
 let filteredOrderInformation = {};
 let currentOrder = {};
-let generated = false;
 
 $(document).ready(() => {
   checkOrders();
@@ -60,20 +59,9 @@ function initButtons() {
   });
 
   $('#generate').click(e => {
-    generated = true;
     let randNum = Math.floor(Math.random() * 4) + 1;
-    if(randNum == 1){
-      changeCarType(1);
-    }
-    else if(randNum == 2){
-      changeCarType(2);
-    }
-    else if(randNum == 3){
-      changeCarType(3);
-    }
-    else if(randNum == 4){
-      changeCarType(4);
-    }
+    changeCarType(randNum);
+
     sendOrder();
   });
 
@@ -110,31 +98,29 @@ function changeCarType(number) {
 }
 
 function sendOrder() {
-  let pin = getPin();
   let type = $('#car-type').html();
-  let postData = {};
-  if (generated) {
-    let max = $('#num-orders').val();
-    max = max > 10 ? 10 : max < 1 ? 1 : max;
-    let skew = $('#skew').val();
-    postData = {"pin": pin, "model": type, "generated": generated, "max": max, "skew": skew}
-  }
-  else postData = {"pin": pin, "model": type, "generated": generated};
-  $.ajax({
+
+  let formData = new FormData();
+  formData.append('model', type);
+  postOrder(formData);
+}
+
+/**
+ *
+ * @param {FormData} formData
+ * @returns {JQuery.jqXHR}
+ */
+function postOrder(formData)
+{
+  formData.append('pin', getPin());
+
+  return $.ajax({
     type: 'POST',
-    data: postData,
+    data: formData,
+    processData: false,
+    contentType: false,
     timeout: 5000,
-    url: GameAPI.rootURL + '/gameLogic/sendOrder',
-    success: function(result) {
-      //window.location.href = '/startGame/' + result.pin;
-      if ($('#order').hasClass('disabled')) {
-        $('#order').removeClass('disabled');
-      }
-      generated = false;
-    },
-    error: function(xhr,status,error) {
-      console.log(error);
-    } 
+    url: GameAPI.rootURL + '/gameLogic/sendOrder'
   });
 }
 
@@ -226,19 +212,13 @@ function chooseFile(){
   });
 
   let orderForm = $('#custom-order-form');
-  orderForm.attr('action', `${GameAPI.rootURL}/customer/customOrder`).on('submit', (event) => {
+  orderForm.attr('action', `${GameAPI.rootURL}/sendOrder`).on('submit', (event) => {
     event.preventDefault();
     let formInfo = new FormData(orderForm[0]);
 
     orderForm.children('#custom-order-submit').addClass('loading');
-    $.post({
-      url: orderForm.attr('action'),
-      data: formInfo,
-      processData: false,
-      contentType: 'multipart/form-data',
-      complete: (data) => {
-        orderForm.children('#custom-order-submit').removeClass('loading');
-      }
+    postOrder(formInfo).always(() => {
+      orderForm.children('#custom-order-submit').removeClass('loading');
     });
   });
 }
