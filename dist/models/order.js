@@ -77,6 +77,7 @@ class Order {
                 "status": this.status,
                 "stage": this.stage,
                 "modelID": this.modelID,
+                "isCustomOrder": (!!this.customOrderInfo),
                 "orderDesc": (this.customOrderInfo ? this.customOrderInfo.orderDesc : null),
                 "imageData": (this.customOrderInfo ? yield this.customOrderInfo.orderImage.toBuffer() : null),
                 "manufacturerReq": this.manufacturerReq,

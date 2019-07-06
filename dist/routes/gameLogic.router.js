@@ -30,6 +30,10 @@ router.post('/sendOrder', fileUpload.single('custom-order-image'), (req, res) =>
 router.get('/getOrder/:id/:orderID', (req, res) => __awaiter(this, void 0, void 0, function* () {
     res.send(yield controller.getOrder(req.params.id, req.params.orderID));
 }));
+router.get('/getCustomOrderImage/:id/:orderID', (req, res) => __awaiter(this, void 0, void 0, function* () {
+    res.setHeader('Content-Type', 'image/png');
+    res.send(yield controller.getCustomOrderImage(req.params.id, req.params.orderID));
+}));
 router.get('/getOrders/:id', (req, res) => __awaiter(this, void 0, void 0, function* () {
     res.send(yield controller.getOrders(req.params.id));
 }));

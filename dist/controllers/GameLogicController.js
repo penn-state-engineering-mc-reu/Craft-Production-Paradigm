@@ -77,6 +77,11 @@ class GameLogicController {
             return yield this.db.getOrders(pin);
         });
     }
+    getCustomOrderImage(pin, orderID) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.db.getCustomOrderImage(pin, orderID);
+        });
+    }
     addSupplyOrder(pin, orderId, order, colors) {
         this.db.addSupplyOrder(pin, orderId, order, colors);
     }

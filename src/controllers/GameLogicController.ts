@@ -72,6 +72,11 @@ export class GameLogicController {
     return await this.db.getOrders(pin);
   }
 
+  public async getCustomOrderImage(pin: string, orderID: string): Promise<Buffer>
+  {
+    return await this.db.getCustomOrderImage(pin, orderID);
+  }
+
   public addSupplyOrder(pin: string, orderId: string, order: Array<number>, colors: Array<string>): void {
     this.db.addSupplyOrder(pin, orderId, order, colors);
   }

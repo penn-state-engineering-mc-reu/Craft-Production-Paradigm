@@ -21,7 +21,32 @@ export class GameLogicDatabaseConnector extends DatabaseConnector {
 
   public async getOrder(pin: string, orderID: string): Promise<object>
   {
-    return await this.orderCollection.findOne({pin: parseInt(pin), _id: orderID});
+    return await this.orderCollection.findOne({pin: parseInt(pin), _id: orderID}, {
+      projection: {'imageData': 0}
+    });
+  }
+
+  public async getCustomOrderImage(pin: string, orderID: string): Promise<Buffer>
+  {
+    let orderInfo: {imageData: any} = await this.orderCollection.findOne({pin: parseInt(pin), _id: orderID}, {
+      projection: {'imageData': 1}
+    });
+
+    if(orderInfo)
+    {
+      if(orderInfo.imageData)
+      {
+        return Promise.resolve<Buffer>(orderInfo.imageData.buffer);
+      }
+      else
+      {
+        return Promise.reject('No image found for the requested order');
+      }
+    }
+    else
+    {
+      return Promise.reject('No information found for the requested order');
+    }
   }
 
   /**
@@ -30,7 +55,9 @@ export class GameLogicDatabaseConnector extends DatabaseConnector {
    */
   public async getOrders(pin: string): Promise<Array<object>> {
     try {
-      return await this.orderCollection.find({pin: parseInt(pin)}).toArray();
+      return await this.orderCollection.find({pin: parseInt(pin)}, {
+        projection: {'imageData': 0}
+      }).toArray();
     } catch(e) {
       return new Array<object>();
     }

@@ -31,6 +31,11 @@ router.get('/getOrder/:id/:orderID', async (req: Request, res: Response) => {
   res.send(await controller.getOrder(req.params.id, req.params.orderID));
 });
 
+router.get('/getCustomOrderImage/:id/:orderID', async (req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'image/png');
+  res.send(await controller.getCustomOrderImage(req.params.id, req.params.orderID));
+});
+
 router.get('/getOrders/:id', async (req: Request, res: Response) => {
   res.send(await controller.getOrders(req.params.id));
 });
