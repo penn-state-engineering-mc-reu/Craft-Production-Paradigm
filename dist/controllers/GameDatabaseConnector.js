@@ -88,3 +88,4 @@ class GameDatabaseConnector extends database_1.default {
     }
 }
 exports.GameDatabaseConnector = GameDatabaseConnector;
+//# sourceMappingURL=GameDatabaseConnector.js.map

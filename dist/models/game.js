@@ -15,3 +15,4 @@ exports.GameScheme = new Schema({
         default: Date.now
     }
 });
+//# sourceMappingURL=game.js.map

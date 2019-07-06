@@ -42,3 +42,4 @@ router.get('/getPossiblePositions/:id', cors(), (req, res) => __awaiter(this, vo
 // if I create self-contained functions, I can write them like this
 //router.post('/', new GameController().addNewGame);
 exports.StartGameRouter = router;
+//# sourceMappingURL=startGame.router.js.map

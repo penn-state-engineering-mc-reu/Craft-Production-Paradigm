@@ -1,22 +1,39 @@
 import { Router, Request, Response } from 'express';
+import multer = require('multer');
+let fileUpload = multer();
+
 import {GameLogicController} from '../controllers/GameLogicController'
 import * as cors from 'cors';
 
 const router: Router = Router();
 const controller: GameLogicController = new GameLogicController();
 
-router.post('/sendOrder', (req: Request, res: Response) => {
+router.post('/sendOrder', fileUpload.single('custom-order-image'), async (req: Request, res: Response) => {
   let pin: number = parseInt(req.body.pin);
-  let modelID: number = parseInt(req.body.model);
-  let generated: boolean = req.body.generated;
-  let max: number = parseInt(req.body.max);
-  let skew: number = parseFloat(req.body.skew);
-  controller.placeOrder(pin, modelID, generated, max, skew);
+
+  if(req.body.model)
+  {
+    let modelID: number = parseInt(req.body.model);
+    await controller.placeOrder(pin, modelID);
+  }
+  else
+  {
+    let modelDesc: string = req.body['custom-order-desc'];
+    let modelImageData: Express.Multer.File = req.file;
+
+    await controller.placeCustomOrder(pin, modelDesc, modelImageData.buffer);
+  }
+
   res.status(200).send('OK');
 });
 
 router.get('/getOrder/:id/:orderID', async (req: Request, res: Response) => {
   res.send(await controller.getOrder(req.params.id, req.params.orderID));
+});
+
+router.get('/getCustomOrderImage/:id/:orderID', async (req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'image/png');
+  res.send(await controller.getCustomOrderImage(req.params.id, req.params.orderID));
 });
 
 router.get('/getOrders/:id', async (req: Request, res: Response) => {

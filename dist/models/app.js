@@ -32,3 +32,4 @@ class App {
     }
 }
 exports.default = new App().app;
+//# sourceMappingURL=app.js.map
