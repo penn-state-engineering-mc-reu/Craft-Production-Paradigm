@@ -22,11 +22,33 @@ class GameLogicDatabaseConnector extends database_1.default {
      * @param order JSON Object that holds all the order details
      */
     addOrder(order) {
-        this.orderCollection.insert(order);
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.orderCollection.insertOne(order);
+        });
     }
     getOrder(pin, orderID) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.orderCollection.findOne({ pin: parseInt(pin), _id: orderID });
+            return yield this.orderCollection.findOne({ pin: parseInt(pin), _id: orderID }, {
+                projection: { 'imageData': 0 }
+            });
+        });
+    }
+    getCustomOrderImage(pin, orderID) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let orderInfo = yield this.orderCollection.findOne({ pin: parseInt(pin), _id: orderID }, {
+                projection: { 'imageData': 1 }
+            });
+            if (orderInfo) {
+                if (orderInfo.imageData) {
+                    return Promise.resolve(orderInfo.imageData.buffer);
+                }
+                else {
+                    return Promise.reject('No image found for the requested order');
+                }
+            }
+            else {
+                return Promise.reject('No information found for the requested order');
+            }
         });
     }
     /**
@@ -36,7 +58,9 @@ class GameLogicDatabaseConnector extends database_1.default {
     getOrders(pin) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                return yield this.orderCollection.find({ pin: parseInt(pin) }).toArray();
+                return yield this.orderCollection.find({ pin: parseInt(pin) }, {
+                    projection: { 'imageData': 0 }
+                }).toArray();
             }
             catch (e) {
                 return new Array();
@@ -172,3 +196,4 @@ class GameLogicDatabaseConnector extends database_1.default {
     }
 }
 exports.GameLogicDatabaseConnector = GameLogicDatabaseConnector;
+//# sourceMappingURL=GameLogicDatabaseConnector.js.map

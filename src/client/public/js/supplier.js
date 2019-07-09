@@ -242,15 +242,41 @@ function populateRequestData(data) {
 }
 
 function updateOrder() {
-  $('#order-image').attr('src', `/../images/Option ${currentOrder.modelID}.PNG`);
-  let html = '<p>Date Ordered: ' + new Date(currentOrder.createDate).toString() + '</p>';
-  html += '<p>Last Modified: ' + new Date(currentOrder.lastModified).toString() + '</p>';
-  if (currentOrder.status === 'Completed')
-    html += '<p>Finished: ' + new Date(currentOrder.finishedTime).toString() + '</p>';
-  html += '<p>Model ID: ' + currentOrder.modelID + '</p>';
-  html += '<p>Stage: ' + currentOrder.stage + '</p>';
-  html += '<p>Status: ' + currentOrder.status + '</p><br>';
-  $('#order-info').html(html);
+  if(currentOrder.isCustomOrder)
+  {
+    $('#order-image').attr('src', `${GameAPI.rootURL}/gameLogic/getCustomOrderImage/${getPin()}/${currentOrder._id}`);
+  }
+  else
+  {
+    $('#order-image').attr('src', `/../images/Option ${currentOrder.modelID}.PNG`);
+  }
+
+  let orderNode = $('#order-info').empty();
+
+  orderNode.append('<p>Date Ordered: ' + new Date(currentOrder.createDate).toString() + '</p>')
+      .append('<p>Last Modified: ' + new Date(currentOrder.lastModified).toString() + '</p>');
+
+  if (currentOrder.status === 'Completed') {
+    orderNode.append('<p>Finished: ' + new Date(currentOrder.finishedTime).toString() + '</p>');
+    $('#view-model').removeClass('disabled');
+  } else {
+    $('#view-model').addClass('disabled');
+  }
+
+  if(!(currentOrder.isCustomOrder)) {
+    orderNode.append('<p>Model ID: ' + currentOrder.modelID + '</p>');
+  }
+
+  orderNode.append('<p>Stage: ' + currentOrder.stage + '</p>')
+      .append('<p>Status: ' + currentOrder.status + '</p>');
+
+  if(currentOrder.isCustomOrder)
+  {
+    orderNode.append('<span>Description:</span>')
+        .append($('<p></p>').text(currentOrder.orderDesc));
+  }
+
+  orderNode.append('<br>');
 }
 
 /**

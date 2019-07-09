@@ -45,6 +45,12 @@
   font-size: 1rem;
   line-height: 1rem;
 }
+
+.image-picker,.image-picker *
+{
+  box-shadow: none !important;
+}
+
 #file-button
 {
   padding: 10px;
@@ -58,6 +64,15 @@
 {
   background-color: #21ba45;
 }
+
+#real-file
+{
+  position: absolute;
+  z-index: -1;
+  width: 1px;
+  height: 1px;
+}
+
 #custom-text
 {
   margin-left: 10px;
