@@ -217,6 +217,15 @@ function updateOrderUI() {
     orderNode.append('<br>');
   }
 }
+
+function updateRealFileBtnPos()
+{
+  let customBtn = $('#file-button');
+
+  $('#real-file').css('top', (customBtn.position().top + (customBtn.outerHeight() * 0.8)))
+      .css('left', (customBtn.position().left + (customBtn.outerWidth() * 0.5)));
+}
+
 function chooseFile(){
   const realFileBtn = document.getElementById("real-file");
   const customBtn = document.getElementById("file-button");
@@ -232,6 +241,9 @@ function chooseFile(){
       customTxt.innerHTML = "No file chosen.";
     }
   });
+
+  updateRealFileBtnPos();
+  $(window).on('resize', updateRealFileBtnPos);
 
   let orderForm = $('#custom-order-form');
   orderForm.attr('action', `${GameAPI.rootURL}/sendOrder`).on('submit', (event) => {
