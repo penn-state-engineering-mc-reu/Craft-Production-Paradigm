@@ -2,12 +2,17 @@ import * as express from "express";
 import * as bodyParser from "body-parser";
 import * as path from 'path';
 import * as cors from 'cors';
-import {StartGameRouter, GameLogicRouter} from '../routes';
+import {createGameRoutes, createCustOrderRoutes} from '../routes';
+import DatabaseConnector from "./database";
+import {GameLogicController} from "../controllers/GameLogicController";
+import {GameController} from "../controllers/GameController";
 
 class App {
   public app: express.Application;
+  public dbConnection: DatabaseConnector;
   constructor() {
     this.app = express();
+    this.dbConnection = new DatabaseConnector();
     this.config();
     this.setRoutes();     
   }
@@ -31,8 +36,8 @@ class App {
   }
 
   private setRoutes(): void {
-    this.app.use('/startGame', StartGameRouter);
-    this.app.use('/gameLogic', GameLogicRouter);
+    this.app.use('/startGame', createGameRoutes(new GameController(this.dbConnection)));
+    this.app.use('/gameLogic', createCustOrderRoutes(new GameLogicController(this.dbConnection)));
   }
 }
 

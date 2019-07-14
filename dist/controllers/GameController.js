@@ -12,12 +12,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose = require("mongoose");
-const game_1 = require("../models/game");
-const GameDatabaseConnector_1 = require("../controllers/GameDatabaseConnector");
-const Game = mongoose.model('Game', game_1.GameScheme);
+const gameSchema_1 = require("../models/gameSchema");
+const GameDatabaseConnector_1 = require("../models/GameDatabaseConnector");
+const Game = mongoose.model('Game', gameSchema_1.GameScheme);
 class GameController {
-    constructor() {
-        this.db = new GameDatabaseConnector_1.GameDatabaseConnector();
+    constructor(dbClient) {
+        this.db = new GameDatabaseConnector_1.GameDatabaseConnector(dbClient);
     }
     /**
      * Takes data sent and creates database entry

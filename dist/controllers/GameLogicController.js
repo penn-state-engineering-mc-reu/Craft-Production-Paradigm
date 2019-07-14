@@ -12,26 +12,22 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const GameLogicDatabaseConnector_1 = require("../controllers/GameLogicDatabaseConnector");
-const order_1 = require("../models/order");
+const GameLogicDatabaseConnector_1 = require("../models/GameLogicDatabaseConnector");
 const orderImage_1 = require("../models/orderImage");
 class GameLogicController {
-    constructor() {
-        this.db = new GameLogicDatabaseConnector_1.GameLogicDatabaseConnector();
+    constructor(dbClient) {
+        this.db = new GameLogicDatabaseConnector_1.GameLogicDatabaseConnector(dbClient);
     }
     placeOrder(pin, modelID) {
         return __awaiter(this, void 0, void 0, function* () {
-            let order = new order_1.default(pin);
-            order.setModelID(modelID);
-            order.setStage('Manufacturer');
-            yield this.db.addOrder(yield order.toJSON());
+            let order = { pin: pin, modelID: modelID };
+            yield this.db.addOrder(order);
         });
     }
     placeCustomOrder(pin, orderDesc, imageData) {
         return __awaiter(this, void 0, void 0, function* () {
-            let order = new order_1.default(pin);
-            order.setCustomOrder(orderDesc, new orderImage_1.OrderImage(imageData));
-            yield this.db.addOrder(yield order.toJSON());
+            let order = { pin: pin, isCustomOrder: true, orderDesc: orderDesc, imageData: yield (new orderImage_1.OrderImage(imageData)).toBuffer() };
+            yield this.db.addOrder(order);
         });
     }
     /*

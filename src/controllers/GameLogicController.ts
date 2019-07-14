@@ -4,28 +4,27 @@
  */
 
 import {Request, Response} from 'express';
-import {GameLogicDatabaseConnector} from '../controllers/GameLogicDatabaseConnector';
-import Order from '../models/order'
+import {GameLogicDatabaseConnector} from '../models/GameLogicDatabaseConnector';
 import {OrderImage} from "../models/orderImage";
+import {ICustomerOrder} from "../models/customerOrderSchema";
+import DatabaseConnector from "../models/database";
+import {GameDatabaseConnector} from "../models/GameDatabaseConnector";
 
 export class GameLogicController {
   private db: GameLogicDatabaseConnector;
-  constructor() {
-    this.db = new GameLogicDatabaseConnector();
+  constructor(dbClient: DatabaseConnector) {
+    this.db = new GameLogicDatabaseConnector(dbClient);
   }
 
   public async placeOrder(pin: number, modelID: number): Promise<void> {
-    let order = new Order(pin);
-    order.setModelID(modelID);
-    order.setStage('Manufacturer');
-    await this.db.addOrder(await order.toJSON());
+    let order = {pin: pin, modelID: modelID};
+    await this.db.addOrder(order);
   }
 
   public async placeCustomOrder(pin: number, orderDesc: string, imageData: Buffer): Promise<void>
   {
-    let order = new Order(pin);
-    order.setCustomOrder(orderDesc, new OrderImage(imageData));
-    await this.db.addOrder(await order.toJSON());
+    let order = {pin: pin, isCustomOrder: true, orderDesc: orderDesc, imageData: await (new OrderImage(imageData)).toBuffer()};
+    await this.db.addOrder(order);
   }
 
   /*
@@ -63,7 +62,7 @@ export class GameLogicController {
     return num;
   }*/
 
-  public async getOrder(pin: string, orderID: string): Promise<object>
+  public async getOrder(pin: string, orderID: string): Promise<ICustomerOrder | null>
   {
     return await this.db.getOrder(pin, orderID);
   }
@@ -94,11 +93,11 @@ export class GameLogicController {
     return this.db.updatePieces(pin, orderId, pieces);
   }
 
-  public updateAssembledModel(pin: string, orderId: string, model: object): number {
+  public updateAssembledModel(pin: string, orderId: string, model: string): number {
     return this.db.updateAssembledModel(pin, orderId, model);
   }
 
-  public async getAssembledModel(pin: string, orderId: string): Promise<object> {
+  public async getAssembledModel(pin: string, orderId: string): Promise<string> {
     return await this.db.getAssembledModel(pin, orderId);
   }
 

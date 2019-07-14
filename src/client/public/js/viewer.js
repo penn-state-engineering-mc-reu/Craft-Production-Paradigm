@@ -129,7 +129,7 @@ function getAssembledModel() {
     type: 'GET',
     url: GameAPI.rootURL + '/gameLogic/getAssembledModel/' + getPin() + '/' + getOrderId(),
     success: (data) => {
-      loadModel(data.assembledModel);
+      loadModel(data);
     },
     error: (xhr, status, error) => {
       console.log(error);

@@ -1,46 +1,35 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose = require("mongoose");
-const game_1 = require("./game");
+const customerOrderCollection_1 = require("./customerOrderCollection");
+const gameCollection_1 = require("./gameCollection");
 class DatabaseConnector {
     constructor() {
-        this.url = 'mongodb://localhost/local';
-        mongoose.connect(this.url);
+        if (process.env.NODE_ENV == 'production')
+            this.url = 'mongodb+srv://' + process.env.DB_USER + ':' + process.env.DB_PASS + '@' + process.env.DB_HOST;
+        else
+            this.url = 'mongodb://localhost/local';
+        console.log(this.url);
+        mongoose.connect(this.url).catch((e) => {
+            console.log(e);
+        });
         this.db = mongoose.connection;
         this.db.on('error', console.error.bind(console, 'connection error:'));
         this.db.once('open', function callback() {
-            console.log('Connected to database!');
+            console.log('Connected to database');
         });
-        this.gameCollection = this.db.collection('gameFiles');
+        this.gameCollection = gameCollection_1.makeCollection(this);
+        this.orderCollection = customerOrderCollection_1.makeCollection(this);
     }
     getConnection() {
         return this.db;
     }
-    // TODO: Delete once I test this
-    addOneNewEntry() {
-        let test = {
-            pin: 0,
-            groupName: "test",
-            status: "waiting",
-            maxPlayers: 2,
-            activePlayers: 1,
-            positions: ["Crafter", "Distributer"]
-        };
-        let Game = mongoose.model('Game', game_1.GameScheme);
-        let game = new Game(test);
-        this.gameCollection.insert(game);
+    getGameCollection() {
+        return this.gameCollection;
     }
-    addToDatabase(game) {
-        this.gameCollection.insert(game);
-    }
-    checkIfPinExists(pin) {
-        this.gameCollection.findOne({ "pin": pin }, (err, results) => {
-            return results != null;
-        });
-        return false;
-    }
-    test() {
-        console.log('test');
+    getOrderCollection() {
+        return this.orderCollection;
     }
 }
-exports.DatabaseConnector = DatabaseConnector;
+exports.default = DatabaseConnector;
+//# sourceMappingURL=database.js.map

@@ -3,16 +3,17 @@
  */
 
 import * as mongoose from 'mongoose';
-import {GameScheme} from '../models/game';
+import {GameScheme} from '../models/gameSchema';
 import {Request, Response} from 'express';
-import {GameDatabaseConnector} from '../controllers/GameDatabaseConnector';
+import {GameDatabaseConnector} from '../models/GameDatabaseConnector';
+import DatabaseConnector from "../models/database";
 
 const Game: mongoose.Model<any> = mongoose.model('Game', GameScheme);
 
 export class GameController {
   private db: GameDatabaseConnector;
-  constructor() {
-    this.db = new GameDatabaseConnector();
+  constructor(dbClient: DatabaseConnector) {
+    this.db = new GameDatabaseConnector(dbClient);
   }
 
   /**
