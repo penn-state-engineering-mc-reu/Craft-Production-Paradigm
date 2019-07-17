@@ -179,6 +179,17 @@ class CustOrderDatabaseConnector {
             return 400;
         }
     }
+    setOrderStage(pin, orderID, newStage) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let time = new Date().getTime();
+            return this.orderModel.findOneAndUpdate({ pin: pin, _id: orderID }, {
+                $set: {
+                    lastModified: time,
+                    stage: newStage
+                }
+            }).exec();
+        });
+    }
     /**
      * If the user doesn't approve the model, the game will turn back to the supplier stage
      * @param pin

@@ -15,16 +15,8 @@ export class SupplierOrderDatabaseConnector {
         return newModel.save();
     }
 
-    public async getManufacturerRequest(pin: number, orderId: string): Promise<Array<PartInventory>> {
-        let orders = await this.orderModel.findOne({pin: pin, _id: orderId}, {manufacturerReq: 1});
-
-        if(orders) {
-            return orders.manufacturerReq;
-        }
-        else
-        {
-            return new Array<PartInventory>();
-        }
+    /*public async getManufacturerRequest(pin: number, orderId: string): Promise<ISupplierOrder | null> {
+        return await this.orderModel.findOne({pin: pin, _id: orderId}, {manufacturerReq: 1});
     }
 
     public async getSupplyOrder(pin: string, orderId: string): Promise<Array<PartInventory>> {
@@ -37,6 +29,11 @@ export class SupplierOrderDatabaseConnector {
         {
             return new Array<PartInventory>();
         }
+    }*/
+
+    public async getSupplyOrders(pin: number): Promise<Array<ISupplierOrder>>
+    {
+        return this.orderModel.find({pin: pin}).exec();
     }
 
     public async completeOrder(gamePin: string, orderID: string, supplierParts: Array<PartInventory>): Promise<ISupplierOrder | null>

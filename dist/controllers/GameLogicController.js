@@ -85,11 +85,14 @@ class GameLogicController {
             return this.supplierOrderDBConnector.completeOrder(pin, orderId, parts);
         });
     }
-    getSupplyOrder(pin, orderId) {
+    forwardManufacturerOrder(pin, orderID) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.supplierOrderDBConnector.getSupplyOrder(pin, orderId);
+            return this.custOrderDBConnector.setOrderStage(pin, orderID, 'Assembler');
         });
     }
+    /*public async getSupplyOrder(pin: string, orderId: string): Promise<Array<PartInventory>> {
+      return await this.supplierOrderDBConnector.getSupplyOrder(pin, orderId);
+    }*/
     /*public async getColors(pin: string, orderId: string): Promise<Array<any>> {
       let result = await this.custOrderDBConnector.getColors(pin, orderId);
       return result;
@@ -105,13 +108,17 @@ class GameLogicController {
             return yield this.custOrderDBConnector.getAssembledModel(pin, orderId);
         });
     }
-    getManufacturerRequest(pin, orderId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return yield this.supplierOrderDBConnector.getManufacturerRequest(pin, orderId);
-        });
-    }
+    /*  public async getManufacturerRequest(pin: number, orderId: string): Promise<ISupplierOrder | null> {
+        return await this.supplierOrderDBConnector.getManufacturerRequest(pin, orderId);
+      }*/
     addSupplyOrder(pin, request) {
+        console.log("At controller: " + JSON.stringify(request));
         return this.supplierOrderDBConnector.addOrder(pin, request);
+    }
+    getSupplyOrders(pin) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.supplierOrderDBConnector.getSupplyOrders(pin);
+        });
     }
     acceptOrder(pin, orderId) {
         return this.custOrderDBConnector.acceptOrder(pin, orderId);

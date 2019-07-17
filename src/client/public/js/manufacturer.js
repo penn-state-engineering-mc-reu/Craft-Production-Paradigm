@@ -28,11 +28,17 @@ function initArray() {
 }
 
 function initButtons() {
+  $('#send-manufacturing-order').on('click', () => {
+    forwardCustomerOrder().then(() => {
+      $('#ready-order').modal('hide');
+    });
+  });
+
   for (let i = 0; i < partProperties.length; i++) {
     let num = '#' + i;
     $(num + '-plus').click(e => {
       $('#error-message').addClass('hidden');
-      $('#send-manufacturing-order').removeClass('disabled');
+      // $('#send-manufacturing-order').removeClass('disabled');
 
       let currentNum = parseInt($(num + '-value').html());
       $(num + '-value').html(currentNum < 10 ? ++currentNum : 10);
@@ -51,7 +57,7 @@ function initButtons() {
       if(partSum <= 0)
       {
         $('#error-message').removeClass('hidden');
-        $('#send-manufacturing-order').addClass('disabled');
+        // $('#send-manufacturing-order').addClass('disabled');
       }
       updateCostWeight();
     });
@@ -70,8 +76,6 @@ function initButtons() {
         }
       });
     })(i);
-
-    $('.' + i + '-picker-container').addClass('picker-container').data('part-number', i);
   }
 
 /*  $('.sp-palette-row .sp-thumb-el').on('click.spectrum touchstart.spectrum', function(event) {
@@ -115,7 +119,7 @@ function checkOrders() {
         while(orderInformation[i].status != 'In Progress') {
           i++;
           if (i >= orderInformation.length) break;
-        } 
+        }
         currentOrder = orderInformation[i] === undefined ? orderInformation[0] : orderInformation[i];
       }
       updateOrder();
@@ -128,13 +132,22 @@ function checkOrders() {
   setTimeout(checkOrders, 3000);
 }
 
+function forwardCustomerOrder()
+{
+  return $.ajax({
+    type: 'POST',
+    url: GameAPI.rootURL + '/gameLogic/forwardManufacturerOrder/' + getPin() + '/' + currentOrder._id,
+    timeout: 5000
+  });
+}
+
 function sendPiecesOrder() {
   let orderData = [];
 
   partProperties.forEach((value, index) => {
     if(pieceOrder[index] > 0) {
       orderData.push({
-        name: value.name,
+        partID: index,
         color: colors[index],
         count: pieceOrder[index],
       });
@@ -149,9 +162,13 @@ function sendPiecesOrder() {
     dataType: 'json',
     success: (data) => {
       initArray();
-      generateSupplyGrid();
+      $('.value').text('0');
+      for(let index = 0; index < partProperties.length; index++)
+      {
+        $('.' + index + '-picker').spectrum('set', BrickColors.defaultBrickColor.RGBString);
+      }
+
       updateCostWeight();
-      initButtons();
     },
     error: (xhr, status, error) => {
       console.log(error);
@@ -229,7 +246,7 @@ function generateSupplyGrid() {
     html += '<div class="row">';
     for (let j = 0; j < 4; j++) {
       let partNumber = i * 4 + j;
-      if (i * 4 + j < partProperties.length) {
+      if (partNumber < partProperties.length) {
         html += '<div class="four wide column">';
         html += `<p align="left">${partProperties[partNumber].name}</p>`;
         html += `<p align="left">$${partProperties[partNumber].price.toFixed(2)} each</p>`;

@@ -190,6 +190,17 @@ export class CustOrderDatabaseConnector {
     }
   }
 
+  public async setOrderStage(pin: number, orderID: string, newStage: string): Promise<ICustomerOrder | null>
+  {
+    let time: number = new Date().getTime();
+    return this.orderModel.findOneAndUpdate({pin: pin, _id: orderID}, {
+      $set: {
+        lastModified: time,
+        stage: newStage
+      }
+    }).exec();
+  }
+
   /**
    * If the user doesn't approve the model, the game will turn back to the supplier stage
    * @param pin 
@@ -205,6 +216,4 @@ export class CustOrderDatabaseConnector {
       return 400;
     }
   }
-
-
 }

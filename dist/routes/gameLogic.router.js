@@ -36,17 +36,20 @@ function createRoutes(controller) {
     router.get('/getOrders/:id', (req, res) => __awaiter(this, void 0, void 0, function* () {
         res.send(yield controller.getOrders(req.params.id));
     }));
-    router.post('/sendSupplyOrder/:id', (req, res) => __awaiter(this, void 0, void 0, function* () {
-        yield controller.completeSupplyOrder(req.params.id, req.body.id, req.body.order);
+    router.post('/sendSupplyOrder/:id/:orderID', (req, res) => __awaiter(this, void 0, void 0, function* () {
+        yield controller.completeSupplyOrder(req.params.id, req.params.orderID, req.body.order);
         res.status(200).send('OK');
     }));
-    router.get('/getSupplyOrder/:id/:orderId', (req, res) => __awaiter(this, void 0, void 0, function* () {
-        res.send(yield controller.getSupplyOrder(req.params.id, req.params.orderId));
-    }));
+    /*  router.get('/getSupplyOrder/:id/:orderId', async (req: Request, res: Response) => {
+        res.send(await controller.getSupplyOrder(req.params.id, req.params.orderId));
+      });*/
     /*router.get('/colors/:id/:orderId', async (req: Request, res: Response) => {
       let result = await controller.getColors(req.params.id, req.params.orderId);
       res.send(result);
     });*/
+    router.post('/forwardManufacturerOrder/:id/:orderID', (req, res) => __awaiter(this, void 0, void 0, function* () {
+        res.send(yield controller.forwardManufacturerOrder(req.params.id, req.params.orderID));
+    }));
     router.post('/updatePieces/:id/:orderId', (req, res) => {
         res.send(controller.updatePieces(req.params.id, req.params.orderId, req.body.pieces));
     });
@@ -57,12 +60,15 @@ function createRoutes(controller) {
     router.get('/getAssembledModel/:id/:orderId', (req, res) => __awaiter(this, void 0, void 0, function* () {
         res.send(yield controller.getAssembledModel(req.params.id, req.params.orderId));
     }));
-    router.get('/getManufacturerRequest/:id/:orderId', (req, res) => __awaiter(this, void 0, void 0, function* () {
-        res.send(yield controller.getManufacturerRequest(parseInt(req.params.id), req.params.orderId));
-    }));
+    /*  router.get('/getManufacturerRequest/:id/:orderId', async (req: Request, res: Response) => {
+        res.send(await controller.getManufacturerRequest(parseInt(req.params.id), req.params.orderId));
+      });*/
     router.post('/addSupplyOrder/:id', (req, res) => {
         res.send(controller.addSupplyOrder(req.params.id, req.body.request));
     });
+    router.get('/getSupplyOrders/:id', (req, res) => __awaiter(this, void 0, void 0, function* () {
+        res.send(yield controller.getSupplyOrders(parseInt(req.params.id)));
+    }));
     router.post('/acceptOrder/:id/:orderId', (req, res) => {
         res.send(controller.acceptOrder(req.params.id, req.params.orderId));
     });

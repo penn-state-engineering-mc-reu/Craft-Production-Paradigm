@@ -2,10 +2,12 @@ import {IOrder, OrderSchema} from "./orderBaseSchema";
 
 export class PartInventory
 {
-    name: string = '';
+    partID: number = -1;
     color: number = 0;
     count: number = 0;
 }
+
+let PartInventoryScheme = {partID: Number, color: Number, count: Number};
 
 export interface ISupplierOrder extends IOrder
 {
@@ -15,6 +17,6 @@ export interface ISupplierOrder extends IOrder
 
 export const SupplierOrderSchema = OrderSchema.clone();
 SupplierOrderSchema.add({
-    manufacturerReq: {type: [{name: String, color: Number, count: Number}], default: new Array<PartInventory>()},
-    supplyOrders: {type: [{name: String, color: Number, count: Number}], default: new Array<PartInventory>()}
+    manufacturerReq: {type: [PartInventoryScheme], default: new Array<PartInventory>()},
+    supplyOrders: {type: [PartInventoryScheme], default: new Array<PartInventory>()}
 });

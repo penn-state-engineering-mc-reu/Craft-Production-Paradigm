@@ -268,6 +268,8 @@ window.BrickColors.allPaletteData = [
         }
     ]
 ];
+// Based on http://www.brothers-brick.com/downloads/2010-LEGO-color-palette.pdf, with color values generated from
+// http://www.peeron.com/cgi-bin/invcgis/colorguide.cgi.
 
 window.BrickColors.spectrumPalette = [];
 window.BrickColors.allPaletteData.forEach(paletteRow => {

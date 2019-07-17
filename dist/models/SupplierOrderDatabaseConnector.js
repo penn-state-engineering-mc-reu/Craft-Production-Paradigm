@@ -18,26 +18,24 @@ class SupplierOrderDatabaseConnector {
             return newModel.save();
         });
     }
-    getManufacturerRequest(pin, orderId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let orders = yield this.orderModel.findOne({ pin: pin, _id: orderId }, { manufacturerReq: 1 });
-            if (orders) {
-                return orders.manufacturerReq;
-            }
-            else {
-                return new Array();
-            }
-        });
+    /*public async getManufacturerRequest(pin: number, orderId: string): Promise<ISupplierOrder | null> {
+        return await this.orderModel.findOne({pin: pin, _id: orderId}, {manufacturerReq: 1});
     }
-    getSupplyOrder(pin, orderId) {
+
+    public async getSupplyOrder(pin: string, orderId: string): Promise<Array<PartInventory>> {
+        let orders = await this.orderModel.findOne({pin: parseInt(pin), _id: orderId}, {supplyOrders: 1});
+
+        if(orders) {
+            return orders.supplyOrders;
+        }
+        else
+        {
+            return new Array<PartInventory>();
+        }
+    }*/
+    getSupplyOrders(pin) {
         return __awaiter(this, void 0, void 0, function* () {
-            let orders = yield this.orderModel.findOne({ pin: parseInt(pin), _id: orderId }, { supplyOrders: 1 });
-            if (orders) {
-                return orders.supplyOrders;
-            }
-            else {
-                return new Array();
-            }
+            return this.orderModel.find({ pin: pin }).exec();
         });
     }
     completeOrder(gamePin, orderID, supplierParts) {
