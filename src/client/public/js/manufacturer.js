@@ -1,4 +1,5 @@
 let pieceOrder = [];
+let colors = [];
 orderInformation = {};
 currentOrder = {};
 
@@ -19,7 +20,11 @@ function getPin() {
 }
 
 function initArray() {
-  for (let i = 0; i < partProperties.length; i++) pieceOrder[i] = 0;
+  for (let i = 0; i < partProperties.length; i++)
+  {
+    pieceOrder[i] = 0;
+    colors[i] = BrickColors.defaultBrickColor.colorID;
+  }
 }
 
 function initButtons() {
@@ -50,7 +55,29 @@ function initButtons() {
       }
       updateCostWeight();
     });
+
+    (function(index) {
+      $('.' + index + '-picker').spectrum({
+        showPalette: true,
+        showPaletteOnly: true,
+        showAlpha: true,
+        containerClassName: index + '-picker-container',
+        palette: BrickColors.spectrumPalette,
+        color: BrickColors.defaultBrickColor.RGBString,
+        change: function (color) {
+          let activeElement = $('.' + index + '-picker-container').find('.sp-thumb-el.sp-thumb-active');
+          colors[index] = BrickColors.allPaletteData[$(activeElement).closest('.sp-palette-row').index()][$(activeElement).index()].colorID;
+        }
+      });
+    })(i);
+
+    $('.' + i + '-picker-container').addClass('picker-container').data('part-number', i);
   }
+
+/*  $('.sp-palette-row .sp-thumb-el').on('click.spectrum touchstart.spectrum', function(event) {
+    let partNum = parseInt($(this).closest('.picker-container').data('part-number'));
+    colors[partNum] = BrickColors.allPaletteData[$(this).closest('.sp-palette-row').index()][$(this).index()].colorID;
+  });*/
 
   $('#left').click(e => {
     let index = orderInformation.indexOf(currentOrder);
@@ -64,7 +91,7 @@ function initButtons() {
     updateOrder();
   });
 
-  $('#send-manufacturing-order').click(e => {
+  $('#send-supplier-order').click(e => {
     sendPiecesOrder();
   });
 }
@@ -102,11 +129,24 @@ function checkOrders() {
 }
 
 function sendPiecesOrder() {
-  let postData = {'request': pieceOrder};
+  let orderData = [];
+
+  partProperties.forEach((value, index) => {
+    if(pieceOrder[index] > 0) {
+      orderData.push({
+        name: value.name,
+        color: colors[index],
+        count: pieceOrder[index],
+      });
+    }
+  });
+
+  let postData = {'request': orderData};
   $.ajax({
     type: 'POST',
     data: postData,
-    url: GameAPI.rootURL + '/gameLogic/updateManufacturerRequest/' + getPin() + '/' + currentOrder._id,
+    url: GameAPI.rootURL + '/gameLogic/addSupplyOrder/' + getPin(),
+    dataType: 'json',
     success: (data) => {
       initArray();
       generateSupplyGrid();
@@ -196,7 +236,8 @@ function generateSupplyGrid() {
         html += `<p align="left">${partProperties[partNumber].weight.toFixed(2)} grams</p>`;
         html += `<p> <img class = "piece" src= "/../images/Lego pieces/${partProperties[partNumber].name}.jpg"> </p>`;
         // Start off each piece with an order of 0
-        html += `<div class="row"><div class="ui statistic"><div id="${partNumber}-value"class="value">0</div></div></div>`;
+        html += `<div class="row"><div class="ui statistic"><div id="${partNumber}-value" class="value">0</div></div></div>`;
+        html += `<div class="row picker"><input type="text" class="${partNumber}-picker" value="${BrickColors.defaultBrickColor.RGBString}"/></div>`;
         // Adds the plus and minus buttons to each piece
         html += '<div class="row"><div class="ui icon buttons">' +
           `<button id="${partNumber}-minus" class="ui button"><i class="minus icon"></i></button>` +

@@ -11,10 +11,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-let noop = (err, raw) => { };
-class GameLogicDatabaseConnector {
+class CustOrderDatabaseConnector {
     constructor(dbConnection) {
-        this.orderModel = dbConnection.getOrderCollection();
+        this.orderModel = dbConnection.getCustOrderCollection();
     }
     /**
      * This will add the order to the game object's array
@@ -62,41 +61,37 @@ class GameLogicDatabaseConnector {
             }
         });
     }
-    // This happens at the supplier stage
+    /*// This happens at the supplier stage
     // I don't know why I have two functions that essentially do the same thing (idgaf at this point)
     // fixed: they no longer do the same thing
-    addSupplyOrder(pin, orderId, order, colors) {
-        let time = new Date().getTime();
-        let update = { $set: { supplyOrders: order, colors: colors, lastModified: time, stage: 'Assembler' } };
-        this.orderModel.update({ pin: parseInt(pin), _id: orderId }, update).exec();
-    }
-    getSupplyOrder(pin, orderId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let orders = yield this.orderModel.findOne({ pin: parseInt(pin), _id: orderId }, { supplyOrders: 1 });
-            if (orders) {
-                return orders.supplyOrders;
-            }
-            else {
-                return new Array();
-            }
-        });
-    }
-    getColors(pin, orderId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                let query = { pin: parseInt(pin), _id: orderId };
-                let fields = { colors: 1 };
-                let result = yield this.orderModel.findOne(query, fields);
-                if (result == null)
-                    return new Array();
-                return result.colors;
-            }
-            catch (e) {
-                console.log(e);
-                return new Array();
-            }
-        });
-    }
+    public addSupplyOrder(pin: string, orderId: string, order: Array<number>, colors: Array<string>): void {
+      let time: number = new Date().getTime();
+      let update: Object = {$set: {supplyOrders: order, colors: colors, lastModified: time, stage: 'Assembler'}};
+      this.orderModel.update({pin: parseInt(pin), _id: orderId}, update).exec();
+    }*/
+    /*  public async getSupplyOrder(pin: string, orderId: string): Promise<Array<number>> {
+        let orders = await this.orderModel.findOne({pin: parseInt(pin), _id: orderId}, {supplyOrders: 1});
+    
+        if(orders) {
+          return orders.supplyOrders;
+        }
+        else
+        {
+          return new Array<number>();
+        }
+      }*/
+    /*public async getColors(pin: string, orderId: string): Promise<Array<string>> {
+      try {
+        let query = {pin: parseInt(pin), _id: orderId};
+        let fields = {colors: 1};
+        let result = await this.orderModel.findOne(query, fields);
+        if (result == null) return new Array<string>();
+        return result.colors;
+      } catch(e) {
+        console.log(e);
+        return new Array<any>();
+      }
+    }*/
     // this is used in the assembler stage
     updatePieces(pin, orderId, pieces) {
         if (pieces != null && pieces != undefined) {
@@ -143,37 +138,37 @@ class GameLogicDatabaseConnector {
             }
         });
     }
-    getManufacturerRequest(pin, orderId) {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                let request = yield this.orderModel.findOne({ pin: parseInt(pin), _id: orderId }, { manufacturerReq: 1 });
-                if (request) {
-                    return request.manufacturerReq;
-                }
-                else {
-                    return new Array();
-                }
-            }
-            catch (e) {
-                return new Array();
-            }
-        });
+    /*
+    public async getManufacturerRequest(pin: string, orderId: string): Promise<Array<number>> {
+      try {
+        let request: (ICustomerOrder | null) = await this.orderModel.findOne({pin: parseInt(pin), _id: orderId}, {manufacturerReq: 1});
+        if(request) {
+          return request.manufacturerReq;
+        }
+        else
+        {
+          return new Array<number>();
+        }
+      } catch(e) {
+        return new Array<number>();
+      }
     }
+    */
     /**
      * Once the manufacturer request is sent, the time modified is updated and the game goes to the supplier stage
      * @param pin
      * @param orderId
      * @param request
      */
-    updateManufacturerRequest(pin, orderId, request) {
-        if (request != null && request != undefined) {
-            let time = new Date().getTime();
-            let update = { $set: { manufacturerReq: request, stage: 'Supplier', lastModified: time } };
-            this.orderModel.update({ pin: parseInt(pin), _id: orderId }, update).exec();
-            return 200;
-        }
-        return 400;
-    }
+    /*public updateManufacturerRequest(pin: string, orderId: string, request: Array<number>): number {
+      if (request != null && request != undefined) {
+        let time: number = new Date().getTime();
+        let update: Object = {$set: {manufacturerReq: request, stage: 'Supplier', lastModified: time}};
+        this.orderModel.update({pin: parseInt(pin), _id: orderId}, update).exec();
+        return 200;
+      }
+      return 400;
+    }*/
     acceptOrder(pin, orderId) {
         try {
             let update = { $set: { status: 'Completed', stage: 'Sent to Customer' } };
@@ -201,5 +196,5 @@ class GameLogicDatabaseConnector {
         }
     }
 }
-exports.GameLogicDatabaseConnector = GameLogicDatabaseConnector;
-//# sourceMappingURL=GameLogicDatabaseConnector.js.map
+exports.CustOrderDatabaseConnector = CustOrderDatabaseConnector;
+//# sourceMappingURL=CustOrderDatabaseConnector.js.map

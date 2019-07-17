@@ -3,6 +3,7 @@ import multer = require('multer');
 
 import {GameLogicController} from '../controllers/GameLogicController'
 import * as cors from 'cors';
+import {PartInventory} from "../models/supplierOrderSchema";
 
 export function createRoutes(controller: GameLogicController): Router {
   const router: Router = Router();
@@ -37,8 +38,8 @@ export function createRoutes(controller: GameLogicController): Router {
     res.send(await controller.getOrders(req.params.id));
   });
 
-  router.post('/sendSupplyOrder/:id', (req: Request, res: Response) => {
-    controller.addSupplyOrder(req.params.id, req.body.id, req.body.order, req.body.colors);
+  router.post('/sendSupplyOrder/:id', async (req: Request, res: Response) => {
+    await controller.completeSupplyOrder(req.params.id, req.body.id, (req.body.order as Array<PartInventory>));
     res.status(200).send('OK');
   });
 
@@ -46,10 +47,10 @@ export function createRoutes(controller: GameLogicController): Router {
     res.send(await controller.getSupplyOrder(req.params.id, req.params.orderId));
   });
 
-  router.get('/colors/:id/:orderId', async (req: Request, res: Response) => {
+  /*router.get('/colors/:id/:orderId', async (req: Request, res: Response) => {
     let result = await controller.getColors(req.params.id, req.params.orderId);
     res.send(result);
-  });
+  });*/
 
   router.post('/updatePieces/:id/:orderId', (req: Request, res: Response) => {
     res.send(controller.updatePieces(req.params.id, req.params.orderId, req.body.pieces));
@@ -65,11 +66,11 @@ export function createRoutes(controller: GameLogicController): Router {
   });
 
   router.get('/getManufacturerRequest/:id/:orderId', async (req: Request, res: Response) => {
-    res.send(await controller.getManufacturerRequest(req.params.id, req.params.orderId));
+    res.send(await controller.getManufacturerRequest(parseInt(req.params.id), req.params.orderId));
   });
 
-  router.post('/updateManufacturerRequest/:id/:orderId', (req: Request, res: Response) => {
-    res.send(controller.updateManufacturerRequest(req.params.id, req.params.orderId, req.body.request));
+  router.post('/addSupplyOrder/:id', (req: Request, res: Response) => {
+    res.send(controller.addSupplyOrder(req.params.id, (req.body.request as Array<PartInventory>)));
   });
 
   router.post('/acceptOrder/:id/:orderId', (req: Request, res: Response) => {

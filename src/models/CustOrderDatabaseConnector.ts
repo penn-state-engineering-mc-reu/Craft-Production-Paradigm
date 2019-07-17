@@ -7,13 +7,11 @@ import {InsertOneWriteOpResult} from "mongodb";
 import {Model, Document, DocumentQuery} from 'mongoose';
 import {ICustomerOrder} from "./customerOrderSchema";
 
-let noop = (err: any, raw: any) => {};
-
-export class GameLogicDatabaseConnector {
+export class CustOrderDatabaseConnector {
   public orderModel: Model<ICustomerOrder>;
 
   constructor(dbConnection: DatabaseConnector) {
-    this.orderModel = dbConnection.getOrderCollection();
+    this.orderModel = dbConnection.getCustOrderCollection();
   }
 
   /**
@@ -64,16 +62,16 @@ export class GameLogicDatabaseConnector {
     }
   }
 
-  // This happens at the supplier stage
+  /*// This happens at the supplier stage
   // I don't know why I have two functions that essentially do the same thing (idgaf at this point)
   // fixed: they no longer do the same thing
   public addSupplyOrder(pin: string, orderId: string, order: Array<number>, colors: Array<string>): void {
     let time: number = new Date().getTime();
     let update: Object = {$set: {supplyOrders: order, colors: colors, lastModified: time, stage: 'Assembler'}};
     this.orderModel.update({pin: parseInt(pin), _id: orderId}, update).exec();
-  }
+  }*/
 
-  public async getSupplyOrder(pin: string, orderId: string): Promise<Array<number>> {
+/*  public async getSupplyOrder(pin: string, orderId: string): Promise<Array<number>> {
     let orders = await this.orderModel.findOne({pin: parseInt(pin), _id: orderId}, {supplyOrders: 1});
 
     if(orders) {
@@ -83,9 +81,9 @@ export class GameLogicDatabaseConnector {
     {
       return new Array<number>();
     }
-  }
+  }*/
 
-  public async getColors(pin: string, orderId: string): Promise<Array<string>> {
+  /*public async getColors(pin: string, orderId: string): Promise<Array<string>> {
     try {
       let query = {pin: parseInt(pin), _id: orderId};
       let fields = {colors: 1};
@@ -96,7 +94,7 @@ export class GameLogicDatabaseConnector {
       console.log(e);
       return new Array<any>();
     }
-  }
+  }*/
 
   // this is used in the assembler stage
   public updatePieces(pin: string, orderId: string, pieces: Array<number>): number {
@@ -148,6 +146,7 @@ export class GameLogicDatabaseConnector {
     }
   }
 
+  /*
   public async getManufacturerRequest(pin: string, orderId: string): Promise<Array<number>> {
     try {
       let request: (ICustomerOrder | null) = await this.orderModel.findOne({pin: parseInt(pin), _id: orderId}, {manufacturerReq: 1});
@@ -162,6 +161,7 @@ export class GameLogicDatabaseConnector {
       return new Array<number>();
     }
   }
+  */
   
   /**
    * Once the manufacturer request is sent, the time modified is updated and the game goes to the supplier stage
@@ -169,7 +169,7 @@ export class GameLogicDatabaseConnector {
    * @param orderId 
    * @param request 
    */
-  public updateManufacturerRequest(pin: string, orderId: string, request: Array<number>): number {
+  /*public updateManufacturerRequest(pin: string, orderId: string, request: Array<number>): number {
     if (request != null && request != undefined) {
       let time: number = new Date().getTime();
       let update: Object = {$set: {manufacturerReq: request, stage: 'Supplier', lastModified: time}};
@@ -177,7 +177,7 @@ export class GameLogicDatabaseConnector {
       return 200;
     }
     return 400;
-  }
+  }*/
 
   public acceptOrder(pin: string, orderId: string)
   {

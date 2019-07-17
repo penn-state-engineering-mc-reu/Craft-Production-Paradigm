@@ -1,13 +1,16 @@
 import * as mongoose from 'mongoose';
 import {makeCollection as makeCustomerOrderCollection} from "./customerOrderCollection";
+import {makeCollection as makeSupplierOrderCollection} from "./supplierOrderCollection";
 import {makeCollection as makeGameCollection} from "./gameCollection";
 import {IGame} from "./gameSchema";
 import {ICustomerOrder} from "./customerOrderSchema";
+import {ISupplierOrder} from "./supplierOrderSchema";
 
 export default class DatabaseConnector {
   protected db: mongoose.Connection;
   protected gameCollection: mongoose.Model<IGame>;
-  protected orderCollection: mongoose.Model<ICustomerOrder>;
+  protected custOrderCollection: mongoose.Model<ICustomerOrder>;
+  protected supplierOrderCollection: mongoose.Model<ISupplierOrder>;
   protected url: string;
   constructor() {
     if (process.env.NODE_ENV == 'production')
@@ -26,7 +29,8 @@ export default class DatabaseConnector {
     });
 
     this.gameCollection = makeGameCollection(this);
-    this.orderCollection = makeCustomerOrderCollection(this);
+    this.custOrderCollection = makeCustomerOrderCollection(this);
+    this.supplierOrderCollection = makeSupplierOrderCollection(this);
   }
 
   public getConnection(): mongoose.Connection
@@ -39,8 +43,13 @@ export default class DatabaseConnector {
     return this.gameCollection;
   }
 
-  public getOrderCollection(): mongoose.Model<ICustomerOrder>
+  public getCustOrderCollection(): mongoose.Model<ICustomerOrder>
   {
-    return this.orderCollection;
+    return this.custOrderCollection;
+  }
+
+  public getSupplierOrderCollection(): mongoose.Model<ISupplierOrder>
+  {
+    return this.supplierOrderCollection;
   }
 }

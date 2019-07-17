@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose = require("mongoose");
 const customerOrderCollection_1 = require("./customerOrderCollection");
+const supplierOrderCollection_1 = require("./supplierOrderCollection");
 const gameCollection_1 = require("./gameCollection");
 class DatabaseConnector {
     constructor() {
@@ -19,7 +20,8 @@ class DatabaseConnector {
             console.log('Connected to database');
         });
         this.gameCollection = gameCollection_1.makeCollection(this);
-        this.orderCollection = customerOrderCollection_1.makeCollection(this);
+        this.custOrderCollection = customerOrderCollection_1.makeCollection(this);
+        this.supplierOrderCollection = supplierOrderCollection_1.makeCollection(this);
     }
     getConnection() {
         return this.db;
@@ -27,8 +29,11 @@ class DatabaseConnector {
     getGameCollection() {
         return this.gameCollection;
     }
-    getOrderCollection() {
-        return this.orderCollection;
+    getCustOrderCollection() {
+        return this.custOrderCollection;
+    }
+    getSupplierOrderCollection() {
+        return this.supplierOrderCollection;
     }
 }
 exports.default = DatabaseConnector;
