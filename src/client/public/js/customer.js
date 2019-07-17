@@ -12,19 +12,19 @@ $(document).ready(() => {
 function initImages() {
   $('#1').click(e => {
     changeCarType(1);
-    $('.ui.basic.modal').modal('show');
+    $('#confirm-standard-order-modal').modal('show');
   });
   $('#2').click(e => {
     changeCarType(2);
-    $('.ui.basic.modal').modal('show');
+    $('#confirm-standard-order-modal').modal('show');
   });
   $('#3').click(e => {
     changeCarType(3);
-    $('.ui.basic.modal').modal('show');
+    $('#confirm-standard-order-modal').modal('show');
   });
   $('#4').click(e => {
     changeCarType(4);
-    $('.ui.basic.modal').modal('show');
+    $('#confirm-standard-order-modal').modal('show');
   });
 }
 
@@ -86,6 +86,10 @@ function initButtons() {
     updateCurrentOrderInfo();
     updateOrderUI();
   });
+
+  $('.modal-close-button').on('click', function() {
+    $(this).closest('.modal').modal('hide');
+  });
 }
 
 // gets the pin from the url
@@ -97,12 +101,17 @@ function changeCarType(number) {
   let dom = $('#car-type').html(number.toString());
 }
 
+function showOrderSentModal()
+{
+  $('#order-success-modal').modal('show');
+}
+
 function sendOrder() {
   let type = $('#car-type').html();
 
   let formData = new FormData();
   formData.append('model', type);
-  postOrder(formData);
+  postOrder(formData).then(showOrderSentModal);
 }
 
 /**
@@ -251,8 +260,9 @@ function chooseFile(){
     let formInfo = new FormData(orderForm[0]);
 
     orderForm.children('#custom-order-submit').addClass('loading');
-    postOrder(formInfo).always(() => {
-      orderForm.children('#custom-order-submit').removeClass('loading');
+    postOrder(formInfo).then(showOrderSentModal)
+        .always(() => {
+          orderForm.children('#custom-order-submit').removeClass('loading');
     });
   });
 }
