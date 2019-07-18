@@ -22,7 +22,7 @@ class SupplierOrderDatabaseConnector {
         return await this.orderModel.findOne({pin: pin, _id: orderId}, {manufacturerReq: 1});
     }
 
-    public async getSupplyOrder(pin: string, orderId: string): Promise<Array<PartInventory>> {
+    public async getSupplyOrder(pin: number, orderId: string): Promise<Array<PartInventory>> {
         let orders = await this.orderModel.findOne({pin: parseInt(pin), _id: orderId}, {supplyOrders: 1});
 
         if(orders) {

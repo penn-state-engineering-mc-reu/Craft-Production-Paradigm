@@ -31,8 +31,9 @@ class App {
         this.app.use(bodyParser({ limit: '50mb' }));
     }
     setRoutes() {
-        this.app.use('/startGame', routes_1.createGameRoutes(new GameController_1.GameController(this.dbConnection)));
-        this.app.use('/gameLogic', routes_1.createCustOrderRoutes(new GameLogicController_1.GameLogicController(this.dbConnection)));
+        let gameController = new GameController_1.GameController(this.dbConnection);
+        this.app.use('/startGame', routes_1.createGameRoutes(gameController));
+        this.app.use('/gameLogic', routes_1.createGameLogicRoutes(gameController, new GameLogicController_1.GameLogicController(this.dbConnection, gameController)));
     }
 }
 exports.default = new App().app;

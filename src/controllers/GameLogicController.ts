@@ -8,13 +8,17 @@ import {OrderImage} from "../models/orderImage";
 import {ICustomerOrder} from "../models/customerOrderSchema";
 import DatabaseConnector from "../models/database";
 import {SupplierOrderDatabaseConnector} from "../models/SupplierOrderDatabaseConnector";
-import {ISupplierOrder, PartInventory} from "../models/supplierOrderSchema";
+import {ISupplierOrder} from "../models/supplierOrderSchema";
+import {PartInventory} from "../models/partInventory";
+import {GameController} from "./GameController";
 
 export class GameLogicController {
+  private gameController: GameController;
   private custOrderDBConnector: CustOrderDatabaseConnector;
   private supplierOrderDBConnector: SupplierOrderDatabaseConnector;
 
-  constructor(dbClient: DatabaseConnector) {
+  constructor(dbClient: DatabaseConnector, gameController: GameController) {
+    this.gameController = gameController;
     this.custOrderDBConnector = new CustOrderDatabaseConnector(dbClient);
     this.supplierOrderDBConnector = new SupplierOrderDatabaseConnector(dbClient);
   }
@@ -65,22 +69,25 @@ export class GameLogicController {
     return num;
   }*/
 
-  public async getOrder(pin: string, orderID: string): Promise<ICustomerOrder | null>
+  public async getOrder(pin: number, orderID: string): Promise<ICustomerOrder | null>
   {
     return await this.custOrderDBConnector.getOrder(pin, orderID);
   }
 
-  public async getOrders(pin: string): Promise<Array<object>> {
+  public async getOrders(pin: number): Promise<Array<object>> {
     return await this.custOrderDBConnector.getOrders(pin);
   }
 
-  public async getCustomOrderImage(pin: string, orderID: string): Promise<Buffer>
+  public async getCustomOrderImage(pin: number, orderID: string): Promise<Buffer>
   {
     return await this.custOrderDBConnector.getCustomOrderImage(pin, orderID);
   }
 
-  public async completeSupplyOrder(pin: string, orderId: string, parts: Array<PartInventory>): Promise<ISupplierOrder | null> {
-    return this.supplierOrderDBConnector.completeOrder(pin, orderId, parts);
+  public async completeSupplyOrder(pin: number, orderId: string, parts: Array<PartInventory>): Promise<void> {
+    await Promise.all([
+        this.supplierOrderDBConnector.completeOrder(pin, orderId, parts),
+        this.gameController.addAssemblerParts(pin, parts)
+    ]);
   }
 
   public async forwardManufacturerOrder(pin: number, orderID: string): Promise<ICustomerOrder | null>
@@ -88,24 +95,24 @@ export class GameLogicController {
     return this.custOrderDBConnector.setOrderStage(pin, orderID, 'Assembler');
   }
 
-  /*public async getSupplyOrder(pin: string, orderId: string): Promise<Array<PartInventory>> {
+  /*public async getSupplyOrder(pin: number, orderId: string): Promise<Array<PartInventory>> {
     return await this.supplierOrderDBConnector.getSupplyOrder(pin, orderId);
   }*/
 
-  /*public async getColors(pin: string, orderId: string): Promise<Array<any>> {
+  /*public async getColors(pin: number, orderId: string): Promise<Array<any>> {
     let result = await this.custOrderDBConnector.getColors(pin, orderId);
     return result;
   }*/
 
-  public updatePieces(pin: string, orderId: string, pieces: Array<number>): number {
+/*  public updatePieces(pin: string, orderId: string, pieces: Array<number>): number {
     return this.custOrderDBConnector.updatePieces(pin, orderId, pieces);
-  }
+  }*/
 
-  public updateAssembledModel(pin: string, orderId: string, model: string): number {
+  public updateAssembledModel(pin: number, orderId: string, model: string): number {
     return this.custOrderDBConnector.updateAssembledModel(pin, orderId, model);
   }
 
-  public async getAssembledModel(pin: string, orderId: string): Promise<string> {
+  public async getAssembledModel(pin: number, orderId: string): Promise<string> {
     return await this.custOrderDBConnector.getAssembledModel(pin, orderId);
   }
 
@@ -113,7 +120,7 @@ export class GameLogicController {
     return await this.supplierOrderDBConnector.getManufacturerRequest(pin, orderId);
   }*/
 
-  public addSupplyOrder(pin: string, request: Array<PartInventory>): Promise<ISupplierOrder> {
+  public addSupplyOrder(pin: number, request: Array<PartInventory>): Promise<ISupplierOrder> {
     console.log("At controller: " + JSON.stringify(request));
     return this.supplierOrderDBConnector.addOrder(pin, request);
   }
@@ -123,11 +130,11 @@ export class GameLogicController {
     return this.supplierOrderDBConnector.getSupplyOrders(pin);
   }
 
-  public acceptOrder(pin: string, orderId: string): number {
+  public acceptOrder(pin: number, orderId: string): number {
     return this.custOrderDBConnector.acceptOrder(pin, orderId);
   }
 
-  public rejectOrder(pin: string, orderId: string): number {
+  public rejectOrder(pin: number, orderId: string): number {
     return this.custOrderDBConnector.rejectOrder(pin, orderId);
   }
 }

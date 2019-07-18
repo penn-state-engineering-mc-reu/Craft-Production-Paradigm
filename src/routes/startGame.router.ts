@@ -12,30 +12,30 @@ export function createRoutes(controller: GameController): Router {
   });
 
   router.post('/joinGame/:id', (req: Request, res: Response) => {
-    controller.joinGame(req);
+    controller.joinGame(parseInt(req.params.id), req.body.position);
     res.status(200).send('OK');
   });
 
   router.get('/getGameInfo/:id', cors(), async (req: Request, res: Response) => {
-    res.send(await controller.getGameInfo(req.params.id));
+    res.send(await controller.getGameInfo(parseInt(req.params.id)));
   });
 
   router.get('/addActivePlayer/:id', cors(), (req: Request, res: Response) => {
-    controller.addActivePlayer(req.params.id);
+    controller.addActivePlayer(parseInt(req.params.id));
     res.sendStatus(200);
   });
 
   router.get('/removeActivePlayer/:id/:position', cors(), (req: Request, res: Response) => {
-    controller.removeActivePlayer(req.params.id, req.params.position);
+    controller.removeActivePlayer(parseInt(req.params.id), req.params.position);
     res.sendStatus(200);
   });
 
   router.get('/checkIfPinExists/:id', cors(), async (req: Request, res: Response) => {
-    res.send(await controller.checkIfPinExists(req.params.id));
+    res.send(await controller.checkIfPinExists(parseInt(req.params.id)));
   });
 
   router.get('/getPossiblePositions/:id', cors(), async (req: Request, res: Response) => {
-    res.send(await controller.getPossiblePositions(req.params.id));
+    res.send(await controller.getPossiblePositions(parseInt(req.params.id)));
   });
 
   return router;

@@ -18,25 +18,25 @@ function createRoutes(controller) {
         res.send(result);
     }));
     router.post('/joinGame/:id', (req, res) => {
-        controller.joinGame(req);
+        controller.joinGame(parseInt(req.params.id), req.body.position);
         res.status(200).send('OK');
     });
     router.get('/getGameInfo/:id', cors(), (req, res) => __awaiter(this, void 0, void 0, function* () {
-        res.send(yield controller.getGameInfo(req.params.id));
+        res.send(yield controller.getGameInfo(parseInt(req.params.id)));
     }));
     router.get('/addActivePlayer/:id', cors(), (req, res) => {
-        controller.addActivePlayer(req.params.id);
+        controller.addActivePlayer(parseInt(req.params.id));
         res.sendStatus(200);
     });
     router.get('/removeActivePlayer/:id/:position', cors(), (req, res) => {
-        controller.removeActivePlayer(req.params.id, req.params.position);
+        controller.removeActivePlayer(parseInt(req.params.id), req.params.position);
         res.sendStatus(200);
     });
     router.get('/checkIfPinExists/:id', cors(), (req, res) => __awaiter(this, void 0, void 0, function* () {
-        res.send(yield controller.checkIfPinExists(req.params.id));
+        res.send(yield controller.checkIfPinExists(parseInt(req.params.id)));
     }));
     router.get('/getPossiblePositions/:id', cors(), (req, res) => __awaiter(this, void 0, void 0, function* () {
-        res.send(yield controller.getPossiblePositions(req.params.id));
+        res.send(yield controller.getPossiblePositions(parseInt(req.params.id)));
     }));
     return router;
     // if I create self-contained functions, I can write them like this

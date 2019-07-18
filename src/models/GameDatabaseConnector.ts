@@ -7,6 +7,7 @@ import * as mongoose from 'mongoose';
 
 import DatabaseConnector from './database';
 import {IGame} from "./gameSchema";
+import {PartInventory} from "./partInventory";
 
 // let noop = (err: any, raw: any) => {};
 
@@ -30,8 +31,8 @@ export class GameDatabaseConnector {
    * This is to avoid games from having the same pin
    * @param pin Identifier
    */
-  public async checkIfPinExists(pinNum: string): Promise<any> {
-    let result = await this.gameCollection.findOne({pin: parseInt(pinNum)});
+  public async checkIfPinExists(pinNum: number): Promise<any> {
+    let result = await this.gameCollection.findOne({pin: pinNum});
     return result != undefined && result != null;
   }
 
@@ -39,9 +40,9 @@ export class GameDatabaseConnector {
    * Increments the active players by one whenever a new player joins the game
    * @param pinNum string
    */
-  public addActivePlayer(pinNum: string): void {
+  public addActivePlayer(pinNum: number): void {
     console.log(`Adding active player for ${pinNum} (a ${typeof pinNum}).`);
-    this.gameCollection.update({pin: parseInt(pinNum)}, {$inc: {activePlayers: 1}}).exec();
+    this.gameCollection.update({pin: pinNum}, {$inc: {activePlayers: 1}}).exec();
   }
 
   /**
@@ -49,8 +50,8 @@ export class GameDatabaseConnector {
    * it will also delete the database entry, if there are no active players
    * @param pinNum string
    */
-  public removeActivePlayer(pinNum: string, position: string): void {
-    let query = {pin: parseInt(pinNum)};
+  public removeActivePlayer(pinNum: number, position: string): void {
+    let query = {pin: pinNum};
     let change = {$inc: {activePlayers: -1}, $pull: {positions: position}};
     this.gameCollection.update(query, change, () => {
       this.gameCollection.findOne(query, (err: any, result: any) => {
@@ -62,11 +63,11 @@ export class GameDatabaseConnector {
 
   /**
    * Used for when looking up the game by pin
-   * @param pinNum string
+   * @param pinNum number
    */
-  public async getGameObject(pinNum: string): Promise<IGame | null> {
+  public async getGameObject(pinNum: number): Promise<IGame | null> {
     try {
-      return (await this.gameCollection.findOne({pin: parseInt(pinNum)}));
+      return (await this.gameCollection.findOne({pin: pinNum}));
     } catch(e) {
       return null;
     }
@@ -77,12 +78,35 @@ export class GameDatabaseConnector {
    * If no positions are returned, the game is full
    * @param pinNum string 
    */
-  public async getPossiblePositions(pinNum: string): Promise<any> {
-    return await this.gameCollection.findOne({pin: parseInt(pinNum)}, {positions: 1});
+  public async getPossiblePositions(pinNum: number): Promise<any> {
+    return await this.gameCollection.findOne({pin: pinNum}, {positions: 1});
   }
 
-  public joinGame(pinNum: string, position: string): void {
+  public joinGame(pinNum: number, position: string): void {
     if (position != null && position != "" && position != undefined)
-      this.gameCollection.update({pin: parseInt(pinNum)}, {$push: {positions: position}}).exec();
+      this.gameCollection.update({pin: pinNum}, {$push: {positions: position}}).exec();
+  }
+
+  public async getAssemblerParts(pinNum: number): Promise<Array<PartInventory> | null>
+  {
+    let gameObj: (IGame | null) = await this.gameCollection.findOne({pin: pinNum}, {assemblerParts: 1}).exec();
+
+    if(gameObj)
+    {
+      return Promise.resolve(gameObj.assemblerParts.slice());
+    }
+    else
+    {
+      return Promise.resolve(null);
+    }
+  }
+
+  public async setAssemblerParts(pinNum: number, newParts: Array<PartInventory>): Promise<void>
+  {
+    await this.gameCollection.findOneAndUpdate({pin: pinNum}, {
+      $set: {
+        assemblerParts: newParts
+      }
+    })
   }
 }

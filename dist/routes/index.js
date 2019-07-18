@@ -4,5 +4,5 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var startGame_router_1 = require("./startGame.router");
 exports.createGameRoutes = startGame_router_1.createRoutes;
 var gameLogic_router_1 = require("./gameLogic.router");
-exports.createCustOrderRoutes = gameLogic_router_1.createRoutes;
+exports.createGameLogicRoutes = gameLogic_router_1.createRoutes;
 //# sourceMappingURL=index.js.map

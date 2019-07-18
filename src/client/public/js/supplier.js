@@ -119,7 +119,8 @@ function sendSupplyOrder() {
 
   $.ajax({
     type: 'POST',
-    data: postData,
+    data: JSON.stringify(postData),
+    contentType: 'application/json',
     url: GameAPI.rootURL + '/gameLogic/sendSupplyOrder/' + getPin() + '/' + currentOrder._id,
     success: (data) => {
       console.log('Order sent!');

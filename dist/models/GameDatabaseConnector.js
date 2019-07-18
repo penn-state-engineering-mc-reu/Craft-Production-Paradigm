@@ -32,7 +32,7 @@ class GameDatabaseConnector {
      */
     checkIfPinExists(pinNum) {
         return __awaiter(this, void 0, void 0, function* () {
-            let result = yield this.gameCollection.findOne({ pin: parseInt(pinNum) });
+            let result = yield this.gameCollection.findOne({ pin: pinNum });
             return result != undefined && result != null;
         });
     }
@@ -42,7 +42,7 @@ class GameDatabaseConnector {
      */
     addActivePlayer(pinNum) {
         console.log(`Adding active player for ${pinNum} (a ${typeof pinNum}).`);
-        this.gameCollection.update({ pin: parseInt(pinNum) }, { $inc: { activePlayers: 1 } }).exec();
+        this.gameCollection.update({ pin: pinNum }, { $inc: { activePlayers: 1 } }).exec();
     }
     /**
      * When someone needs to exit the application, this handles removing the active player
@@ -50,7 +50,7 @@ class GameDatabaseConnector {
      * @param pinNum string
      */
     removeActivePlayer(pinNum, position) {
-        let query = { pin: parseInt(pinNum) };
+        let query = { pin: pinNum };
         let change = { $inc: { activePlayers: -1 }, $pull: { positions: position } };
         this.gameCollection.update(query, change, () => {
             this.gameCollection.findOne(query, (err, result) => {
@@ -63,12 +63,12 @@ class GameDatabaseConnector {
     }
     /**
      * Used for when looking up the game by pin
-     * @param pinNum string
+     * @param pinNum number
      */
     getGameObject(pinNum) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                return (yield this.gameCollection.findOne({ pin: parseInt(pinNum) }));
+                return (yield this.gameCollection.findOne({ pin: pinNum }));
             }
             catch (e) {
                 return null;
@@ -82,12 +82,32 @@ class GameDatabaseConnector {
      */
     getPossiblePositions(pinNum) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.gameCollection.findOne({ pin: parseInt(pinNum) }, { positions: 1 });
+            return yield this.gameCollection.findOne({ pin: pinNum }, { positions: 1 });
         });
     }
     joinGame(pinNum, position) {
         if (position != null && position != "" && position != undefined)
-            this.gameCollection.update({ pin: parseInt(pinNum) }, { $push: { positions: position } }).exec();
+            this.gameCollection.update({ pin: pinNum }, { $push: { positions: position } }).exec();
+    }
+    getAssemblerParts(pinNum) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let gameObj = yield this.gameCollection.findOne({ pin: pinNum }, { assemblerParts: 1 }).exec();
+            if (gameObj) {
+                return Promise.resolve(gameObj.assemblerParts.slice());
+            }
+            else {
+                return Promise.resolve(null);
+            }
+        });
+    }
+    setAssemblerParts(pinNum, newParts) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.gameCollection.findOneAndUpdate({ pin: pinNum }, {
+                $set: {
+                    assemblerParts: newParts
+                }
+            });
+        });
     }
 }
 exports.GameDatabaseConnector = GameDatabaseConnector;

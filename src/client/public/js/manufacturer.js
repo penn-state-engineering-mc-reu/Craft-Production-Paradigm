@@ -157,9 +157,9 @@ function sendPiecesOrder() {
   let postData = {'request': orderData};
   $.ajax({
     type: 'POST',
-    data: postData,
     url: GameAPI.rootURL + '/gameLogic/addSupplyOrder/' + getPin(),
-    dataType: 'json',
+    data: JSON.stringify(postData),
+    contentType: 'application/json',
     success: (data) => {
       initArray();
       $('.value').text('0');

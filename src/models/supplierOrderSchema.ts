@@ -1,13 +1,5 @@
 import {IOrder, OrderSchema} from "./orderBaseSchema";
-
-export class PartInventory
-{
-    partID: number = -1;
-    color: number = 0;
-    count: number = 0;
-}
-
-let PartInventoryScheme = {partID: Number, color: Number, count: Number};
+import {PartInventory, PartInventoryScheme} from "./partInventory";
 
 export interface ISupplierOrder extends IOrder
 {

@@ -1,4 +1,7 @@
 import * as mongoose from 'mongoose';
+
+import {PartInventory, PartInventoryScheme} from "./partInventory";
+
 const Schema = mongoose.Schema;
 
 export interface IGame extends mongoose.Document
@@ -11,6 +14,7 @@ export interface IGame extends mongoose.Document
   activePlayers: number;
   positions: Array<string>;
   createdDate: Date;
+  assemblerParts: Array<PartInventory>;
 }
 
 export const GameScheme = new Schema({
@@ -24,5 +28,6 @@ export const GameScheme = new Schema({
   createdDate: {
     type: Date,
     default: Date.now
-  }
+  },
+  assemblerParts: {type: PartInventoryScheme, default: new Array<PartInventory>()}
 });

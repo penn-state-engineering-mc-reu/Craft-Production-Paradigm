@@ -16,7 +16,8 @@ const CustOrderDatabaseConnector_1 = require("../models/CustOrderDatabaseConnect
 const orderImage_1 = require("../models/orderImage");
 const SupplierOrderDatabaseConnector_1 = require("../models/SupplierOrderDatabaseConnector");
 class GameLogicController {
-    constructor(dbClient) {
+    constructor(dbClient, gameController) {
+        this.gameController = gameController;
         this.custOrderDBConnector = new CustOrderDatabaseConnector_1.CustOrderDatabaseConnector(dbClient);
         this.supplierOrderDBConnector = new SupplierOrderDatabaseConnector_1.SupplierOrderDatabaseConnector(dbClient);
     }
@@ -82,7 +83,10 @@ class GameLogicController {
     }
     completeSupplyOrder(pin, orderId, parts) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.supplierOrderDBConnector.completeOrder(pin, orderId, parts);
+            yield Promise.all([
+                this.supplierOrderDBConnector.completeOrder(pin, orderId, parts),
+                this.gameController.addAssemblerParts(pin, parts)
+            ]);
         });
     }
     forwardManufacturerOrder(pin, orderID) {
@@ -90,16 +94,16 @@ class GameLogicController {
             return this.custOrderDBConnector.setOrderStage(pin, orderID, 'Assembler');
         });
     }
-    /*public async getSupplyOrder(pin: string, orderId: string): Promise<Array<PartInventory>> {
+    /*public async getSupplyOrder(pin: number, orderId: string): Promise<Array<PartInventory>> {
       return await this.supplierOrderDBConnector.getSupplyOrder(pin, orderId);
     }*/
-    /*public async getColors(pin: string, orderId: string): Promise<Array<any>> {
+    /*public async getColors(pin: number, orderId: string): Promise<Array<any>> {
       let result = await this.custOrderDBConnector.getColors(pin, orderId);
       return result;
     }*/
-    updatePieces(pin, orderId, pieces) {
+    /*  public updatePieces(pin: string, orderId: string, pieces: Array<number>): number {
         return this.custOrderDBConnector.updatePieces(pin, orderId, pieces);
-    }
+      }*/
     updateAssembledModel(pin, orderId, model) {
         return this.custOrderDBConnector.updateAssembledModel(pin, orderId, model);
     }

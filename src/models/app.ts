@@ -2,7 +2,7 @@ import * as express from "express";
 import * as bodyParser from "body-parser";
 import * as path from 'path';
 import * as cors from 'cors';
-import {createGameRoutes, createCustOrderRoutes} from '../routes';
+import {createGameRoutes, createGameLogicRoutes} from '../routes';
 import DatabaseConnector from "./database";
 import {GameLogicController} from "../controllers/GameLogicController";
 import {GameController} from "../controllers/GameController";
@@ -36,8 +36,9 @@ class App {
   }
 
   private setRoutes(): void {
-    this.app.use('/startGame', createGameRoutes(new GameController(this.dbConnection)));
-    this.app.use('/gameLogic', createCustOrderRoutes(new GameLogicController(this.dbConnection)));
+    let gameController = new GameController(this.dbConnection);
+    this.app.use('/startGame', createGameRoutes(gameController));
+    this.app.use('/gameLogic', createGameLogicRoutes(gameController, new GameLogicController(this.dbConnection, gameController)));
   }
 }
 

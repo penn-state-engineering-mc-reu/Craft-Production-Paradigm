@@ -7,6 +7,7 @@ import {GameScheme} from '../models/gameSchema';
 import {Request, Response} from 'express';
 import {GameDatabaseConnector} from '../models/GameDatabaseConnector';
 import DatabaseConnector from "../models/database";
+import {PartInventory} from "../models/partInventory";
 
 const Game: mongoose.Model<any> = mongoose.model('Game', GameScheme);
 
@@ -28,31 +29,31 @@ export class GameController {
     return requestGame.pin;
   }
 
-  public joinGame(req: Request) {
-    this.db.joinGame(req.params.id, req.body.position);
+  public joinGame(pin: number, position: string) {
+    this.db.joinGame(pin, position);
   }
 
   /**
    * Gets all of the game info from database using the pin
    * @param pin JavaScript decided for me that it will be a string
    */
-  public async getGameInfo(pin: string): Promise<any> {
+  public async getGameInfo(pin: number): Promise<any> {
     return await this.db.getGameObject(pin);
   }
 
-  public addActivePlayer(pin: string): void {
+  public addActivePlayer(pin: number): void {
     this.db.addActivePlayer(pin);
   }
 
-  public removeActivePlayer(pin: string, position: string): void {
+  public removeActivePlayer(pin: number, position: string): void {
     this.db.removeActivePlayer(pin, position);
   }
 
-  public async checkIfPinExists(pin: string) {
+  public async checkIfPinExists(pin: number) {
     return await this.db.checkIfPinExists(pin);
   }
 
-  public async getPossiblePositions(pin: string): Promise<any> {
+  public async getPossiblePositions(pin: number): Promise<any> {
     let possiblePositions: string[] = ['Customer', 'Manufacturer', 'Supplier', 'Assembler'];
     let takenPositions = await this.db.getPossiblePositions(pin);
     takenPositions.positions.forEach((element: string) => {
@@ -63,19 +64,62 @@ export class GameController {
     return possiblePositions;
   }
 
+  public async getAssemblerParts(pin: number): Promise<Array<PartInventory> | null>
+  {
+    return this.db.getAssemblerParts(pin);
+  }
+
+  public async setAssemblerParts(pin: number, newParts: Array<PartInventory>): Promise<void>
+  {
+    return this.db.setAssemblerParts(pin, newParts);
+  }
+
+  public async addAssemblerParts(pin: number, newParts: Array<PartInventory>): Promise<void>
+  {
+    let assemblerParts: (Array<PartInventory> | null) = await this.db.getAssemblerParts(pin);
+
+    if(assemblerParts)
+    {
+      newParts.forEach(thisNewPart => {
+        // Checked twice because TypeScript won't change the data type if a null check occurs in an outer block
+        if(assemblerParts)
+        {
+          let matchedExistingIndex: number = assemblerParts.findIndex(function (thisExistingPart): boolean {
+            return (thisExistingPart.partID === thisNewPart.partID && thisExistingPart.color === thisNewPart.color);
+          });
+
+          if (matchedExistingIndex !== -1)
+          {
+            assemblerParts[matchedExistingIndex].count += thisNewPart.count;
+          }
+          else
+          {
+            assemblerParts.push(thisNewPart);
+          }
+        }
+      });
+
+      await this.db.setAssemblerParts(pin, assemblerParts);
+    }
+    else
+    {
+      await this.db.setAssemblerParts(pin, newParts);
+    }
+  }
+
   /**
    * Generates a pin and makes sure the pin doesn't already exist in the db
    */
   private async generatePin(): Promise<number> {    
     let notOriginal: Boolean = true;
-    let pin: string = Math.floor(Math.random() * 9999).toString();
+    let pin: number = Math.floor(Math.random() * 9999);
 
     while(notOriginal) {
       let result = await this.db.checkIfPinExists(pin);
       notOriginal = result;
-      if (notOriginal) pin = Math.floor(Math.random() * 9999).toString();
+      if (notOriginal) pin = Math.floor(Math.random() * 9999);
     }
 
-    return parseInt(pin);
+    return pin;
   }
 }

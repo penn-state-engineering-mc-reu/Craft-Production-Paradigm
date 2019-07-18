@@ -28,12 +28,12 @@ class CustOrderDatabaseConnector {
     }
     getOrder(pin, orderID) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.orderModel.findOne({ pin: parseInt(pin), _id: orderID }, { 'imageData': 0 }).exec();
+            return this.orderModel.findOne({ pin: pin, _id: orderID }, { 'imageData': 0 }).exec();
         });
     }
     getCustomOrderImage(pin, orderID) {
         return __awaiter(this, void 0, void 0, function* () {
-            let orderInfo = yield this.orderModel.findOne({ pin: parseInt(pin), _id: orderID }, { 'imageData': 1 });
+            let orderInfo = yield this.orderModel.findOne({ pin: pin, _id: orderID }, { 'imageData': 1 });
             if (orderInfo) {
                 if (orderInfo.imageData) {
                     return Promise.resolve(orderInfo.imageData);
@@ -54,7 +54,7 @@ class CustOrderDatabaseConnector {
     getOrders(pin) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                return (yield this.orderModel.find({ pin: parseInt(pin) }, { 'imageData': 0 }));
+                return (yield this.orderModel.find({ pin: pin }, { 'imageData': 0 }));
             }
             catch (e) {
                 return new Array();
@@ -64,12 +64,12 @@ class CustOrderDatabaseConnector {
     /*// This happens at the supplier stage
     // I don't know why I have two functions that essentially do the same thing (idgaf at this point)
     // fixed: they no longer do the same thing
-    public addSupplyOrder(pin: string, orderId: string, order: Array<number>, colors: Array<string>): void {
+    public addSupplyOrder(pin: number, orderId: string, order: Array<number>, colors: Array<string>): void {
       let time: number = new Date().getTime();
       let update: Object = {$set: {supplyOrders: order, colors: colors, lastModified: time, stage: 'Assembler'}};
       this.orderModel.update({pin: parseInt(pin), _id: orderId}, update).exec();
     }*/
-    /*  public async getSupplyOrder(pin: string, orderId: string): Promise<Array<number>> {
+    /*  public async getSupplyOrder(pin: number, orderId: string): Promise<Array<number>> {
         let orders = await this.orderModel.findOne({pin: parseInt(pin), _id: orderId}, {supplyOrders: 1});
     
         if(orders) {
@@ -80,7 +80,7 @@ class CustOrderDatabaseConnector {
           return new Array<number>();
         }
       }*/
-    /*public async getColors(pin: string, orderId: string): Promise<Array<string>> {
+    /*public async getColors(pin: number, orderId: string): Promise<Array<string>> {
       try {
         let query = {pin: parseInt(pin), _id: orderId};
         let fields = {colors: 1};
@@ -92,16 +92,16 @@ class CustOrderDatabaseConnector {
         return new Array<any>();
       }
     }*/
-    // this is used in the assembler stage
-    updatePieces(pin, orderId, pieces) {
+    /*  // this is used in the assembler stage
+      public updatePieces(pin: string, orderId: string, pieces: Array<number>): number {
         if (pieces != null && pieces != undefined) {
-            let time = new Date().getTime();
-            let update = { $set: { supplyOrders: pieces, lastModified: time } };
-            this.orderModel.update({ pin: parseInt(pin), _id: orderId }, update).exec();
-            return 200;
+          let time: number = new Date().getTime();
+          let update: Object = {$set: {supplyOrders: pieces, lastModified: time}};
+          this.orderModel.update({pin: parseInt(pin), _id: orderId}, update).exec();
+          return 200;
         }
         return 400;
-    }
+      }*/
     /**
      * Updates the assembled model in the database
      * Also assumed that the process has been finishes so status is changed
@@ -114,7 +114,7 @@ class CustOrderDatabaseConnector {
         if (model != null && model != undefined) {
             let time = new Date().getTime();
             let update = { $set: { assembledModel: model, status: 'Completed', finishedTime: time, stage: 'Inspection' } };
-            this.orderModel.update({ pin: parseInt(pin), _id: orderId }, update).exec();
+            this.orderModel.update({ pin: pin, _id: orderId }, update).exec();
             return 200;
         }
         return 400;
@@ -122,7 +122,7 @@ class CustOrderDatabaseConnector {
     getAssembledModel(pin, orderId) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                let query = { pin: parseInt(pin), _id: orderId.toString() };
+                let query = { pin: pin, _id: orderId.toString() };
                 let projection = { assembledModel: 1 };
                 let foundOrder = yield this.orderModel.findOne(query, projection);
                 if (foundOrder) {
@@ -139,7 +139,7 @@ class CustOrderDatabaseConnector {
         });
     }
     /*
-    public async getManufacturerRequest(pin: string, orderId: string): Promise<Array<number>> {
+    public async getManufacturerRequest(pin: number, orderId: string): Promise<Array<number>> {
       try {
         let request: (ICustomerOrder | null) = await this.orderModel.findOne({pin: parseInt(pin), _id: orderId}, {manufacturerReq: 1});
         if(request) {
@@ -160,7 +160,7 @@ class CustOrderDatabaseConnector {
      * @param orderId
      * @param request
      */
-    /*public updateManufacturerRequest(pin: string, orderId: string, request: Array<number>): number {
+    /*public updateManufacturerRequest(pin: number, orderId: string, request: Array<number>): number {
       if (request != null && request != undefined) {
         let time: number = new Date().getTime();
         let update: Object = {$set: {manufacturerReq: request, stage: 'Supplier', lastModified: time}};
@@ -172,7 +172,7 @@ class CustOrderDatabaseConnector {
     acceptOrder(pin, orderId) {
         try {
             let update = { $set: { status: 'Completed', stage: 'Sent to Customer' } };
-            this.orderModel.update({ pin: parseInt(pin), _id: orderId }, update).exec();
+            this.orderModel.update({ pin: pin, _id: orderId }, update).exec();
             return 200;
         }
         catch (e) {
@@ -199,7 +199,7 @@ class CustOrderDatabaseConnector {
         try {
             let time = new Date().getTime();
             let update = { $set: { status: 'In Progress', stage: 'Supplier', lastModified: time, assembledModel: null, finishedTime: -1 } };
-            this.orderModel.update({ pin: parseInt(pin), _id: orderId }, update).exec();
+            this.orderModel.update({ pin: pin, _id: orderId }, update).exec();
             return 200;
         }
         catch (e) {

@@ -1,7 +1,8 @@
 import {Model} from "mongoose";
 
 import DatabaseConnector from './database';
-import {ISupplierOrder, PartInventory} from "./supplierOrderSchema";
+import {ISupplierOrder} from "./supplierOrderSchema";
+import {PartInventory} from "./partInventory";
 
 export class SupplierOrderDatabaseConnector {
     public orderModel: Model<ISupplierOrder>;
@@ -10,7 +11,7 @@ export class SupplierOrderDatabaseConnector {
         this.orderModel = dbConnection.getSupplierOrderCollection();
     }
 
-    public async addOrder(pin: string, manufRequest: Array<PartInventory>): Promise<ISupplierOrder> {
+    public async addOrder(pin: number, manufRequest: Array<PartInventory>): Promise<ISupplierOrder> {
         let newModel = new this.orderModel({pin: pin, manufacturerReq: manufRequest});
         return newModel.save();
     }
@@ -19,7 +20,7 @@ export class SupplierOrderDatabaseConnector {
         return await this.orderModel.findOne({pin: pin, _id: orderId}, {manufacturerReq: 1});
     }
 
-    public async getSupplyOrder(pin: string, orderId: string): Promise<Array<PartInventory>> {
+    public async getSupplyOrder(pin: number, orderId: string): Promise<Array<PartInventory>> {
         let orders = await this.orderModel.findOne({pin: parseInt(pin), _id: orderId}, {supplyOrders: 1});
 
         if(orders) {
@@ -36,7 +37,7 @@ export class SupplierOrderDatabaseConnector {
         return this.orderModel.find({pin: pin}).exec();
     }
 
-    public async completeOrder(gamePin: string, orderID: string, supplierParts: Array<PartInventory>): Promise<ISupplierOrder | null>
+    public async completeOrder(gamePin: number, orderID: string, supplierParts: Array<PartInventory>): Promise<ISupplierOrder | null>
     {
         let time: number = new Date().getTime();
         return this.orderModel.findOneAndUpdate({pin: gamePin, _id: orderID}, {$set: {
