@@ -230,7 +230,7 @@ function checkPieces() {
 function openSupplyModal() {
   checkPieces();
   updatePieces();
-  if (pieces == null)
+  if (pieces.length === 0)
     $('#no-pieces').modal('show');
   else
     $('#pieces-modal').modal('show');
@@ -313,7 +313,7 @@ function generatePiecesGrid() {
     for (let col = 0; col < 4; col++) {
       if (row * 4 + col < num) {
         html += '<div class="four wide text-center column">';
-        html += '<p id="' + (row * 4 + col) + '-name">' + names[pieces[i].partID] + '</p>';
+        html += '<p id="' + (row * 4 + col) + '-name" class="part-name-text">' + names[pieces[i].partID] + '</p>';
         html += '<p id="' + (row * 4 + col) + '-color">(' + BrickColors.findByColorID(pieces[i].color).colorName + ')</p>';
         html += '<div class="row"><div class="ui statistic"><div id="' + i + '-value';
         html += '"class="value">' + pieces[i].count + '</div></div></div>';

@@ -202,14 +202,14 @@ export class CustOrderDatabaseConnector {
   }
 
   /**
-   * If the user doesn't approve the model, the game will turn back to the supplier stage
+   * If the user doesn't approve the model, the customer order will be sent back to the manufacturer stage
    * @param pin 
    * @param orderId 
    */
   public rejectOrder(pin: number, orderId: string): number {
     try {
       let time: number = new Date().getTime();
-      let update: Object = {$set: {status: 'In Progress', stage: 'Supplier', lastModified: time, assembledModel: null, finishedTime: -1}};
+      let update: Object = {$set: {status: 'In Progress', stage: 'Manufacturer', lastModified: time, assembledModel: null, finishedTime: -1}};
       this.orderModel.update({pin: pin, _id: orderId}, update).exec();
       return 200;
     } catch(e) {

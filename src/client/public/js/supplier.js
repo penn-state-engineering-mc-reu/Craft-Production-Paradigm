@@ -125,8 +125,12 @@ function sendSupplyOrder() {
     success: (data) => {
       console.log('Order sent!');
       $('#ready-order').modal('toggle');
-      generateSupplyGrid();
-      initGridButtons();
+      initArray();
+      $('.value').text('0');
+      for(let index = 0; index < partProperties.length; index++)
+      {
+        $('.' + index + '-picker').spectrum('set', BrickColors.defaultBrickColor.RGBString);
+      }
     },
     error: (xhr, status, error) => {
       console.log(error);
