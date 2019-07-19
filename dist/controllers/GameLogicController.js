@@ -12,26 +12,25 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const GameLogicDatabaseConnector_1 = require("../controllers/GameLogicDatabaseConnector");
-const order_1 = require("../models/order");
+const CustOrderDatabaseConnector_1 = require("../models/CustOrderDatabaseConnector");
 const orderImage_1 = require("../models/orderImage");
+const SupplierOrderDatabaseConnector_1 = require("../models/SupplierOrderDatabaseConnector");
 class GameLogicController {
-    constructor() {
-        this.db = new GameLogicDatabaseConnector_1.GameLogicDatabaseConnector();
+    constructor(dbClient, gameController) {
+        this.gameController = gameController;
+        this.custOrderDBConnector = new CustOrderDatabaseConnector_1.CustOrderDatabaseConnector(dbClient);
+        this.supplierOrderDBConnector = new SupplierOrderDatabaseConnector_1.SupplierOrderDatabaseConnector(dbClient);
     }
     placeOrder(pin, modelID) {
         return __awaiter(this, void 0, void 0, function* () {
-            let order = new order_1.default(pin);
-            order.setModelID(modelID);
-            order.setStage('Manufacturer');
-            yield this.db.addOrder(yield order.toJSON());
+            let order = { pin: pin, modelID: modelID };
+            yield this.custOrderDBConnector.addOrder(order);
         });
     }
     placeCustomOrder(pin, orderDesc, imageData) {
         return __awaiter(this, void 0, void 0, function* () {
-            let order = new order_1.default(pin);
-            order.setCustomOrder(orderDesc, new orderImage_1.OrderImage(imageData));
-            yield this.db.addOrder(yield order.toJSON());
+            let order = { pin: pin, isCustomOrder: true, orderDesc: orderDesc, imageData: yield (new orderImage_1.OrderImage(imageData)).toBuffer() };
+            yield this.custOrderDBConnector.addOrder(order);
         });
     }
     /*
@@ -69,57 +68,67 @@ class GameLogicController {
       }*/
     getOrder(pin, orderID) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db.getOrder(pin, orderID);
+            return yield this.custOrderDBConnector.getOrder(pin, orderID);
         });
     }
     getOrders(pin) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db.getOrders(pin);
+            return yield this.custOrderDBConnector.getOrders(pin);
         });
     }
     getCustomOrderImage(pin, orderID) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db.getCustomOrderImage(pin, orderID);
+            return yield this.custOrderDBConnector.getCustomOrderImage(pin, orderID);
         });
     }
-    addSupplyOrder(pin, orderId, order, colors) {
-        this.db.addSupplyOrder(pin, orderId, order, colors);
-    }
-    getSupplyOrder(pin, orderId) {
+    completeSupplyOrder(pin, orderId, parts) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db.getSupplyOrder(pin, orderId);
+            yield Promise.all([
+                this.supplierOrderDBConnector.completeOrder(pin, orderId, parts),
+                this.gameController.addAssemblerParts(pin, parts)
+            ]);
         });
     }
-    getColors(pin, orderId) {
+    forwardManufacturerOrder(pin, orderID) {
         return __awaiter(this, void 0, void 0, function* () {
-            let result = yield this.db.getColors(pin, orderId);
-            return result;
+            return this.custOrderDBConnector.setOrderStage(pin, orderID, 'Assembler');
         });
     }
-    updatePieces(pin, orderId, pieces) {
-        return this.db.updatePieces(pin, orderId, pieces);
-    }
+    /*public async getSupplyOrder(pin: number, orderId: string): Promise<Array<PartInventory>> {
+      return await this.supplierOrderDBConnector.getSupplyOrder(pin, orderId);
+    }*/
+    /*public async getColors(pin: number, orderId: string): Promise<Array<any>> {
+      let result = await this.custOrderDBConnector.getColors(pin, orderId);
+      return result;
+    }*/
+    /*  public updatePieces(pin: string, orderId: string, pieces: Array<number>): number {
+        return this.custOrderDBConnector.updatePieces(pin, orderId, pieces);
+      }*/
     updateAssembledModel(pin, orderId, model) {
-        return this.db.updateAssembledModel(pin, orderId, model);
+        return this.custOrderDBConnector.updateAssembledModel(pin, orderId, model);
     }
     getAssembledModel(pin, orderId) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db.getAssembledModel(pin, orderId);
+            return yield this.custOrderDBConnector.getAssembledModel(pin, orderId);
         });
     }
-    getManufacturerRequest(pin, orderId) {
+    /*  public async getManufacturerRequest(pin: number, orderId: string): Promise<ISupplierOrder | null> {
+        return await this.supplierOrderDBConnector.getManufacturerRequest(pin, orderId);
+      }*/
+    addSupplyOrder(pin, request) {
+        console.log("At controller: " + JSON.stringify(request));
+        return this.supplierOrderDBConnector.addOrder(pin, request);
+    }
+    getSupplyOrders(pin) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db.getManufacturerRequest(pin, orderId);
+            return this.supplierOrderDBConnector.getSupplyOrders(pin);
         });
-    }
-    updateManufacturerRequest(pin, orderId, request) {
-        return this.db.updateManufacturerRequest(pin, orderId, request);
     }
     acceptOrder(pin, orderId) {
-        return this.db.acceptOrder(pin, orderId);
+        return this.custOrderDBConnector.acceptOrder(pin, orderId);
     }
     rejectOrder(pin, orderId) {
-        return this.db.rejectOrder(pin, orderId);
+        return this.custOrderDBConnector.rejectOrder(pin, orderId);
     }
 }
 exports.GameLogicController = GameLogicController;

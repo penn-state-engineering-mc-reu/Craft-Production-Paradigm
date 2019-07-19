@@ -7,7 +7,7 @@ function loadRollOverMesh() {
   let index = allModels.indexOf(currentObj);
   loader.load(allModels[index].directory, function (geometry) {
     geometry.computeBoundingBox();
-    let modelColor = tinycolor(colors[index]);
+    let modelColor = tinycolor(BrickColors.findByColorID(pieces[pieceIndex].color).RGBString);
     let material = new THREE.MeshPhongMaterial({transparent: true, opacity: modelColor.getAlpha(),
       color: modelColor.toHexString(), shininess: 30, specular: 0x111111});
     rollOverMesh = new THREE.Mesh(geometry, material);
@@ -27,6 +27,7 @@ function loadRollOverMesh() {
     currentRollOverModel = allModels[index].name;
     rollOverMesh.userData.dimensions = size;
     rollOverMesh.userData.modelType = currentRollOverModel;
+    rollOverMesh.userData.colorInfo = pieces[pieceIndex].color;
     rollOverMesh.name = 'rollOverMesh';
 
     rollOverMesh.position.y += determineModelYTranslation();
@@ -58,9 +59,9 @@ function onDocumentMouseMove(event)
 function updateRolloverMesh(mousePos) {
   raycaster.setFromCamera(mousePos, camera);
   var intersects = raycaster.intersectObjects(collisionObjects);
-  pieceIndex = names.indexOf(currentRollOverModel);
+  // pieceIndex = names.indexOf(currentRollOverModel);
   if (pieceIndex != -1) {
-    if (pieces[pieceIndex] == 0) {
+    if (pieces[pieceIndex].count == 0) {
       currentRollOverModel = "";
       scene.remove(rollOverMesh);
     }
@@ -150,7 +151,7 @@ function onDocumentMouseDown(event) {
   if (intersects.length > 0 || objIntersect.length > 0) {
     var intersect = intersects[0];
     var objIntersect = objIntersect[0];
-    pieceIndex = names.indexOf(currentRollOverModel);
+    // pieceIndex = names.indexOf(currentRollOverModel);
     // delete cube
     if (isCtrlDown) {
       if (intersect.object != plane) {
@@ -162,8 +163,24 @@ function onDocumentMouseDown(event) {
           collisionObjects.splice(collisionObjects.indexOf(intersect.object), 1);
           // I get this kind of shit when I forget to actually design some parts
           // It's also because some parts of JS can be "interesting"
-          let index = names.indexOf(intersect.object.children[0].userData.modelType);
-          pieces[index] = parseInt(pieces[index]) + 1;
+          let partID = names.indexOf(intersect.object.children[0].userData.modelType);
+          let partColor = intersect.object.children[0].userData.colorInfo;
+          let existingPiece = pieces.find(value => {
+            return (value.partID === partID && value.color === partColor);
+          });
+
+          if(existingPiece) {
+            (existingPiece.count)++;
+          }
+          else
+          {
+            pieces.push({
+              partID: partID,
+              color: partColor,
+              count: 1
+            });
+          }
+
           // It's about as stupid as it looks
           // this is because the intersection object is the collision object
           // group.remove(intersect.object.children[0]);
@@ -172,10 +189,19 @@ function onDocumentMouseDown(event) {
         }
       }
     }
-    else if (isShiftDown && pieces[pieceIndex] > 0) {
+    else if (isShiftDown && pieces[pieceIndex].count > 0) {
       placeLego(intersect, (placement, modelMesh, collisionMesh) => {
         if (placement) {
-          pieces[pieceIndex] = parseInt(pieces[pieceIndex]) - 1;
+          let newPieceCount = pieces[pieceIndex].count - 1;
+
+          if(newPieceCount > 0) {
+            pieces[pieceIndex].count = newPieceCount;
+          }
+          else
+          {
+            pieces.splice(pieceIndex, 1);
+            pieceIndex = -1;
+          }
           placementOffset.set(0, 0, 0);
           updatePieces();
 
@@ -271,7 +297,7 @@ function placeLego(intersect, cb) {
  * @param {THREE.Vector3} size 
  */
 function generateObjFromModel(geometry, modelObj, size) {
-  let modelColor = tinycolor(colors[allModels.indexOf(currentObj)]);
+  let modelColor = tinycolor(BrickColors.findByColorID(pieces[pieceIndex].color).RGBString);
 
   geometry.computeBoundingBox();
   let material = new THREE.MeshPhongMaterial({transparent: true, opacity: modelColor.getAlpha(),
@@ -281,6 +307,7 @@ function generateObjFromModel(geometry, modelObj, size) {
   modelObj.mesh.rotation.y = rollOverMesh.rotation.y;
   modelObj.mesh.rotation.z = rollOverMesh.rotation.z;
   modelObj.mesh.scale.set(currentObj.scale,currentObj.scale,currentObj.scale);
+  modelObj.mesh.userData.colorInfo = pieces[pieceIndex].color;
 
   // group.add(modelObj.mesh);
   let box = new THREE.Box3().setFromObject(modelObj.mesh);
