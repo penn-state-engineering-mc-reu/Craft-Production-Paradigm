@@ -3,29 +3,35 @@
  * i.e. Things that deal with the orders
  */
 
-import {Request, Response} from 'express';
-import {GameLogicDatabaseConnector} from '../controllers/GameLogicDatabaseConnector';
-import Order from '../models/order'
+import {CustOrderDatabaseConnector} from '../models/CustOrderDatabaseConnector';
 import {OrderImage} from "../models/orderImage";
+import {ICustomerOrder} from "../models/customerOrderSchema";
+import DatabaseConnector from "../models/database";
+import {SupplierOrderDatabaseConnector} from "../models/SupplierOrderDatabaseConnector";
+import {ISupplierOrder} from "../models/supplierOrderSchema";
+import {PartInventory} from "../models/partInventory";
+import {GameController} from "./GameController";
 
 export class GameLogicController {
-  private db: GameLogicDatabaseConnector;
-  constructor() {
-    this.db = new GameLogicDatabaseConnector();
+  private gameController: GameController;
+  private custOrderDBConnector: CustOrderDatabaseConnector;
+  private supplierOrderDBConnector: SupplierOrderDatabaseConnector;
+
+  constructor(dbClient: DatabaseConnector, gameController: GameController) {
+    this.gameController = gameController;
+    this.custOrderDBConnector = new CustOrderDatabaseConnector(dbClient);
+    this.supplierOrderDBConnector = new SupplierOrderDatabaseConnector(dbClient);
   }
 
   public async placeOrder(pin: number, modelID: number): Promise<void> {
-    let order = new Order(pin);
-    order.setModelID(modelID);
-    order.setStage('Manufacturer');
-    await this.db.addOrder(await order.toJSON());
+    let order = {pin: pin, modelID: modelID};
+    await this.custOrderDBConnector.addOrder(order);
   }
 
   public async placeCustomOrder(pin: number, orderDesc: string, imageData: Buffer): Promise<void>
   {
-    let order = new Order(pin);
-    order.setCustomOrder(orderDesc, new OrderImage(imageData));
-    await this.db.addOrder(await order.toJSON());
+    let order = {pin: pin, isCustomOrder: true, orderDesc: orderDesc, imageData: await (new OrderImage(imageData)).toBuffer()};
+    await this.custOrderDBConnector.addOrder(order);
   }
 
   /*
@@ -63,58 +69,72 @@ export class GameLogicController {
     return num;
   }*/
 
-  public async getOrder(pin: string, orderID: string): Promise<object>
+  public async getOrder(pin: number, orderID: string): Promise<ICustomerOrder | null>
   {
-    return await this.db.getOrder(pin, orderID);
+    return await this.custOrderDBConnector.getOrder(pin, orderID);
   }
 
-  public async getOrders(pin: string): Promise<Array<object>> {
-    return await this.db.getOrders(pin);
+  public async getOrders(pin: number): Promise<Array<object>> {
+    return await this.custOrderDBConnector.getOrders(pin);
   }
 
-  public async getCustomOrderImage(pin: string, orderID: string): Promise<Buffer>
+  public async getCustomOrderImage(pin: number, orderID: string): Promise<Buffer>
   {
-    return await this.db.getCustomOrderImage(pin, orderID);
+    return await this.custOrderDBConnector.getCustomOrderImage(pin, orderID);
   }
 
-  public addSupplyOrder(pin: string, orderId: string, order: Array<number>, colors: Array<string>): void {
-    this.db.addSupplyOrder(pin, orderId, order, colors);
+  public async completeSupplyOrder(pin: number, orderId: string, parts: Array<PartInventory>): Promise<void> {
+    await Promise.all([
+        this.supplierOrderDBConnector.completeOrder(pin, orderId, parts),
+        this.gameController.addAssemblerParts(pin, parts)
+    ]);
   }
 
-  public async getSupplyOrder(pin: string, orderId: string): Promise<Array<number>> {
-    return await this.db.getSupplyOrder(pin, orderId);
+  public async forwardManufacturerOrder(pin: number, orderID: string): Promise<ICustomerOrder | null>
+  {
+    return this.custOrderDBConnector.setOrderStage(pin, orderID, 'Assembler');
   }
 
-  public async getColors(pin: string, orderId: string): Promise<Array<any>> {
-    let result = await this.db.getColors(pin, orderId);
+  /*public async getSupplyOrder(pin: number, orderId: string): Promise<Array<PartInventory>> {
+    return await this.supplierOrderDBConnector.getSupplyOrder(pin, orderId);
+  }*/
+
+  /*public async getColors(pin: number, orderId: string): Promise<Array<any>> {
+    let result = await this.custOrderDBConnector.getColors(pin, orderId);
     return result;
+  }*/
+
+/*  public updatePieces(pin: string, orderId: string, pieces: Array<number>): number {
+    return this.custOrderDBConnector.updatePieces(pin, orderId, pieces);
+  }*/
+
+  public updateAssembledModel(pin: number, orderId: string, model: string): number {
+    return this.custOrderDBConnector.updateAssembledModel(pin, orderId, model);
   }
 
-  public updatePieces(pin: string, orderId: string, pieces: Array<number>): number {
-    return this.db.updatePieces(pin, orderId, pieces);
+  public async getAssembledModel(pin: number, orderId: string): Promise<string> {
+    return await this.custOrderDBConnector.getAssembledModel(pin, orderId);
   }
 
-  public updateAssembledModel(pin: string, orderId: string, model: object): number {
-    return this.db.updateAssembledModel(pin, orderId, model);
+/*  public async getManufacturerRequest(pin: number, orderId: string): Promise<ISupplierOrder | null> {
+    return await this.supplierOrderDBConnector.getManufacturerRequest(pin, orderId);
+  }*/
+
+  public addSupplyOrder(pin: number, request: Array<PartInventory>): Promise<ISupplierOrder> {
+    console.log("At controller: " + JSON.stringify(request));
+    return this.supplierOrderDBConnector.addOrder(pin, request);
   }
 
-  public async getAssembledModel(pin: string, orderId: string): Promise<object> {
-    return await this.db.getAssembledModel(pin, orderId);
+  public async getSupplyOrders(pin: number): Promise<Array<ISupplierOrder>>
+  {
+    return this.supplierOrderDBConnector.getSupplyOrders(pin);
   }
 
-  public async getManufacturerRequest(pin: string, orderId: string): Promise<Array<number>> {
-    return await this.db.getManufacturerRequest(pin, orderId);
+  public acceptOrder(pin: number, orderId: string): number {
+    return this.custOrderDBConnector.acceptOrder(pin, orderId);
   }
 
-  public updateManufacturerRequest(pin: string, orderId: string, request: Array<number>): number {
-    return this.db.updateManufacturerRequest(pin, orderId, request);
-  }
-
-  public acceptOrder(pin: string, orderId: string): number {
-    return this.db.acceptOrder(pin, orderId);
-  }
-
-  public rejectOrder(pin: string, orderId: string): number {
-    return this.db.rejectOrder(pin, orderId);
+  public rejectOrder(pin: number, orderId: string): number {
+    return this.custOrderDBConnector.rejectOrder(pin, orderId);
   }
 }

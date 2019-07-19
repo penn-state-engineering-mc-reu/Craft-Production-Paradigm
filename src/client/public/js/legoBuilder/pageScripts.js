@@ -4,20 +4,20 @@ const names = ["1x1", "2x2", "2x3x2", "1x2 Pin",
               "Rim 3", "1x2", "1x4", "1x2 Plate",
               "4x6 Plate", "6x8 Plate", "2x10 Plate", "Windshield",
               "Steering Wheel", "Lego Man"];
-let pieces = null;
+let pieces = [];
 let pieceIndex = -1; // used to modify the supply of the piece type
 let orderInformation = {};
 let currentOrder = {};
-let colors = [];
+// let colors = [];
 
 $(document).ready(() => {
   initButtons();
   checkOrders();
-  for (let i = 0; i < names.length; i++) colors[i] = "#d0d3d4";
+  // for (let i = 0; i < names.length; i++) colors[i] = "#d0d3d4";
   checkPieces();
-  getColors();
+  // getColors();
   setInterval(checkPieces, 3000);
-  setInterval(getColors, 3000);
+  // setInterval(getColors, 3000);
 });
 
 // gets the pin from the url
@@ -49,19 +49,14 @@ function initButtons() {
   });
 }
 
-function cycle() {
+/*function cycle() {
   let index = allModels.indexOf(currentObj);
   currentObj = ++index == allModels.length ? allModels[0] : allModels[index];
   loadRollOverMesh();
-}
+}*/
 
-function getModel(name) {
-  allModels.forEach((element, i) => {
-    if (element.name == name) {
-      currentObj = element;
-      pieceIndex = names.indexOf(currentObj);
-    }
-  });
+function getModel(partID) {
+  currentObj = allModels[partID];
   loadRollOverMesh();
 }
 
@@ -215,11 +210,11 @@ function checkPieces() {
   $.ajax({
     type: 'GET',
     cache: 'false',
-    url: GameAPI.rootURL + '/gameLogic/getSupplyOrder/' + getPin() + '/' + currentOrder._id,
+    url: GameAPI.rootURL + '/gameLogic/getAssemblerParts/' + getPin(),
     timeout: 5000,
     success: (data) => {
       if (data != null && data != undefined && data != "") {
-        if (getNumOfPieceTypes(data) != 0 && !samePieces(data, pieces)) {
+        if (!samePieces(data, pieces)) {
           pieces = data;
           generatePiecesGrid();
           initSupplyButtons();
@@ -235,24 +230,29 @@ function checkPieces() {
 function openSupplyModal() {
   checkPieces();
   updatePieces();
-  if (pieces == null)
+  if (pieces.length === 0)
     $('#no-pieces').modal('show');
   else
     $('#pieces-modal').modal('show');
 }
 
 // finds how many actual types of pieces there are
-function getNumOfPieceTypes(pieceArray) {
+/*function getNumOfPieceTypes(pieceArray) {
   let num = 0;
   pieceArray.forEach(elem => {num += elem == 0 ? 0 : 1});
   return num;
-}
+}*/
 
 function samePieces(array1, array2) {
-  if (array1 == null || array2 == null) return false
-  if (array1.length != array2.length) return false;
+  if (array1 == null || array2 == null) return false;
+  if (array1.length !== array2.length) return false;
   for (let i = 0; i < array1.length; i++) {
-    if (array1[i] != array2[i]) return false;
+    if(array1[i].partID !== array2[i].partID
+    || array1[i].color !== array2[i].color
+    || array1[i].count !== array2[i].count)
+    {
+      return false;
+    }
   }
   return true;
 }
@@ -262,8 +262,9 @@ function updatePieces() {
   if (pieces != null && pieces != undefined) {
     $.ajax({
       type: 'POST',
-      data: postData,
-      url: GameAPI.rootURL + '/gameLogic/updatePieces/' + getPin() + '/' + currentOrder._id,
+      data: JSON.stringify(postData),
+      contentType: 'application/json',
+      url: GameAPI.rootURL + '/gameLogic/setAssemblerParts/' + getPin(),
       success: (data) => {
         //console.log(data);
         checkPieces();
@@ -277,17 +278,18 @@ function updatePieces() {
 }
 
 function initSupplyButtons() {
-  for (let i = 0; i < getNumOfPieceTypes(pieces); i++) {
+  for (let i = 0; i < pieces.length; i++) {
     let num = '#' + i;
-    $(num + '-button').click(e => {
-      let modelName = $(num + '-name').html();
+    $(num + '-button').click(function() {
+      let partID = parseInt($(this).data('part-id'));
       $('#pieces-modal').modal('toggle');
-      getModel(modelName);
+      getModel(partID);
+      pieceIndex = i;
     });
   }
 }
 
-function getColors() {
+/*function getColors() {
   $.ajax({
     type: 'GET',
     url: GameAPI.rootURL + '/gameLogic/colors/' + getPin() + '/' + currentOrder._id,
@@ -298,24 +300,24 @@ function getColors() {
       console.log(status, error);
     }
   });
-}
+}*/
 
 function generatePiecesGrid() {
   let html = "";
   // this is to ensure that I'm not appended to previous information
   $('#supply-grid').html(html);
   let i = 0;
-  let num = getNumOfPieceTypes(pieces);
+  let num = pieces.length;
   for (let row = 0; row < num / 4; row++) {
     html = '<div class="row">';
     for (let col = 0; col < 4; col++) {
-      while(pieces[i] == 0 && i < pieces.length) i++;
       if (row * 4 + col < num) {
         html += '<div class="four wide text-center column">';
-        html += '<p id="' + (row * 4 + col) + '-name">' + names[i] + '</p>';
+        html += '<p id="' + (row * 4 + col) + '-name" class="part-name-text">' + names[pieces[i].partID] + '</p>';
+        html += '<p id="' + (row * 4 + col) + '-color">(' + BrickColors.findByColorID(pieces[i].color).colorName + ')</p>';
         html += '<div class="row"><div class="ui statistic"><div id="' + i + '-value';
-        html += '"class="value">' + pieces[i] + '</div></div></div>';
-        html += '<button class="ui button" id="' + (row * 4 + col) + '-button">Place</button></div>';
+        html += '"class="value">' + pieces[i].count + '</div></div></div>';
+        html += '<button class="ui button" id="' + (row * 4 + col) + '-button" data-part-id="' + pieces[i].partID + '">Place</button></div>';
         i++;
       }
     }
@@ -328,7 +330,7 @@ function generatePiecesGrid() {
         case 3: size = 'four'; break;
       }
       html += '<div class="' + size + ' wide column"></div>'
-    };
+    }
     html += '</div>';
     $('#supply-grid').append(html);
   }
