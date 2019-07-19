@@ -1,86 +1,98 @@
 import { Router, Request, Response } from 'express';
 import multer = require('multer');
-let fileUpload = multer();
 
 import {GameLogicController} from '../controllers/GameLogicController'
 import * as cors from 'cors';
+import {PartInventory} from "../models/partInventory";
+import {GameController} from "../controllers/GameController";
 
-const router: Router = Router();
-const controller: GameLogicController = new GameLogicController();
+export function createRoutes(gameController: GameController, gameLogicController: GameLogicController): Router {
+  const router: Router = Router();
+  let fileUpload = multer();
 
-router.post('/sendOrder', fileUpload.single('custom-order-image'), async (req: Request, res: Response) => {
-  let pin: number = parseInt(req.body.pin);
+  router.post('/sendOrder', fileUpload.single('custom-order-image'), async (req: Request, res: Response) => {
+    let pin: number = parseInt(req.body.pin);
 
-  if(req.body.model)
-  {
-    let modelID: number = parseInt(req.body.model);
-    await controller.placeOrder(pin, modelID);
-  }
-  else
-  {
-    let modelDesc: string = req.body['custom-order-desc'];
-    let modelImageData: Express.Multer.File = req.file;
+    if (req.body.model) {
+      let modelID: number = parseInt(req.body.model);
+      await gameLogicController.placeOrder(pin, modelID);
+    } else {
+      let modelDesc: string = req.body['custom-order-desc'];
+      let modelImageData: Express.Multer.File = req.file;
 
-    await controller.placeCustomOrder(pin, modelDesc, modelImageData.buffer);
-  }
+      await gameLogicController.placeCustomOrder(pin, modelDesc, modelImageData.buffer);
+    }
 
-  res.status(200).send('OK');
-});
+    res.status(200).send('OK');
+  });
 
-router.get('/getOrder/:id/:orderID', async (req: Request, res: Response) => {
-  res.send(await controller.getOrder(req.params.id, req.params.orderID));
-});
+  router.get('/getOrder/:id/:orderID', async (req: Request, res: Response) => {
+    res.send(await gameLogicController.getOrder(parseInt(req.params.id), req.params.orderID));
+  });
 
-router.get('/getCustomOrderImage/:id/:orderID', async (req: Request, res: Response) => {
-  res.setHeader('Content-Type', 'image/png');
-  res.send(await controller.getCustomOrderImage(req.params.id, req.params.orderID));
-});
+  router.get('/getCustomOrderImage/:id/:orderID', async (req: Request, res: Response) => {
+    res.setHeader('Content-Type', 'image/png');
+    res.send(await gameLogicController.getCustomOrderImage(parseInt(req.params.id), req.params.orderID));
+  });
 
-router.get('/getOrders/:id', async (req: Request, res: Response) => {
-  res.send(await controller.getOrders(req.params.id));
-});
+  router.get('/getOrders/:id', async (req: Request, res: Response) => {
+    res.send(await gameLogicController.getOrders(parseInt(req.params.id)));
+  });
 
-router.post('/sendSupplyOrder/:id', (req: Request, res: Response) => {
-  controller.addSupplyOrder(req.params.id, req.body.id, req.body.order, req.body.colors);
-  res.status(200).send('OK');
-});
+  router.post('/sendSupplyOrder/:id/:orderID', async (req: Request, res: Response) => {
+    await gameLogicController.completeSupplyOrder(parseInt(req.params.id), req.params.orderID, (req.body.order as Array<PartInventory>));
+    res.status(200).send('OK');
+  });
 
-router.get('/getSupplyOrder/:id/:orderId', async (req: Request, res: Response) => {
-  res.send(await controller.getSupplyOrder(req.params.id, req.params.orderId));
-});
+  router.get('/getAssemblerParts/:id', async (req: Request, res: Response) => {
+    res.send(await gameController.getAssemblerParts(parseInt(req.params.id)));
+  });
 
-router.get('/colors/:id/:orderId', async(req: Request, res: Response) => {
-  let result = await controller.getColors(req.params.id, req.params.orderId);
-  res.send(result);
-});
+/*  router.get('/getSupplyOrder/:id/:orderId', async (req: Request, res: Response) => {
+    res.send(await controller.getSupplyOrder(parseInt(req.params.id), req.params.orderId));
+  });*/
 
-router.post('/updatePieces/:id/:orderId', (req: Request, res: Response) => {
-  res.send(controller.updatePieces(req.params.id, req.params.orderId, req.body.pieces));
-});
+  /*router.get('/colors/:id/:orderId', async (req: Request, res: Response) => {
+    let result = await controller.getColors(parseInt(req.params.id), req.params.orderId);
+    res.send(result);
+  });*/
 
-router.post('/sendAssembledModel/:id/:orderId', (req: Request, res: Response) => {
-  console.log('Assembled model has been sent');
-  res.send(controller.updateAssembledModel(req.params.id, req.params.orderId, req.body.model));
-});
+  router.post('/forwardManufacturerOrder/:id/:orderID', async (req: Request, res: Response) => {
+    res.send(await gameLogicController.forwardManufacturerOrder(parseInt(req.params.id), req.params.orderID));
+  });
 
-router.get('/getAssembledModel/:id/:orderId', async (req: Request, res: Response) => {
-  res.send(await controller.getAssembledModel(req.params.id, req.params.orderId));
-});
+  router.post('/setAssemblerParts/:id', async (req: Request, res: Response) => {
+    res.send(await gameController.setAssemblerParts(parseInt(req.params.id), req.body.pieces));
+  });
 
-router.get('/getManufacturerRequest/:id/:orderId', async (req: Request, res: Response) => {
-  res.send(await controller.getManufacturerRequest(req.params.id, req.params.orderId));
-});
+  router.post('/sendAssembledModel/:id/:orderId', (req: Request, res: Response) => {
+    console.log('Assembled model has been sent');
+    res.send(gameLogicController.updateAssembledModel(parseInt(req.params.id), req.params.orderId, req.body.model));
+  });
 
-router.post('/updateManufacturerRequest/:id/:orderId', (req: Request, res: Response) => {
-  res.send(controller.updateManufacturerRequest(req.params.id, req.params.orderId, req.body.request));
-});
+  router.get('/getAssembledModel/:id/:orderId', async (req: Request, res: Response) => {
+    res.send(await gameLogicController.getAssembledModel(parseInt(req.params.id), req.params.orderId));
+  });
 
-router.post('/acceptOrder/:id/:orderId', (req: Request, res: Response) => {
-  res.send(controller.acceptOrder(req.params.id, req.params.orderId));
-});
+/*  router.get('/getManufacturerRequest/:id/:orderId', async (req: Request, res: Response) => {
+    res.send(await controller.getManufacturerRequest(parseInt(parseInt(req.params.id)), req.params.orderId));
+  });*/
 
-router.post('/rejectOrder/:id/:orderId', (req: Request, res: Response) => {
-  res.send(controller.rejectOrder(req.params.id, req.params.orderId));
-});
+  router.post('/addSupplyOrder/:id', (req: Request, res: Response) => {
+    res.send(gameLogicController.addSupplyOrder(parseInt(req.params.id), (req.body.request as Array<PartInventory>)));
+  });
 
-export const GameLogicRouter: Router = router;
+  router.get('/getSupplyOrders/:id', async (req: Request, res: Response) => {
+    res.send(await gameLogicController.getSupplyOrders(parseInt(req.params.id)));
+  });
+
+  router.post('/acceptOrder/:id/:orderId', (req: Request, res: Response) => {
+    res.send(gameLogicController.acceptOrder(parseInt(req.params.id), req.params.orderId));
+  });
+
+  router.post('/rejectOrder/:id/:orderId', (req: Request, res: Response) => {
+    res.send(gameLogicController.rejectOrder(parseInt(req.params.id), req.params.orderId));
+  });
+
+  return router;
+}

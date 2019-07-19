@@ -4,9 +4,13 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const routes_1 = require("../routes");
+const database_1 = require("./database");
+const GameLogicController_1 = require("../controllers/GameLogicController");
+const GameController_1 = require("../controllers/GameController");
 class App {
     constructor() {
         this.app = express();
+        this.dbConnection = new database_1.default();
         this.config();
         this.setRoutes();
     }
@@ -27,8 +31,9 @@ class App {
         this.app.use(bodyParser({ limit: '50mb' }));
     }
     setRoutes() {
-        this.app.use('/startGame', routes_1.StartGameRouter);
-        this.app.use('/gameLogic', routes_1.GameLogicRouter);
+        let gameController = new GameController_1.GameController(this.dbConnection);
+        this.app.use('/startGame', routes_1.createGameRoutes(gameController));
+        this.app.use('/gameLogic', routes_1.createGameLogicRoutes(gameController, new GameLogicController_1.GameLogicController(this.dbConnection, gameController)));
     }
 }
 exports.default = new App().app;

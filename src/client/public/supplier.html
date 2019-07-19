@@ -16,6 +16,8 @@
 		<script src="/../semantic/dist/semantic.min.js"></script>
 		<script src='/../spectrum/spectrum.js'></script>
 	  	<script src="/../js/gameAPI.js"></script>
+	    <script src="/../js/brickColors.js"></script>
+	    <script src="/../js/partProperties.js"></script>
 		<script src="/../js/supplier.js"></script>
   </head>
   <body>
@@ -28,8 +30,7 @@
               Supplier
             </h1>
 					</div>
-					<button class="ui massive green button" id="request">Manufacturer Request</button>
-					<button class="ui massive yellow button" id="order">Orders From Customer</button>
+					<button class="ui massive green button" id="order">Orders From Manufacturer</button>
           <div id="supply-grid" class="ui celled grid">
 					</div>
         </div>
@@ -55,12 +56,9 @@
 			<div class="header">
 				Order Information
 			</div>
-			<div class="image content">
-				<div class="ui image order-image-container">
-					<img id="order-image" src="">
-				</div>
+			<div class="content">
 				<div class="description">
-					<div class="ui header">Order Sent From the Customer</div>
+					<div class="ui header">Order Sent From the Manufacturer</div>
 					<span id="order-info"></span>
 				</div>
 			</div>

@@ -1,0 +1,1 @@
+{"version":3,"file":"customerOrderCollection.js","sourceRoot":"","sources":["../../src/models/customerOrderCollection.ts"],"names":[],"mappings":";;AAEA,+DAA0E;AAG1E,wBAA+B,YAA+B;IAC1D,OAAO,YAAY,CAAC,aAAa,EAAE,CAAC,KAAK,CAAiB,eAAe,EAAE,yCAAmB,EAAE,gBAAgB,CAAC,CAAC;AACtH,CAAC;AAFD,wCAEC"}
