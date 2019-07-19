@@ -48,6 +48,7 @@ function init() {
   document.addEventListener('mousedown', onDocumentMouseDown, false);
   document.addEventListener('keydown', onDocumentKeyDown, false);
   document.addEventListener('keyup', onDocumentKeyUp, false);
+  renderer.domElement.addEventListener('wheel', onRendererMouseWheel, false);
   window.addEventListener('resize', onWindowResize, false);
 }
 
@@ -58,7 +59,7 @@ function initCamera() {
   camera.position.set(0, 500, 800);
   camera.lookAt(new THREE.Vector3());
   controls = new THREE.OrbitControls(camera, renderer.domElement);
-  controls.addEventListener( 'change', render );
+  // controls.addEventListener( 'change', render );
   controls.rotateSpeed = 1.0;
   controls.zoomSpeed = 1;
   controls.panSpeed = 0.8;
@@ -289,9 +290,9 @@ function createEnvironment(onCompleted)
           thisWallMesh.setRotationFromEuler(elem.rotation);
 
           roomGroup.add(thisWallMesh);
-
-          onCompleted();
         });
+
+        onCompleted();
       }), undefined, function (ex) {
         console.trace(ex);
       });
@@ -339,6 +340,7 @@ function onWindowResize() {
 function render() { renderer.render(scene, camera); }
 
 function animate() {
-  requestAnimationFrame(animate);
   controls.update();
+  render();
+  requestAnimationFrame(animate);
 }

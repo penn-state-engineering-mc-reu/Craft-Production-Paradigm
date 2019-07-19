@@ -1,12 +1,13 @@
 'use strict'
 let currentRollOverModel = "";
+let placementOffset = new THREE.Vector3();
 
 function loadRollOverMesh() {
   let loader = new THREE.STLLoader();
   let index = allModels.indexOf(currentObj);
   loader.load(allModels[index].directory, function (geometry) {
     geometry.computeBoundingBox();
-    let modelColor = tinycolor(colors[index]);
+    let modelColor = tinycolor(BrickColors.findByColorID(pieces[pieceIndex].color).RGBString);
     let material = new THREE.MeshPhongMaterial({transparent: true, opacity: modelColor.getAlpha(),
       color: modelColor.toHexString(), shininess: 30, specular: 0x111111});
     rollOverMesh = new THREE.Mesh(geometry, material);
@@ -26,9 +27,11 @@ function loadRollOverMesh() {
     currentRollOverModel = allModels[index].name;
     rollOverMesh.userData.dimensions = size;
     rollOverMesh.userData.modelType = currentRollOverModel;
+    rollOverMesh.userData.colorInfo = pieces[pieceIndex].color;
     rollOverMesh.name = 'rollOverMesh';
 
     rollOverMesh.position.y += determineModelYTranslation();
+    placementOffset.set(0, 0, 0);
   });
 }
 
@@ -46,14 +49,19 @@ function getNormalizedMousePosition(event)
   return new THREE.Vector2((event.clientX / window.innerWidth) * 2 - 1, - ( (event.clientY - canvasPosition.top) / canvasHeight ) * 2 + 1);
 }
 
-function onDocumentMouseMove(event) {
+function onDocumentMouseMove(event)
+{
   event.preventDefault();
   mouse = getNormalizedMousePosition(event);
-  raycaster.setFromCamera(mouse, camera);
+  updateRolloverMesh(mouse);
+}
+
+function updateRolloverMesh(mousePos) {
+  raycaster.setFromCamera(mousePos, camera);
   var intersects = raycaster.intersectObjects(collisionObjects);
-  pieceIndex = names.indexOf(currentRollOverModel);
+  // pieceIndex = names.indexOf(currentRollOverModel);
   if (pieceIndex != -1) {
-    if (pieces[pieceIndex] == 0) {
+    if (pieces[pieceIndex].count == 0) {
       currentRollOverModel = "";
       scene.remove(rollOverMesh);
     }
@@ -80,6 +88,7 @@ function onDocumentMouseMove(event) {
         }
 
         moveToSnappedPosition(rollOverMesh);
+        rollOverMesh.position.add(placementOffset);
       }
     }
     else {
@@ -91,25 +100,26 @@ function onDocumentMouseMove(event) {
       });
     }
   }
-  render(); 
+  // render();
 }
 
 // handles all the keyboard presses
 // TODO: Handle multiple keypresses
 function onDocumentKeyDown(event) {
-  var vector = new THREE.Vector3();
   switch (event.keyCode) {
     case 16: isShiftDown = true; break; // Shift
     case 17: isCtrlDown = true; break;  // Ctrl
-    case 87: vector.set(0, 10, 0); break;  // W
-    case 65: vector.set(10, 0, 0); break;  // A
-    case 83: vector.set(0, -10, 0); break; // S
-    case 68: vector.set(-10, 0, 0); break; // D
-    case 81: rollOverMesh.rotation.z += Math.PI / 2; moveToSnappedPosition(rollOverMesh); render(); break; // Q
-    case 69: rollOverMesh.rotation.z -= Math.PI / 2; moveToSnappedPosition(rollOverMesh); render(); break; // E
-    case 32: controls.reset(); break;   // Space
+    case 87: placementOffset.add(new THREE.Vector3(0, 0, -TILE_DIMENSIONS.y)); break;  // W
+    case 65: placementOffset.add(new THREE.Vector3(-TILE_DIMENSIONS.x, 0, 0)); break;  // A
+    case 83: placementOffset.add(new THREE.Vector3(0, 0, TILE_DIMENSIONS.y)); break; // S
+    case 68: placementOffset.add(new THREE.Vector3(TILE_DIMENSIONS.x, 0, 0)); break; // D
+    case 81: rollOverMesh.rotation.z += Math.PI / 2; /* render(); */ break; // Q
+    case 69: rollOverMesh.rotation.z -= Math.PI / 2; /* render(); */ break; // E
+      // Manually updating the camera's world matrix seems to be necessary for raytracing (used during the rollover mesh
+      // update) when the camera is moved/rotated in the same frame.
+    case 32: controls.reset(); camera.updateMatrixWorld(); break;   // Space
   }
-  camera.position.add(vector);
+  updateRolloverMesh(mouse);
 }
 
 function onDocumentKeyUp(event) {
@@ -117,6 +127,12 @@ function onDocumentKeyUp(event) {
     case 16: isShiftDown = false; break;
     case 17: isCtrlDown = false; break;
   }
+}
+
+function onRendererMouseWheel(event)
+{
+  camera.updateMatrixWorld();
+  updateRolloverMesh(mouse);
 }
 
 /**
@@ -135,7 +151,7 @@ function onDocumentMouseDown(event) {
   if (intersects.length > 0 || objIntersect.length > 0) {
     var intersect = intersects[0];
     var objIntersect = objIntersect[0];
-    pieceIndex = names.indexOf(currentRollOverModel);
+    // pieceIndex = names.indexOf(currentRollOverModel);
     // delete cube
     if (isCtrlDown) {
       if (intersect.object != plane) {
@@ -147,24 +163,59 @@ function onDocumentMouseDown(event) {
           collisionObjects.splice(collisionObjects.indexOf(intersect.object), 1);
           // I get this kind of shit when I forget to actually design some parts
           // It's also because some parts of JS can be "interesting"
-          let index = names.indexOf(intersect.object.children[0].userData.modelType);
-          pieces[index] = parseInt(pieces[index]) + 1;
+          let partID = names.indexOf(intersect.object.children[0].userData.modelType);
+          let partColor = intersect.object.children[0].userData.colorInfo;
+          let existingPiece = pieces.find(value => {
+            return (value.partID === partID && value.color === partColor);
+          });
+
+          if(existingPiece) {
+            (existingPiece.count)++;
+          }
+          else
+          {
+            pieces.push({
+              partID: partID,
+              color: partColor,
+              count: 1
+            });
+          }
+
           // It's about as stupid as it looks
           // this is because the intersection object is the collision object
           // group.remove(intersect.object.children[0]);
           updatePieces();
+          updateRolloverMesh(mouse);
         }
       }
     }
-    else if (isShiftDown && pieces[pieceIndex] > 0) {
-      placeLego(intersect, placement => {
+    else if (isShiftDown && pieces[pieceIndex].count > 0) {
+      placeLego(intersect, (placement, modelMesh, collisionMesh) => {
         if (placement) {
-          pieces[pieceIndex] = parseInt(pieces[pieceIndex]) - 1;
+          let newPieceCount = pieces[pieceIndex].count - 1;
+
+          if(newPieceCount > 0) {
+            pieces[pieceIndex].count = newPieceCount;
+          }
+          else
+          {
+            pieces.splice(pieceIndex, 1);
+            pieceIndex = -1;
+          }
+          placementOffset.set(0, 0, 0);
           updatePieces();
+
+          // Manually updating the world matrices seems to be necessary for raytracing (used during the rollover mesh
+          // update) for objects created in the same frame.
+          modelMesh.updateMatrixWorld();
+          collisionMesh.updateMatrixWorld();
+          updateRolloverMesh(mouse);
+          // TODO: Update rollover mesh
+          // setTimeout(() => {updateRolloverMesh(mouse);}, 500);
         }
       });
     }
-    render();
+    // render();
   }
 }
 
@@ -203,6 +254,7 @@ function placeLego(intersect, cb) {
         modelObj.position.y += determineModelYTranslation();
 
         moveToSnappedPosition(modelObj);
+        modelObj.position.add(placementOffset);
       }
       else {
         placementPossible = false;
@@ -222,20 +274,18 @@ function placeLego(intersect, cb) {
       }
       else {
         placementPossible = determineModelPosition(modelObj, intersect, size, dim);
-
-        if(placementPossible) {
-          moveToSnappedPosition(modelObj);
-        }
       }
     }
 
+
+    let collisionCube;
     // If the piece can't be placed on another, I don't want it to create and add the modelObj to the scene
     if (placementPossible) {
       scene.add(modelObj);
-      generateCollisionCube(modelObj, size);
+      collisionCube = generateCollisionCube(modelObj, size);
     }
 
-    cb(placementPossible);
+    cb(placementPossible, modelObj, collisionCube);
   });
 }
 
@@ -247,7 +297,7 @@ function placeLego(intersect, cb) {
  * @param {THREE.Vector3} size 
  */
 function generateObjFromModel(geometry, modelObj, size) {
-  let modelColor = tinycolor(colors[allModels.indexOf(currentObj)]);
+  let modelColor = tinycolor(BrickColors.findByColorID(pieces[pieceIndex].color).RGBString);
 
   geometry.computeBoundingBox();
   let material = new THREE.MeshPhongMaterial({transparent: true, opacity: modelColor.getAlpha(),
@@ -257,6 +307,7 @@ function generateObjFromModel(geometry, modelObj, size) {
   modelObj.mesh.rotation.y = rollOverMesh.rotation.y;
   modelObj.mesh.rotation.z = rollOverMesh.rotation.z;
   modelObj.mesh.scale.set(currentObj.scale,currentObj.scale,currentObj.scale);
+  modelObj.mesh.userData.colorInfo = pieces[pieceIndex].color;
 
   // group.add(modelObj.mesh);
   let box = new THREE.Box3().setFromObject(modelObj.mesh);
@@ -304,6 +355,8 @@ function generateCollisionCube(modelObj, size) {
 
   cube.children.push(modelObj);
   objects.push(modelObj);
+
+  return cube;
 }
 
 /**
