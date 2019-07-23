@@ -5,7 +5,7 @@ const names = ["1x1", "2x2", "2x3x2", "1x2 Pin",
               "4x6 Plate", "6x8 Plate", "2x10 Plate", "Windshield",
               "Steering Wheel", "Lego Man"];
 let pieces = [];
-let pieceIndex = -1; // used to modify the supply of the piece type
+// let pieceIndex = -1; // used to modify the supply of the piece type
 let orderInformation = {};
 let currentOrder = {};
 // let colors = [];
@@ -13,11 +13,7 @@ let currentOrder = {};
 $(document).ready(() => {
   initButtons();
   checkOrders();
-  // for (let i = 0; i < names.length; i++) colors[i] = "#d0d3d4";
-  checkPieces();
-  // getColors();
   setInterval(checkPieces, 3000);
-  // setInterval(getColors, 3000);
 });
 
 // gets the pin from the url
@@ -39,7 +35,6 @@ function initButtons() {
   });
 
   $('#order').click(e => {openModal()});
-  $('#pieces').click(e => {openSupplyModal()});
   $('#controls').click(e => {displayControls()});
 
   $('#send-model').click(e => {
@@ -55,10 +50,12 @@ function initButtons() {
   loadRollOverMesh();
 }*/
 
+/*
 function getModel(partID) {
   currentObj = allModels[partID];
   loadRollOverMesh();
 }
+ */
 
 //======================================================================================================
 //                                    Order Functions
@@ -216,8 +213,7 @@ function checkPieces() {
       if (data != null && data != undefined && data != "") {
         if (!samePieces(data, pieces)) {
           pieces = data;
-          generatePiecesGrid();
-          initSupplyButtons();
+          updateBinParts();
         }
       }
     },
@@ -227,6 +223,7 @@ function checkPieces() {
   });
 }
 
+/*
 function openSupplyModal() {
   checkPieces();
   updatePieces();
@@ -235,6 +232,7 @@ function openSupplyModal() {
   else
     $('#pieces-modal').modal('show');
 }
+ */
 
 // finds how many actual types of pieces there are
 /*function getNumOfPieceTypes(pieceArray) {
@@ -260,16 +258,11 @@ function samePieces(array1, array2) {
 function updatePieces() {
   let postData = {'pieces': pieces};
   if (pieces != null && pieces != undefined) {
-    $.ajax({
+    return $.ajax({
       type: 'POST',
       data: JSON.stringify(postData),
       contentType: 'application/json',
       url: GameAPI.rootURL + '/gameLogic/setAssemblerParts/' + getPin(),
-      success: (data) => {
-        //console.log(data);
-        checkPieces();
-        generatePiecesGrid();
-      },
       error: (xhr, status, error) => {
         console.log(error);
       }
@@ -277,17 +270,19 @@ function updatePieces() {
   }
 }
 
+/*
 function initSupplyButtons() {
   for (let i = 0; i < pieces.length; i++) {
     let num = '#' + i;
     $(num + '-button').click(function() {
       let partID = parseInt($(this).data('part-id'));
       $('#pieces-modal').modal('toggle');
-      getModel(partID);
       pieceIndex = i;
+      getModel(partID);
     });
   }
 }
+ */
 
 /*function getColors() {
   $.ajax({
@@ -302,6 +297,7 @@ function initSupplyButtons() {
   });
 }*/
 
+/*
 function generatePiecesGrid() {
   let html = "";
   // this is to ensure that I'm not appended to previous information
@@ -337,3 +333,4 @@ function generatePiecesGrid() {
 
   initSupplyButtons();
 }
+ */
