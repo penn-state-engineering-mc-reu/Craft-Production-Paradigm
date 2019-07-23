@@ -260,7 +260,7 @@ function samePieces(array1, array2) {
 function updatePieces() {
   let postData = {'pieces': pieces};
   if (pieces != null && pieces != undefined) {
-    $.ajax({
+    return $.ajax({
       type: 'POST',
       data: JSON.stringify(postData),
       contentType: 'application/json',
@@ -283,8 +283,8 @@ function initSupplyButtons() {
     $(num + '-button').click(function() {
       let partID = parseInt($(this).data('part-id'));
       $('#pieces-modal').modal('toggle');
-      getModel(partID);
       pieceIndex = i;
+      getModel(partID);
     });
   }
 }

@@ -3,9 +3,8 @@ let currentRollOverModel = "";
 let placementOffset = new THREE.Vector3();
 
 function loadRollOverMesh() {
-  let loader = new THREE.STLLoader();
   let index = allModels.indexOf(currentObj);
-  loader.load(allModels[index].directory, function (geometry) {
+  getPartGeometry(index, function (geometry) {
     geometry.computeBoundingBox();
     let modelColor = tinycolor(BrickColors.findByColorID(pieces[pieceIndex].color).RGBString);
     let material = new THREE.MeshPhongMaterial({transparent: true, opacity: modelColor.getAlpha(),
@@ -60,11 +59,7 @@ function updateRolloverMesh(mousePos) {
   raycaster.setFromCamera(mousePos, camera);
   var intersects = raycaster.intersectObjects(collisionObjects);
   // pieceIndex = names.indexOf(currentRollOverModel);
-  if (pieceIndex != -1) {
-    if (pieces[pieceIndex].count == 0) {
-      currentRollOverModel = "";
-      scene.remove(rollOverMesh);
-    }
+  if (rollOverMesh !== null) {
     clearPreviousRollOverObject();
     if (intersects.length > 0 && currentRollOverModel != "") {
       // Need to load the rollOverMesh once the user enters the plane one again
@@ -142,6 +137,65 @@ function onRendererMouseWheel(event)
  * 
  */
 
+function returnPartToStock(partMesh)
+{
+  // I get this kind of shit when I forget to actually design some parts
+  // It's also because some parts of JS can be "interesting"
+  let partID = names.indexOf(partMesh.userData.modelType);
+  let partColor = partMesh.userData.colorInfo;
+  let existingPiece = pieces.find(value => {
+    return (value.partID === partID && value.color === partColor);
+  });
+
+  if(existingPiece) {
+    (existingPiece.count)++;
+  }
+  else
+  {
+    pieces.push({
+      partID: partID,
+      color: partColor,
+      count: 1
+    });
+  }
+
+  // It's about as stupid as it looks
+  // this is because the intersection object is the collision object
+  // group.remove(intersect.object.children[0]);
+}
+
+/*
+function removePartFromStock(index)
+{
+  let newPieceCount = pieces[index].count - 1;
+
+  if(newPieceCount > 0) {
+    pieces[index].count = newPieceCount;
+  }
+  else
+  {
+    pieces.splice(index, 1);
+  }
+}
+*/
+
+function removePartFromStock(partID, colorID)
+{
+  let index = pieces.findIndex(value => {
+    return (value.partID === partID && value.color === colorID);
+  });
+
+  let newPieceCount = pieces[index].count - 1;
+
+  if(newPieceCount > 0) {
+    pieces[index].count = newPieceCount;
+  }
+  else
+  {
+    pieces.splice(index, 1);
+  }
+}
+
 function onDocumentMouseDown(event) {
   event.preventDefault();
   mouse = getNormalizedMousePosition(event);
@@ -161,35 +215,24 @@ function onDocumentMouseDown(event) {
           scene.remove(intersect.object.children[0]);
           objects.splice(objects.indexOf(intersect.object.children[0]), 1);
           collisionObjects.splice(collisionObjects.indexOf(intersect.object), 1);
-          // I get this kind of shit when I forget to actually design some parts
-          // It's also because some parts of JS can be "interesting"
-          let partID = names.indexOf(intersect.object.children[0].userData.modelType);
-          let partColor = intersect.object.children[0].userData.colorInfo;
-          let existingPiece = pieces.find(value => {
-            return (value.partID === partID && value.color === partColor);
+          returnPartToStock(intersect.object.children[0]);
+          updatePieces().then(() => {
+            updateBinParts();
           });
-
-          if(existingPiece) {
-            (existingPiece.count)++;
-          }
-          else
-          {
-            pieces.push({
-              partID: partID,
-              color: partColor,
-              count: 1
-            });
-          }
-
-          // It's about as stupid as it looks
-          // this is because the intersection object is the collision object
-          // group.remove(intersect.object.children[0]);
-          updatePieces();
           updateRolloverMesh(mouse);
         }
       }
     }
-    else if (isShiftDown && pieces[pieceIndex].count > 0) {
+    else if(isShiftDown && rollOverMesh !== null)
+    {
+      placeLego(intersect, (placement, modelMesh, collisionMesh) => {
+        if(placement)
+        {
+          placementOffset.set(0, 0, 0);
+        }
+      });
+    }
+    /*else if (isShiftDown && pieces[pieceIndex].count > 0) {
       placeLego(intersect, (placement, modelMesh, collisionMesh) => {
         if (placement) {
           let newPieceCount = pieces[pieceIndex].count - 1;
@@ -214,8 +257,63 @@ function onDocumentMouseDown(event) {
           // setTimeout(() => {updateRolloverMesh(mouse);}, 500);
         }
       });
-    }
+    }*/
     // render();
+  }
+  else if(isShiftDown)
+  {
+    let binCollection = scene.getObjectByName('Environment').getObjectByName('Room').getObjectByName('Workbenches')
+        .children[0].children;
+
+    let binObject = null;
+    let binObjectHit = binCollection.some(thisBin => {
+      let binIntersects = raycaster.intersectObject(thisBin, true);
+
+      if(binIntersects.length >= 1)
+      {
+        binObject = binIntersects[0].object;
+        return true;
+      }
+      else
+      {
+        return false;
+      }
+    });
+
+    if(binObjectHit)
+    {
+      if(binObject.userData.isPart)
+      {
+        if (rollOverMesh)
+        {
+          returnPartToStock(rollOverMesh);
+        }
+
+        let newPartID = names.indexOf(binObject.userData.modelType);
+        removePartFromStock(newPartID, binObject.userData.colorInfo);
+
+        binObject.parent.remove(binObject);
+        binObject.name = 'rollOverMesh';
+        scene.remove(rollOverMesh);
+        rollOverMesh = binObject;
+        currentRollOverModel = binObject.userData.modelType;
+        currentObj = allModels[newPartID];
+
+        updatePieces().then(() => {
+          updateBinParts();
+        });
+      }
+      else if(binObject.name === 'partBin' && rollOverMesh !== null)
+      {
+        returnPartToStock(rollOverMesh);
+        rollOverMesh = null;
+        currentRollOverModel = '';
+        currentObj = null;
+        updatePieces().then(() => {
+          updateBinParts();
+        });
+      }
+    }
   }
 }
 
@@ -229,6 +327,106 @@ function clearPreviousRollOverObject() {
   });
 }
 
+function getPartGeometry(partID, onLoaded)
+{
+    if(partModelCache[partID])
+    {
+        onLoaded(partModelCache[partID]);
+    }
+    else
+    {
+        let loader = new THREE.STLLoader();
+
+        loader.load(allModels[partID].directory, function(geometry) {
+            partModelCache[partID] = geometry;
+            onLoaded(geometry);
+        });
+    }
+}
+
+function updateBinParts()
+{
+  const BASE_PART_OFFSET = new THREE.Vector3(50, 20, 50),
+        PART_COL_SPACING = new THREE.Vector3(30, 0, 0),
+        PART_ROW_SPACING = new THREE.Vector3(0, 0, 30),
+        PART_LEVEL_SPACING = new THREE.Vector3(0, 20, 0);
+
+  let binCollection = scene.getObjectByName('Environment').getObjectByName('Room').getObjectByName('Workbenches')
+      .children[0].children;
+  binCollection.forEach(thisBin => {
+    for(let i = thisBin.children.length - 1; i >= 0; i--)
+    {
+      thisBin.remove(thisBin.children[i]);
+    }
+  });
+
+  let rayOrigin = new THREE.Vector3();
+  binCollection[0].getWorldPosition(rayOrigin);
+  rayOrigin.add(BASE_PART_OFFSET);
+  let binIntersectDist = (new THREE.Raycaster(rayOrigin, new THREE.Vector3(0, 0, 1), 1, 1000))
+      .intersectObject(binCollection[0])[0].distance;
+
+  pieces.forEach((thisPieceInfo, thisPieceIndex) => {
+    getPartGeometry(thisPieceInfo.partID, function(geometry) {
+      geometry.computeBoundingBox();
+      let modelColor = tinycolor(BrickColors.findByColorID(thisPieceInfo.color).RGBString);
+      let material = new THREE.MeshPhongMaterial({transparent: true, opacity: modelColor.getAlpha(),
+        color: modelColor.toHexString(), shininess: 30, specular: 0x111111});
+
+      let templateMesh = new THREE.Mesh(geometry, material);
+      templateMesh.scale.set(allModels[thisPieceInfo.partID].scale, allModels[thisPieceInfo.partID].scale, allModels[thisPieceInfo.partID].scale);
+      templateMesh.rotation.x += - Math.PI / 2;
+
+      let adjustedBoundingBoxPt1 = (new THREE.Vector3()).copy(geometry.boundingBox.max).multiply(templateMesh.scale)
+          .applyEuler(templateMesh.rotation);
+      let adjustedBoundingBoxPt2 = (new THREE.Vector3()).copy(geometry.boundingBox.min).multiply(templateMesh.scale)
+          .applyEuler(templateMesh.rotation);
+      let adjustedBoundingBox = (new THREE.Box3()).setFromPoints([adjustedBoundingBoxPt1, adjustedBoundingBoxPt2]);
+      let adjustedBoundingBoxSize = (new THREE.Vector3()).copy(adjustedBoundingBox.max).sub(adjustedBoundingBox.min);
+
+      templateMesh.userData.isPart = true;
+      templateMesh.userData.dimensions = adjustedBoundingBoxSize;
+      templateMesh.userData.modelType = names[thisPieceInfo.partID];
+      templateMesh.userData.colorInfo = thisPieceInfo.color;
+
+      let parentBin = binCollection[thisPieceInfo.partID];
+
+      let partColorGroup = parentBin.getChildByName(thisPieceInfo.color.toString());
+      if(!partColorGroup)
+      {
+        partColorGroup = new THREE.Group();
+        partColorGroup.name = thisPieceInfo.color.toString();
+
+        let colOffset = (new THREE.Vector3()).setX(adjustedBoundingBoxSize.x).add(PART_COL_SPACING)
+            .multiplyScalar(parentBin.children.length);
+        partColorGroup.position.copy(BASE_PART_OFFSET).sub(adjustedBoundingBox.min).add(colOffset);
+
+        parentBin.add(partColorGroup);
+      }
+
+      let partLevel = 0,
+          partRow = 0;
+      for(let partNum = 0; partNum < thisPieceInfo.count; partNum++, partRow++)
+      {
+        if(adjustedBoundingBoxSize.z * (partRow + 1) + PART_ROW_SPACING.z * partRow > binIntersectDist)
+        {
+          partLevel++;
+          partRow = 0;
+        }
+
+        let thisPieceMesh = templateMesh.clone();
+        let rowOffset = (new THREE.Vector3()).setZ(adjustedBoundingBoxSize.z).add(PART_ROW_SPACING)
+            .multiplyScalar(partRow);
+        let levelOffset = (new THREE.Vector3()).setY(adjustedBoundingBoxSize.y).add(PART_LEVEL_SPACING)
+            .multiplyScalar(partLevel);
+        thisPieceMesh.position.copy(rowOffset).add(levelOffset);
+
+        partColorGroup.add(thisPieceMesh);
+      }
+    });
+  });
+}
+
 /**
  * Handles placing the object on the scene and creating the collision object
  * @param {THREE.Intersection} intersect
@@ -236,31 +434,31 @@ function clearPreviousRollOverObject() {
  */
 function placeLego(intersect, cb) {
   let placementPossible = true;
-  let loader = new THREE.STLLoader();
   let index = allModels.indexOf(currentObj);
-  loader.load(allModels[index].directory, function (geometry) {
-    // i wanted to break up this function so i needed to pass these variables by reference
-    let modelObj = {}, size = {};
-    generateObjFromModel(geometry, modelObj, size);
-    size = size.size;
-    modelObj = modelObj.mesh;
-    modelObj.userData.modelType = currentRollOverModel;
 
-    if (intersect.object.name == 'plane') {
+  // getPartGeometry(index, function(geometry) {
+  // i wanted to break up this function so i needed to pass these variables by reference
+  let modelObj = rollOverMesh, size = new THREE.Vector3();
+  // generateObjFromModel(geometry, modelObj, size);
+
+  let box = new THREE.Box3().setFromObject(modelObj);
+  box.getSize(size);
+
+  if (intersect.object.name == 'plane') {
       //changeObjPosOnPlane(modelObj, intersect, size);
       let mName = currentRollOverModel.split(' ');
       if (mName[0] != 'Rim' && mName[0] != 'Tire') {
-        modelObj.position.copy(intersect.point).add(intersect.face.normal);
-        modelObj.position.y += determineModelYTranslation();
+          modelObj.position.copy(intersect.point).add(intersect.face.normal);
+          modelObj.position.y += determineModelYTranslation();
 
-        moveToSnappedPosition(modelObj);
-        modelObj.position.add(placementOffset);
+          moveToSnappedPosition(modelObj);
+          modelObj.position.add(placementOffset);
       }
       else {
-        placementPossible = false;
+          placementPossible = false;
       }
-    }
-    else {
+  }
+  else {
       let dim = intersect.face.normal;
       dim.normalize();
       // TODO: THERE SEEMS TO BE A PROBLEM WITH A SLIGHTLY LOWER PLACEMENT THAN IT SHOULD BE
@@ -270,23 +468,27 @@ function placeLego(intersect, cb) {
       // this is lazy programming. i don't want to handle the array bounds
       // i did this all already in a better manner but it was lost with my desktop. RIP
       if ((iName[1] == 'Pin' || iName[1] == 'Double' || iName[0] == 'Rim') && (mName[0] == 'Rim' || mName[0] == 'Tire')) {
-        placementPossible = determineWheelPosition(modelObj, intersect, dim);
+          placementPossible = determineWheelPosition(modelObj, intersect, dim);
       }
       else {
-        placementPossible = determineModelPosition(modelObj, intersect, size, dim);
+          placementPossible = determineModelPosition(modelObj, intersect, size, dim);
       }
-    }
+  }
 
 
-    let collisionCube;
-    // If the piece can't be placed on another, I don't want it to create and add the modelObj to the scene
-    if (placementPossible) {
+  let collisionCube;
+  // If the piece can't be placed on another, I don't want it to create and add the modelObj to the scene
+  if (placementPossible) {
       scene.add(modelObj);
+      objects.push(modelObj);
       collisionCube = generateCollisionCube(modelObj, size);
-    }
+      rollOverMesh = null;
+      currentRollOverModel = '';
+      currentObj = null;
+  }
 
-    cb(placementPossible, modelObj, collisionCube);
-  });
+  cb(placementPossible, modelObj, collisionCube);
+  // });
 }
 
 /**
@@ -296,7 +498,7 @@ function placeLego(intersect, cb) {
  * @param {THREE.MESH} modelObj 
  * @param {THREE.Vector3} size 
  */
-function generateObjFromModel(geometry, modelObj, size) {
+/*function generateObjFromModel(geometry, modelObj, size) {
   let modelColor = tinycolor(BrickColors.findByColorID(pieces[pieceIndex].color).RGBString);
 
   geometry.computeBoundingBox();
@@ -313,7 +515,7 @@ function generateObjFromModel(geometry, modelObj, size) {
   let box = new THREE.Box3().setFromObject(modelObj.mesh);
   size.size = new THREE.Vector3();
   box.getSize(size.size);
-}
+}*/
 
 /**
  * Generates the collision box around the mesh
@@ -354,7 +556,6 @@ function generateCollisionCube(modelObj, size) {
   cube.userData.rotation = (modelObj.rotation.z / (Math.PI / 2)) % 4;
 
   cube.children.push(modelObj);
-  objects.push(modelObj);
 
   return cube;
 }
