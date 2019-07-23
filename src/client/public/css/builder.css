@@ -27,3 +27,22 @@ canvas {
 .part-name-text {
   margin-bottom: 0.3em;
 }
+
+#order
+{
+  margin: 0;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+#controls
+{
+  position: absolute;
+  width: 200px;
+  top: 0;
+  right: 0;
+  margin: 0;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
