@@ -37,11 +37,7 @@ function init() {
   createEnvironment(() => {
     createGridAndPlane(scene.getObjectByName('Environment').getObjectByName('Room')
       .getObjectByName('Workbenches').children[0]);
-  }, () => {
-    updatePieces().then(() => {
-      updateBinParts();
-    });
-  });
+  }, checkPieces);
 
   //objects.push(plane);
   raycaster = new THREE.Raycaster();

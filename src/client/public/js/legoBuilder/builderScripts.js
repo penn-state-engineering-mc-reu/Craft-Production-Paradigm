@@ -2,6 +2,7 @@
 let currentRollOverModel = "";
 let placementOffset = new THREE.Vector3();
 
+/*
 function loadRollOverMesh() {
   let index = allModels.indexOf(currentObj);
   getPartGeometry(index, function (geometry) {
@@ -33,6 +34,7 @@ function loadRollOverMesh() {
     placementOffset.set(0, 0, 0);
   });
 }
+ */
 
 /**
  * ================================================================
