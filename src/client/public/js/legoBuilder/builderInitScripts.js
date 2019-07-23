@@ -17,7 +17,8 @@ var container;
 var camera, scene, renderer, controls;
 var plane, cube;
 var mouse, raycaster, isCtrlDown = false, isShiftDown = false;
-var rollOverMesh, material, collisionBox;
+var rollOverMesh = null, material, collisionBox;
+let partModelCache = {};
 const TILE_DIMENSIONS = new THREE.Vector2(24, 24);
 var objects = [], collisionObjects = [];
 var currentObj = twoByTwo;
@@ -36,7 +37,7 @@ function init() {
   createEnvironment(() => {
     createGridAndPlane(scene.getObjectByName('Environment').getObjectByName('Room')
       .getObjectByName('Workbenches').children[0]);
-  });
+  }, checkPieces);
 
   //objects.push(plane);
   raycaster = new THREE.Raycaster();
@@ -169,7 +170,7 @@ function addMeshRow(templateMesh, newMeshParent, startX, yPos, zPos, spacing, nu
   }
 }
 
-function createEnvironment(onCompleted)
+function createEnvironment(onRoomCompleted, onBinsCompleted)
 {
   let modelLoader = new THREE.STLLoader();
   modelLoader.load('../objects/environment/workbench.stl', function(workbenchGeometry) {
@@ -221,9 +222,14 @@ function createEnvironment(onCompleted)
       });
 
       let binTemplateMesh = new THREE.Mesh(binGeometry, binMaterial);
+      binTemplateMesh.name = "partBin";
 
       addMeshRow(binTemplateMesh, workbenchGroup.children[0], binStartX, -cornerWorkbenchPos.y, binZ, 50, 12);
       addMeshRow(binTemplateMesh, workbenchGroup.children[0], binStartX, 0, binZ, 50, 10);
+
+      if(onBinsCompleted) {
+        onBinsCompleted();
+      }
     }, undefined, function(ex) {
       console.trace(ex);
     });
@@ -292,7 +298,9 @@ function createEnvironment(onCompleted)
           roomGroup.add(thisWallMesh);
         });
 
-        onCompleted();
+        if(onRoomCompleted) {
+          onRoomCompleted();
+        }
       }), undefined, function (ex) {
         console.trace(ex);
       });
