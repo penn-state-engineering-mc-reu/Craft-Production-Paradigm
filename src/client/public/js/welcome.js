@@ -142,7 +142,7 @@ function getPostData() {
   position = position === '' ? 'Assembler' : position;
   sessionStorage.position = position;
   data.positions.push(position);
-  let players = $('#num-players').val();
+  let players = 4;
   data.maxPlayers = players > 4 ? 4 : players < 2 ? 2 : players;
   return JSON.stringify(data);
 }
