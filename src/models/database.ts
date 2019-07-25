@@ -13,18 +13,25 @@ export default class DatabaseConnector {
   protected supplierOrderCollection: mongoose.Model<ISupplierOrder>;
   protected url: string;
   constructor() {
+    const RECONNECTION_INTERVAL: number = 10000;
+
     if (process.env.NODE_ENV == 'production')
       this.url = 'mongodb+srv://' + process.env.DB_USER + ':' + process.env.DB_PASS + '@' + process.env.DB_HOST;
     else 
       this.url = 'mongodb://localhost/local';
     console.log(this.url);
-    mongoose.connect(this.url).catch((e) => {
-      console.log(e);
-    });
-    this.db = mongoose.connection;
+    let connectionObj = this.db = mongoose.createConnection(this.url);
+    let connString = this.url;
 
-    this.db.on('error', console.error.bind(console, 'connection error:'));
-    this.db.once('open', function callback () {
+    this.db.on('error', function(errorInfo) {
+      console.log('Database connection error:', errorInfo);
+      setTimeout(function() {
+        console.log('Attempting reconnection to database...');
+        connectionObj.openUri(connString);
+      }, RECONNECTION_INTERVAL);
+    });
+
+    this.db.once('connected', function callback () {
       console.log('Connected to database');
     });
 
