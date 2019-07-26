@@ -132,6 +132,29 @@ function onRendererMouseWheel(event)
   updateRolloverMesh(mouse);
 }
 
+function onBeforePageUnload(event)
+{
+  if(objects.length > 0 || rollOverMesh !== null)
+  {
+    event.preventDefault();
+    event.returnValue = 'The parts and model that you are working on will be lost.';
+  }
+}
+
+function onPageUnload(event)
+{
+  objects.forEach(value => {
+    returnPartToStock(value);
+  });
+
+  if(rollOverMesh)
+  {
+    returnPartToStock(rollOverMesh);
+  }
+
+  updatePieces(true);
+}
+
 /**
  * ================================================================
  *        CREATION AND DELETION OF THE MODELS IN THE SCENE

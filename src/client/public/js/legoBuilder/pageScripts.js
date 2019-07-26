@@ -255,18 +255,25 @@ function samePieces(array1, array2) {
   return true;
 }
 
-function updatePieces() {
+function updatePieces(pageUnloading) {
   let postData = {'pieces': pieces};
+  let APIUrl = GameAPI.rootURL + '/gameLogic/setAssemblerParts/' + getPin();
   if (pieces != null && pieces != undefined) {
-    return $.ajax({
-      type: 'POST',
-      data: JSON.stringify(postData),
-      contentType: 'application/json',
-      url: GameAPI.rootURL + '/gameLogic/setAssemblerParts/' + getPin(),
-      error: (xhr, status, error) => {
-        console.log(error);
-      }
-    });
+    if(pageUnloading)
+    {
+      return navigator.sendBeacon(APIUrl, JSON.stringify(postData));
+    }
+    else {
+      return $.ajax({
+        type: 'POST',
+        data: JSON.stringify(postData),
+        contentType: 'application/json',
+        url: APIUrl,
+        error: (xhr, status, error) => {
+          console.log(error);
+        }
+      });
+    }
   }
 }
 
