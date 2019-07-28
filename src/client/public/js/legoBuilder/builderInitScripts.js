@@ -51,6 +51,8 @@ function init() {
   document.addEventListener('keyup', onDocumentKeyUp, false);
   renderer.domElement.addEventListener('wheel', onRendererMouseWheel, false);
   window.addEventListener('resize', onWindowResize, false);
+  window.addEventListener('beforeunload', onBeforePageUnload);
+  window.addEventListener('unload', onPageUnload);
 }
 
 // Initializes the camera -- Allows to use mouse wheel to zoom

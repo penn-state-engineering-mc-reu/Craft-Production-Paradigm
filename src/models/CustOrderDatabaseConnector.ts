@@ -56,7 +56,7 @@ export class CustOrderDatabaseConnector {
    */
   public async getOrders(pin: number): Promise<Array<ICustomerOrder>> {
     try {
-      return (await this.orderModel.find({pin: pin}, {'imageData': 0}));
+      return (await this.orderModel.find({pin: pin}, {'imageData': 0, 'assembledModel': 0}));
     } catch(e) {
       return new Array<ICustomerOrder>();
     }
