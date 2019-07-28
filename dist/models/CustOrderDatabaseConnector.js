@@ -54,7 +54,7 @@ class CustOrderDatabaseConnector {
     getOrders(pin) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                return (yield this.orderModel.find({ pin: pin }, { 'imageData': 0 }));
+                return (yield this.orderModel.find({ pin: pin }, { 'imageData': 0, 'assembledModel': 0 }));
             }
             catch (e) {
                 return new Array();
