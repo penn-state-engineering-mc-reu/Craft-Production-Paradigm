@@ -19,8 +19,19 @@
 			<div class="ui centered grid" style="margin: 0;">
 				<button class="ui massive yellow button" id="order">Order From Customer</button>
 				<!-- <button class="ui massive green button" id="pieces">Available Pieces</button> -->
+
 				<button class="ui massive green button" id="controls"><i class="question circle outline icon"></i>Controls</button>
 			</div>
+		<div class = "stopwatch">
+			<div class ="controls">
+				<button class ="start">Start</button>
+				<button class ="stop">Stop</button>
+				<button class ="reset">Reset</button>
+			</div>
+			<div class ="display">
+				<span class="minutes">00</span><span class ="seconds">00</span><span class = "centiseconds">00</span>
+			</div>
+		</div>
 			<!-- THIS IS ONLY HERE FOR TESTING. WILL BE REMOVED LATER
       <div id="models" class="ui buttons">
         <button class="ui button" onclick="getModel('oneByOne');">1x1</button>
@@ -73,6 +84,7 @@
 		<script src="/../js/legoBuilder/pageScripts.js"></script>
 		<script src="/../js/legoBuilder/builderInitScripts.js"></script>
 		<script src="/../js/legoBuilder/builderScripts.js"></script>
+		<script src="/../js/legoBuilder/stopwatch.js"></script>
 
 		<!-- Modals for the different shit -->
 		<div class="ui basic modal" id="no-orders">
