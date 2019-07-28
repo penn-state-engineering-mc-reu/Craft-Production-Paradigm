@@ -1,59 +1,50 @@
-var sw = document.getElementByClassName('stopwatch');
+let currentTimer = 0;
+let interval = 0;
+let lastUpdateTime = new Date().getTime();
+const start = document.getElementById('start');
+const stop = document.getElementById('stop');
+const reset = document.getElementById('reset');
+const mins = document.getElementById('min');
+const secs = document.getElementById('sec');
+const cent = document.getElementById('cent');
+
 $(document).ready(() => {
-    initButtons();
+    begin();
 });
-function initButtons(){
-    $('#start').click(e => {startTimer()});
-    $('#stop').click(e => {stopTimer()});
-    $('#reset').click(e => {resetTimer()});
-
-}
-[].forEach.call(sw,function(s){
-    var currentTimer = 0,
-        interval = 0,
-        lastUpdateTime = new Date().getTime(),
-        start = s.querySelector('button.start'),
-        stop = s.querySelector('button.stop'),
-        reset = s.querySelector('button.restart'),
-        mins = s.querySelector('span.minutes'),
-        secs = s.querySelector('span.seconds'),
-        cent = s.querySelector('span.centiseconds');
-
-    //start.addEventListener('click',startTimer());
-    //stop.addEventListener('click',stopTimer());
-    //reset.addEventListener('click',resetTimer());
-
-    function pad (n){
-        return ('00' + n).substr(-2);
+    function begin () {
+        start.addEventListener('click', startTimer);
+        stop.addEventListener('click', stopTimer);
+        reset.addEventListener('click', resetTimer);
     }
-    function updateTimer(){
-        var now = new Date().getTime(),
-            dt = now * lastUpdateTime;
-        currentTimer += dt;
-        var time = new Date(currentTimer);
 
-        mins.innerHTML = pad(time.getMinutes());
-        secs.innerHTML = pad(time.getSeconds());
-        cent.innerHTML = pad(Math.floor(time.getMilliseconds()/10));
-
-        lastUpdateTime = now;
-    }
-    function startTimer(){
-        if (!interval){
-            lastUpdateTime = new Date().getTime();
-            interval = setInterval(update,1);
+        function pad (n){
+            return ('00' + n).substr(-2);
         }
-    }
-    function stopTimer(){
-        clearInterval(interval);
-        interval = 0;
-    }
-    function resetTimer(){
-        stopTimer();
-        currentTimer = 0;
+        function updateTimer(){
+            var now = new Date().getTime(),
+                dt = now * lastUpdateTime;
+            currentTimer += dt;
+            var time = new Date(currentTimer);
 
-        min.innerHTML = secs.innerHTML = cent.innerHTML = pad(0);
-    }
+            mins.innerHTML = pad(time.getMinutes());
+            secs.innerHTML = pad(time.getSeconds());
+            cent.innerHTML = pad(Math.floor(time.getMilliseconds()/10));
 
+            lastUpdateTime = now;
+        }
+        function startTimer(){
+            if (!interval){
+                lastUpdateTime = new Date().getTime();
+                interval = setInterval(update,1);
+            }
+        }
+        function stopTimer(){
+            clearInterval(interval);
+            interval = 0;
+        }
+        function resetTimer(){
+            stopTimer();
+            currentTimer = 0;
 
-});
+            min.innerHTML = secs.innerHTML = cent.innerHTML = pad(0);
+        }
