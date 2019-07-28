@@ -18,7 +18,22 @@ function initButtons() {
     $('#join-game-modal').modal({onApprove : onApproveJoin}).modal('show');    
   });
 
-  $('#pin').keypress((e) => setTimeout(checkIfPinIsValid, 1000));
+  let checkPinTimerID = null;
+  $('#pin').on('input', function(e) {
+    if (checkPinTimerID !== null)
+    {
+      clearTimeout(checkPinTimerID);
+    }
+
+    if($(this).val().length > 0)
+    {
+      checkPinTimerID = setTimeout(() => {
+        checkPinTimerID = null;
+        checkIfPinIsValid();
+      }, 1000);
+    }
+  });
+
   $('.ui.dropdown').dropdown();
 }
 

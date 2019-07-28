@@ -14,4 +14,5 @@
 
 .pin {
   padding-bottom: 10px;
+  min-width: 150px;
 }

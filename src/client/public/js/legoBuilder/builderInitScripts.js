@@ -21,7 +21,7 @@ var rollOverMesh = null, material, collisionBox;
 let partModelCache = {};
 const TILE_DIMENSIONS = new THREE.Vector2(24, 24);
 var objects = [], collisionObjects = [];
-var currentObj = twoByTwo;
+var currentObj = null;
 // var group = new THREE.Group();
 
 // Kicks off the program
@@ -215,7 +215,8 @@ function createEnvironment(onRoomCompleted, onBinsCompleted)
 
     modelLoader.load('../objects/environment/part_bin.stl', function(binGeometry) {
       let binStartX = 175; // -(bboxSize.x / 2) + 175;
-      let binZ = -450;
+      let backBinZ = -450,
+      frontBinZ = 75;
 
       let binMaterial = new THREE.MeshPhongMaterial({
         color: "#0000ff",
@@ -226,8 +227,9 @@ function createEnvironment(onRoomCompleted, onBinsCompleted)
       let binTemplateMesh = new THREE.Mesh(binGeometry, binMaterial);
       binTemplateMesh.name = "partBin";
 
-      addMeshRow(binTemplateMesh, workbenchGroup.children[0], binStartX, -cornerWorkbenchPos.y, binZ, 50, 12);
-      addMeshRow(binTemplateMesh, workbenchGroup.children[0], binStartX, 0, binZ, 50, 10);
+      addMeshRow(binTemplateMesh, workbenchGroup.children[0], binStartX, -cornerWorkbenchPos.y, frontBinZ, 50, 12);
+      addMeshRow(binTemplateMesh, workbenchGroup.children[0], binStartX, -cornerWorkbenchPos.y, backBinZ, 50, 12);
+      addMeshRow(binTemplateMesh, workbenchGroup.children[0], binStartX, 0, backBinZ, 50, 2);
 
       if(onBinsCompleted) {
         onBinsCompleted();
