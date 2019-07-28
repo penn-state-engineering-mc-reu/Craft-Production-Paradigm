@@ -1,4 +1,13 @@
 var sw = document.getElementByClassName('stopwatch');
+$(document).ready(() => {
+    initButtons();
+});
+function initButtons(){
+    $('#start').click(e => {startTimer()});
+    $('#stop').click(e => {stopTimer()});
+    $('#reset').click(e => {resetTimer()});
+
+}
 [].forEach.call(sw,function(s){
     var currentTimer = 0,
         interval = 0,
@@ -10,9 +19,9 @@ var sw = document.getElementByClassName('stopwatch');
         secs = s.querySelector('span.seconds'),
         cent = s.querySelector('span.centiseconds');
 
-    start.addEventListener('click',startTimer());
-    stop.addEventListener('click',stopTimer());
-    reset.addEventListener('click',resetTimer());
+    //start.addEventListener('click',startTimer());
+    //stop.addEventListener('click',stopTimer());
+    //reset.addEventListener('click',resetTimer());
 
     function pad (n){
         return ('00' + n).substr(-2);
