@@ -22,7 +22,7 @@ $(document).ready(() => {
         }
         function updateTimer(){
             var now = new Date().getTime(),
-                dt = now * lastUpdateTime;
+                dt = now - lastUpdateTime;
             currentTimer += dt;
             var time = new Date(currentTimer);
 
