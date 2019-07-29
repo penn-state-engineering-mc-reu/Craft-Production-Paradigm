@@ -35,7 +35,7 @@ $(document).ready(() => {
         function startTimer(){
             if (!interval){
                 lastUpdateTime = new Date().getTime();
-                interval = setInterval(update,1);
+                interval = setInterval(updateTimer,1);
             }
         }
         function stopTimer(){
