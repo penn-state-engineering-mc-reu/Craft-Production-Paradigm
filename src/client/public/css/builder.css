@@ -52,14 +52,6 @@ canvas {
   text-align: left;
   margin-top: 10px;
 }
-.display:after
-{
-  content: ':';
-}
-.display:last-child:after
-{
-  content: '';
-}
 .start
 {
   font-size: 20px;
@@ -83,4 +75,12 @@ canvas {
   margin: 0;
   border-radius: 5px;
   cursor: pointer;
+}
+#min.minutes:after
+{
+  content: ':';
+}
+#sec.seconds:after
+{
+  content: ':';
 }
