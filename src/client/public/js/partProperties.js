@@ -122,7 +122,7 @@ window.partProperties = [
   {
     name: '2x8 Plate',
     price: 0.25,
-    wieght: 2.25
+    weight: 2.25
   },
   {
     name: '2x6 Plate',
