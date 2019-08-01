@@ -1,9 +1,3 @@
-const names = ["1x1", "2x2", "2x2 Slope", "2x3x2", "1x2 Pin", "1x2 Slope", "1x2 Inverted Slope",
-              "2x2 Pin", "2x2x2 Pin", "2x2 Double", "Tire 1",
-              "Tire 2", "Tire 3", "Rim 1", "Rim 2",
-              "Rim 3", "1x2", "1x4", "1x2 Plate", "2x2 Plate",
-              "4x6 Plate", "6x8 Plate", "2x10 Plate", "Windshield",
-              "Steering Wheel", "Lego Man"];
 let pieces = [];
 // let pieceIndex = -1; // used to modify the supply of the piece type
 let orderInformation = {};
