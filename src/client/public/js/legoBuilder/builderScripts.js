@@ -382,8 +382,10 @@ function updateBinParts()
   let rayOrigin = new THREE.Vector3();
   binCollection[0].getWorldPosition(rayOrigin);
   rayOrigin.add(BASE_PART_OFFSET);
-  let binIntersectDist = (new THREE.Raycaster(rayOrigin, new THREE.Vector3(0, 0, 1), 1, 1000))
-      .intersectObject(binCollection[0])[0].distance;
+  let binRaycaster = new THREE.Raycaster(rayOrigin, new THREE.Vector3(1, 0, 0), 1, 1000);
+  let binIntersectXDist = binRaycaster.intersectObject(binCollection[0])[0].distance;
+  binRaycaster.set(rayOrigin, new THREE.Vector3(0, 0, 1));
+  let binIntersectZDist = binRaycaster.intersectObject(binCollection[0])[0].distance;
 
   pieces.forEach((thisPieceInfo, thisPieceIndex) => {
     getPartGeometry(thisPieceInfo.partID, function(geometry) {
@@ -404,24 +406,44 @@ function updateBinParts()
 
       let parentBin = binCollection[thisPieceInfo.partID];
 
-      let partColorGroup = parentBin.getChildByName(thisPieceInfo.color.toString());
-      if(!partColorGroup)
+      let newColGroupOffset = (new THREE.Vector3()).setX(adjustedBoundingBoxSize.x).add(PART_COL_SPACING)
+          .multiplyScalar(parentBin.children.length);
+      let columnGroup;
+
+      let partLevel;
+      if(parentBin.children.length === 0 || newColGroupOffset.x + adjustedBoundingBoxSize.x <= binIntersectXDist)
       {
-        partColorGroup = new THREE.Group();
-        partColorGroup.name = thisPieceInfo.color.toString();
+        columnGroup = new THREE.Group();
+        parentBin.add(columnGroup);
+        columnGroup.position.copy(BASE_PART_OFFSET).sub(adjustedBoundingBox.min).add(newColGroupOffset);
 
-        let colOffset = (new THREE.Vector3()).setX(adjustedBoundingBoxSize.x).add(PART_COL_SPACING)
-            .multiplyScalar(parentBin.children.length);
-        partColorGroup.position.copy(BASE_PART_OFFSET).sub(adjustedBoundingBox.min).add(colOffset);
+        partLevel = 0;
+      }
+      else
+      {
+        let allGroupMinLevel = Number.POSITIVE_INFINITY;
+        let minLevelGroup = null;
 
-        parentBin.add(partColorGroup);
+        parentBin.children.forEach(thisGroup => {
+          if(thisGroup.userData.maxLevel < allGroupMinLevel)
+          {
+            minLevelGroup = thisGroup;
+            allGroupMinLevel = thisGroup.userData.maxLevel;
+          }
+        });
+
+        partLevel = allGroupMinLevel + 1;
+        columnGroup = minLevelGroup;
       }
 
-      let partLevel = 0,
-          partRow = 0;
+      let partColorGroup = new THREE.Group();
+      partColorGroup.name = thisPieceInfo.color.toString();
+      columnGroup.add(partColorGroup);
+
+      let partRow = 0;
       for(let partNum = 0; partNum < thisPieceInfo.count; partNum++, partRow++)
       {
-        if(adjustedBoundingBoxSize.z * (partRow + 1) + PART_ROW_SPACING.z * partRow > binIntersectDist)
+        if(adjustedBoundingBoxSize.z * (partRow + 1) + PART_ROW_SPACING.z * partRow > binIntersectZDist)
         {
           partLevel++;
           partRow = 0;
@@ -436,6 +458,8 @@ function updateBinParts()
 
         partColorGroup.add(thisPieceMesh);
       }
+
+      columnGroup.userData.maxLevel = partLevel;
     });
   });
 }
