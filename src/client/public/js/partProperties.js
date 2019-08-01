@@ -16,13 +16,13 @@ window.partProperties = [
   },
   {
     name: '2x2 Slope',
-    price: 0.12,
-    weight: 1.15
+    price: 0.14,
+    weight: 1.05
   },
   {
     name: '2x2 Pin',
-    price: 0.30, 
-    weight: 1.05
+    price: 0.15, 
+    weight: 0.70
   },
   {
     name: '2x3x2',
@@ -36,13 +36,13 @@ window.partProperties = [
   },
   {
     name: '1x2 Slope',
-    price: 0.04,
-    weight: 0.69
+    price: 0.11,
+    weight: 0.65
   },
   {
     name: '1x2 Inverted Slope',
-    price: 0.04,
-    weight: 0.66
+    price: 0.11,
+    weight: 0.70
   },
   {
     name: '2x2x1 Pin',
@@ -106,8 +106,8 @@ window.partProperties = [
   },
   {
     name: '2x2 Plate',
-    price: 0.18,
-    weight: 0.64
+    price: 0.11,
+    weight: 0.60
   },
   {
     name: '4x6 Plate',
@@ -116,18 +116,18 @@ window.partProperties = [
   },
   {
     name: '4x10 Plate',
-    price: 0.35,
-    weight: 5.55
+    price: 0.54,
+    weight: 5.40
   },
   {
     name: '2x8 Plate',
-    price: 0.23,
-    wieght: 2.27
+    price: 0.25,
+    wieght: 2.25
   },
   {
     name: '2x6 Plate',
-    price: 0.20,
-    weight: 1.74
+    price: 0.19,
+    weight: 1.70
   },
   {
     name: '6x8 Plate',
