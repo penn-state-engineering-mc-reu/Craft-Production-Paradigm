@@ -229,7 +229,7 @@ function createEnvironment(onRoomCompleted, onBinsCompleted)
 
       addMeshRow(binTemplateMesh, workbenchGroup.children[0], binStartX, -cornerWorkbenchPos.y, frontBinZ, 50, 12);
       addMeshRow(binTemplateMesh, workbenchGroup.children[0], binStartX, -cornerWorkbenchPos.y, backBinZ, 50, 12);
-      addMeshRow(binTemplateMesh, workbenchGroup.children[0], binStartX, 0, backBinZ, 50, 2);
+      addMeshRow(binTemplateMesh, workbenchGroup.children[0], binStartX, 0, backBinZ, 50, 7);
 
       if(onBinsCompleted) {
         onBinsCompleted();
