@@ -5,14 +5,24 @@ window.partProperties = [
     weight: 0.45
   },
   {
+    name: '1x3',
+    price: 0.05,
+    weight: 0.59
+  },
+  {
     name: '2x2',
     price: 0.14,
     weight: 1.15
   },
   {
     name: '2x2 Slope',
-    price: 0.0, // data needed
-    weight: 0.0 // data needed
+    price: 0.14,
+    weight: 1.05
+  },
+  {
+    name: '2x2 Pin',
+    price: 0.15, 
+    weight: 0.70
   },
   {
     name: '2x3x2',
@@ -26,16 +36,16 @@ window.partProperties = [
   },
   {
     name: '1x2 Slope',
-    price: 0.0, // data needed
-    weight: 0.0 // data needed
+    price: 0.11,
+    weight: 0.65
   },
   {
     name: '1x2 Inverted Slope',
-    price: 0.0, // data needed
-    weight: 0.0 // data needed
+    price: 0.11,
+    weight: 0.70
   },
   {
-    name: '2x2 Pin',
+    name: '2x2x1 Pin',
     price: 0.18,
     weight: 0.95
   },
@@ -96,13 +106,28 @@ window.partProperties = [
   },
   {
     name: '2x2 Plate',
-    price: 0.0, // data needed
-    weight: 0.0 // data needed
+    price: 0.11,
+    weight: 0.60
   },
   {
     name: '4x6 Plate',
     price: 0.43,
     weight: 3.35
+  },
+  {
+    name: '4x10 Plate',
+    price: 0.54,
+    weight: 5.40
+  },
+  {
+    name: '2x8 Plate',
+    price: 0.25,
+    weight: 2.25
+  },
+  {
+    name: '2x6 Plate',
+    price: 0.19,
+    weight: 1.70
   },
   {
     name: '6x8 Plate',

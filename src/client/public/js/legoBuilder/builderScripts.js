@@ -1,5 +1,5 @@
 'use strict'
-let currentRollOverModel = "";
+let currentRollOverModel = null;
 let placementOffset = new THREE.Vector3();
 
 /*
@@ -63,7 +63,7 @@ function updateRolloverMesh(mousePos) {
   // pieceIndex = names.indexOf(currentRollOverModel);
   if (rollOverMesh !== null) {
     clearPreviousRollOverObject();
-    if (intersects.length > 0 && currentRollOverModel != "") {
+    if (intersects.length > 0 && currentRollOverModel !== null) {
       // Need to load the rollOverMesh once the user enters the plane one again
       // this is to avoid lingering rollOverMeshes when you cycle through different pieces
       if (scene.children.indexOf(rollOverMesh) == -1) scene.add(rollOverMesh);
@@ -155,7 +155,7 @@ function returnPartToStock(partMesh)
 {
   // I get this kind of shit when I forget to actually design some parts
   // It's also because some parts of JS can be "interesting"
-  let partID = names.indexOf(partMesh.userData.modelType);
+  let partID = partMesh.userData.modelType;
   let partColor = partMesh.userData.colorInfo;
   let existingPiece = pieces.find(value => {
     return (value.partID === partID && value.color === partColor);
@@ -303,15 +303,14 @@ function onDocumentMouseDown(event) {
           returnPartToStock(rollOverMesh);
         }
 
-        let newPartID = names.indexOf(binObject.userData.modelType);
-        removePartFromStock(newPartID, binObject.userData.colorInfo);
+        removePartFromStock(binObject.userData.modelType, binObject.userData.colorInfo);
 
         binObject.parent.remove(binObject);
         binObject.name = 'rollOverMesh';
         scene.remove(rollOverMesh);
         rollOverMesh = binObject;
         currentRollOverModel = binObject.userData.modelType;
-        currentObj = allModels[newPartID];
+        currentObj = allModels[binObject.userData.modelType];
 
         updatePieces().then(() => {
           updateBinParts();
@@ -321,7 +320,7 @@ function onDocumentMouseDown(event) {
       {
         returnPartToStock(rollOverMesh);
         rollOverMesh = null;
-        currentRollOverModel = '';
+        currentRollOverModel = null;
         currentObj = null;
         updatePieces().then(() => {
           updateBinParts();
@@ -400,7 +399,7 @@ function updateBinParts()
 
       templateMesh.userData.isPart = true;
       templateMesh.userData.dimensions = adjustedBoundingBoxSize;
-      templateMesh.userData.modelType = names[thisPieceInfo.partID];
+      templateMesh.userData.modelType = thisPieceInfo.partID;
       templateMesh.userData.colorInfo = thisPieceInfo.color;
 
       let parentBin = binCollection[thisPieceInfo.partID];
@@ -460,7 +459,7 @@ function placeLego(intersect, cb) {
 
   if (intersect.object.name === 'plane') {
       //changeObjPosOnPlane(modelObj, intersect, size);
-      let mName = currentRollOverModel.split(' ');
+      let mName = allModels[currentRollOverModel].name.split(' ');
       if (mName[0] === 'Rim' || mName[0] === 'Tire') {
         placementPossible = false;
       }
@@ -470,7 +469,7 @@ function placeLego(intersect, cb) {
       dim.normalize();
       // TODO: THERE SEEMS TO BE A PROBLEM WITH A SLIGHTLY LOWER PLACEMENT THAN IT SHOULD BE
       let iName = intersect.object.userData.obj.name.split(' ');
-      let mName = currentRollOverModel.split(' ');
+      let mName = allModels[currentRollOverModel].name.split(' ');
 
       // this is lazy programming. i don't want to handle the array bounds
       // i did this all already in a better manner but it was lost with my desktop. RIP
@@ -490,7 +489,7 @@ function placeLego(intersect, cb) {
       objects.push(modelObj);
       collisionCube = generateCollisionCube(modelObj, size);
       rollOverMesh = null;
-      currentRollOverModel = '';
+      currentRollOverModel = null;
       currentObj = null;
   }
 
@@ -671,7 +670,7 @@ function getSnapBasisValue(snapBasis, minValue, maxValue)
 function moveToSnappedPosition(objToMove)
 {
   objToMove.geometry.computeBoundingBox();
-  let partID = names.indexOf(objToMove.userData.modelType);
+  let partID = objToMove.userData.modelType;
   let gridOffset = new THREE.Vector2(allModels[partID].snapOffsetX, allModels[partID].snapOffsetZ);
 
   let snapPoint = (new THREE.Vector3(
@@ -708,7 +707,7 @@ function determineWheelPosition(modelObj, intersect, dim) {
   let rotationMatrix = determineRotationMatrix(intersect, rotation);  
 
   let typeColl = collisionModel.name.split(' ');
-  let typeModel = modelObj.userData.modelType.split(' ');
+  let typeModel = allModels[modelObj.userData.modelType].name.split(' ');
   if (typeColl.length == 1) {
     scene.remove(modelObj);
     return false;
