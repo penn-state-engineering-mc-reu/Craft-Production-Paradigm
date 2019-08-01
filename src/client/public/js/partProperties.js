@@ -5,6 +5,11 @@ window.partProperties = [
     weight: 0.45
   },
   {
+    name: '1x3',
+    price: 0.0,//need
+    weight: 0.0//need
+  },
+  {
     name: '2x2',
     price: 0.14,
     weight: 1.15
@@ -13,6 +18,11 @@ window.partProperties = [
     name: '2x2 Slope',
     price: 0.0, // data needed
     weight: 0.0 // data needed
+  },
+  {
+    name: '2x2 Pin',
+    price: 0.0, //need
+    weight: 0.0 //need
   },
   {
     name: '2x3x2',
@@ -35,7 +45,7 @@ window.partProperties = [
     weight: 0.0 // data needed
   },
   {
-    name: '2x2 Pin',
+    name: '2x2x1 Pin',
     price: 0.18,
     weight: 0.95
   },
@@ -103,6 +113,21 @@ window.partProperties = [
     name: '4x6 Plate',
     price: 0.43,
     weight: 3.35
+  },
+  {
+    name: '4x10 Plate',
+    price: 0.0,//need
+    weight: 0.0//need
+  },
+  {
+    name: '2x8 Plate',
+    price: 0.0,//need
+    wieght: 0.0//need
+  },
+  {
+    name: '2x6 Plate',
+    price: 0.0,//need
+    weight: 0.0//need
   },
   {
     name: '6x8 Plate',
