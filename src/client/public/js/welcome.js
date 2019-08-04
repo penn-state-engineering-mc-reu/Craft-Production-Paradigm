@@ -18,7 +18,22 @@ function initButtons() {
     $('#join-game-modal').modal({onApprove : onApproveJoin}).modal('show');    
   });
 
-  $('#pin').keypress((e) => setTimeout(checkIfPinIsValid, 1000));
+  let checkPinTimerID = null;
+  $('#pin').on('input', function(e) {
+    if (checkPinTimerID !== null)
+    {
+      clearTimeout(checkPinTimerID);
+    }
+
+    if($(this).val().length > 0)
+    {
+      checkPinTimerID = setTimeout(() => {
+        checkPinTimerID = null;
+        checkIfPinIsValid();
+      }, 1000);
+    }
+  });
+
   $('.ui.dropdown').dropdown();
 }
 
@@ -142,7 +157,7 @@ function getPostData() {
   position = position === '' ? 'Assembler' : position;
   sessionStorage.position = position;
   data.positions.push(position);
-  let players = $('#num-players').val();
+  let players = 4;
   data.maxPlayers = players > 4 ? 4 : players < 2 ? 2 : players;
   return JSON.stringify(data);
 }

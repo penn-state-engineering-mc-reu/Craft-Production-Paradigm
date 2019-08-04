@@ -1,16 +1,12 @@
-const names = ["1x1", "2x2", "2x3x2", "1x2 Pin", 
-              "2x2 Pin", "2x2x2 Pin", "2x2 Double", "Tire 1",
-              "Tire 2", "Tire 3", "Rim 1", "Rim 2",
-              "Rim 3", "1x2", "1x4", "1x2 Plate",
-              "4x6 Plate", "6x8 Plate", "2x10 Plate", "Windshield",
-              "Steering Wheel", "Lego Man"];
 let pieceOrder = [];
+let colors = [];
 orderInformation = {};
 currentOrder = {};
 
 $(document).ready(() => {
   generateSupplyGrid();
   initArray();
+  updateCostWeight();
   initButtons();
   $('#order').click(e => {
     openModal();
@@ -24,19 +20,30 @@ function getPin() {
 }
 
 function initArray() {
-  for (let i = 0; i < names.length; i++) pieceOrder[i] = 0;
+  for (let i = 0; i < partProperties.length; i++)
+  {
+    pieceOrder[i] = 0;
+    colors[i] = BrickColors.defaultBrickColor.colorID;
+  }
 }
 
 function initButtons() {
-  for (let i = 0; i < names.length; i++) {
+  $('#send-manufacturing-order').on('click', () => {
+    forwardCustomerOrder().then(() => {
+      $('#ready-order').modal('hide');
+    });
+  });
+
+  for (let i = 0; i < partProperties.length; i++) {
     let num = '#' + i;
     $(num + '-plus').click(e => {
       $('#error-message').addClass('hidden');
-      $('#send-manufacturing-order').removeClass('disabled');
+      // $('#send-manufacturing-order').removeClass('disabled');
 
       let currentNum = parseInt($(num + '-value').html());
       $(num + '-value').html(currentNum < 10 ? ++currentNum : 10);
       pieceOrder[i] = currentNum;
+      updateCostWeight();
     });
     $(num + '-minus').click(e => {
       let currentNum = parseInt($(num + '-value').html());
@@ -50,10 +57,31 @@ function initButtons() {
       if(partSum <= 0)
       {
         $('#error-message').removeClass('hidden');
-        $('#send-manufacturing-order').addClass('disabled');
+        // $('#send-manufacturing-order').addClass('disabled');
       }
+      updateCostWeight();
     });
+
+    (function(index) {
+      $('.' + index + '-picker').spectrum({
+        showPalette: true,
+        showPaletteOnly: true,
+        showAlpha: true,
+        containerClassName: index + '-picker-container',
+        palette: BrickColors.spectrumPalette,
+        color: BrickColors.defaultBrickColor.RGBString,
+        change: function (color) {
+          let activeElement = $('.' + index + '-picker-container').find('.sp-thumb-el.sp-thumb-active');
+          colors[index] = BrickColors.allPaletteData[$(activeElement).closest('.sp-palette-row').index()][$(activeElement).index()].colorID;
+        }
+      });
+    })(i);
   }
+
+/*  $('.sp-palette-row .sp-thumb-el').on('click.spectrum touchstart.spectrum', function(event) {
+    let partNum = parseInt($(this).closest('.picker-container').data('part-number'));
+    colors[partNum] = BrickColors.allPaletteData[$(this).closest('.sp-palette-row').index()][$(this).index()].colorID;
+  });*/
 
   $('#left').click(e => {
     let index = orderInformation.indexOf(currentOrder);
@@ -67,7 +95,7 @@ function initButtons() {
     updateOrder();
   });
 
-  $('#send-manufacturing-order').click(e => {
+  $('#send-supplier-order').click(e => {
     sendPiecesOrder();
   });
 }
@@ -91,7 +119,7 @@ function checkOrders() {
         while(orderInformation[i].status != 'In Progress') {
           i++;
           if (i >= orderInformation.length) break;
-        } 
+        }
         currentOrder = orderInformation[i] === undefined ? orderInformation[0] : orderInformation[i];
       }
       updateOrder();
@@ -104,15 +132,43 @@ function checkOrders() {
   setTimeout(checkOrders, 3000);
 }
 
+function forwardCustomerOrder()
+{
+  return $.ajax({
+    type: 'POST',
+    url: GameAPI.rootURL + '/gameLogic/forwardManufacturerOrder/' + getPin() + '/' + currentOrder._id,
+    timeout: 5000
+  });
+}
+
 function sendPiecesOrder() {
-  let postData = {'request': pieceOrder};
+  let orderData = [];
+
+  partProperties.forEach((value, index) => {
+    if(pieceOrder[index] > 0) {
+      orderData.push({
+        partID: index,
+        color: colors[index],
+        count: pieceOrder[index],
+      });
+    }
+  });
+
+  let postData = {'request': orderData};
   $.ajax({
     type: 'POST',
-    data: postData,
-    url: GameAPI.rootURL + '/gameLogic/updateManufacturerRequest/' + getPin() + '/' + currentOrder._id,
+    url: GameAPI.rootURL + '/gameLogic/addSupplyOrder/' + getPin(),
+    data: JSON.stringify(postData),
+    contentType: 'application/json',
     success: (data) => {
-      generateSupplyGrid();
-      initButtons();
+      initArray();
+      $('.value').text('0');
+      for(let index = 0; index < partProperties.length; index++)
+      {
+        $('.' + index + '-picker').spectrum('set', BrickColors.defaultBrickColor.RGBString);
+      }
+
+      updateCostWeight();
     },
     error: (xhr, status, error) => {
       console.log(error);
@@ -137,15 +193,47 @@ function openModal() {
 }
 
 function updateOrder() {
-  $('#order-image').attr('src', `/../images/Option ${currentOrder.modelID}.PNG`);
-  let html = '<p>Date Ordered: ' + new Date(currentOrder.createDate).toString() + '</p>';
-  html += '<p>Last Modified: ' + new Date(currentOrder.lastModified).toString() + '</p>';
-  if (currentOrder.status === 'Completed')
-    html += '<p>Finished: ' + new Date(currentOrder.finishedTime).toString() + '</p>';
-  html += '<p>Model ID: ' + currentOrder.modelID + '</p>';
-  html += '<p>Stage: ' + currentOrder.stage + '</p>';
-  html += '<p>Status: ' + currentOrder.status + '</p><br>';
-  $('#order-info').html(html);
+  if(currentOrder.isCustomOrder)
+  {
+    $('#order-image').attr('src', `${GameAPI.rootURL}/gameLogic/getCustomOrderImage/${getPin()}/${currentOrder._id}`);
+  }
+  else
+  {
+    $('#order-image').attr('src', `/../images/Option ${currentOrder.modelID}.PNG`);
+  }
+
+  let orderNode = $('#order-info').empty();
+
+  orderNode.append('<p>Date Ordered: ' + new Date(currentOrder.createDate).toString() + '</p>')
+      .append('<p>Last Modified: ' + new Date(currentOrder.lastModified).toString() + '</p>');
+
+  if (currentOrder.status === 'Completed') {
+    orderNode.append('<p>Finished: ' + new Date(currentOrder.finishedTime).toString() + '</p>');
+    $('#view-model').removeClass('disabled');
+  } else {
+    $('#view-model').addClass('disabled');
+  }
+
+  if(!(currentOrder.isCustomOrder)) {
+    orderNode.append('<p>Model ID: ' + currentOrder.modelID + '</p>');
+  }
+
+  orderNode.append('<p>Stage: ' + currentOrder.stage + '</p>')
+      .append('<p>Status: ' + currentOrder.status + '</p>');
+
+  if(currentOrder.isCustomOrder)
+  {
+    orderNode.append('<span>Description:</span>')
+        .append($('<p></p>').text(currentOrder.orderDesc));
+  }
+
+  orderNode.append('<br>');
+}
+
+function updateCostWeight()
+{
+  $('#total-cost-text').text(`$${totalPartCost(pieceOrder).toFixed(2)}`);
+  $('#total-weight-text').text(totalPartWeight(pieceOrder).toFixed(2));
 }
 
 /**
@@ -154,23 +242,27 @@ function updateOrder() {
  */
 function generateSupplyGrid() {
   let html = "";
-  for (let i = 0; i < names.length / 4; i++) {
+  for (let i = 0; i < partProperties.length / 4; i++) {
     html += '<div class="row">';
     for (let j = 0; j < 4; j++) {
-      if (i * 4 + j < names.length) {
+      let partNumber = i * 4 + j;
+      if (partNumber < partProperties.length) {
         html += '<div class="four wide column">';
-        html += '<p align="left">' + names[i * 4 + j] + '</p>';
-        html += `<p> <img class = "piece" src= "/../images/Lego pieces/${names[i * 4 + j]}.jpg"> </p>`;
+        html += `<p align="left">${partProperties[partNumber].name}</p>`;
+        html += `<p align="left">$${partProperties[partNumber].price.toFixed(2)} each</p>`;
+        html += `<p align="left">${partProperties[partNumber].weight.toFixed(2)} grams</p>`;
+        html += `<p> <img class = "piece" src= "/../images/Lego pieces/${partProperties[partNumber].name}.jpg"> </p>`;
         // Start off each piece with an order of 0
-        html += '<div class="row"><div class="ui statistic"><div id="' + (i * 4 + j) + '-value' + '"class="value">0</div></div></div>'
+        html += `<div class="row"><div class="ui statistic"><div id="${partNumber}-value" class="value">0</div></div></div>`;
+        html += `<div class="row picker"><input type="text" class="${partNumber}-picker" value="${BrickColors.defaultBrickColor.RGBString}"/></div>`;
         // Adds the plus and minus buttons to each piece
         html += '<div class="row"><div class="ui icon buttons">' +
-          '<button id="'+ (i * 4 + j) + '-minus' + '" class="ui button"><i class="minus icon"></i></button>' +
-          '<button id="'+ (i * 4 + j) + '-plus' + '" class="ui button"><i class="plus icon"></i></button></div></div></div>';
+          `<button id="${partNumber}-minus" class="ui button"><i class="minus icon"></i></button>` +
+          `<button id="${partNumber}-plus" class="ui button"><i class="plus icon"></i></button></div></div></div>`;
       }
     }
     // I want there to be vertical lines between each cube so I need to add a blank space 
-    if (i + 1 >= names.length / 4) html += '<div class="five wide column"></div>';
+    if (i + 1 >= partProperties.length / 4) html += '<div class="five wide column"></div>';
     html += '</div>';
   }
 

@@ -68,9 +68,9 @@ function getGameInfo() {
     url: GameAPI.rootURL + '/startGame/getGameInfo/' + pin,
     timeout: 5000,
     success: (result) => {
-      applyGameInfo(result[0]);
+      applyGameInfo(result);
       setTimeout(getGameInfo, 5000);
-      if (result[0].activePlayers == result[0].maxPlayers)
+      if (result.activePlayers == result.maxPlayers)
         $('#start-game').removeClass('disabled');
     },
     error: (xhr,status,error) => {

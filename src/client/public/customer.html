@@ -26,18 +26,7 @@
             </h1>
           </div>
           <div class="row">
-            <h3 class="ui header">Generate Orders By Guassian Distribution</h3>
-          </div>
-          <div class="row">
-            <div class="ui input left icon labeled">
-              <input id="num-orders" placeholder="# of Orders" type="number" min="1" max="10">
-              <i class="cart plus icon"></i>
-            </div>
-            <div class="ui input left icon labeled">
-              <input id="skew" placeholder="Skew" type="number" min="0">
-              <i class="chart area icon"></i>
-            </div>
-            <button class="ui green button" id="generate">Generate</button>
+            <button class="ui green button" id="generate">Generate Random Order</button>
           </div>
           <div class="row">
             <div class="ui horizontal divider">OR</div>
@@ -63,12 +52,35 @@
               </div>
             </div>
           </div>
-					<button class="disabled ui massive green button" id="order">View Orders Placed</button>
+		<div class="row">
+            <div class="ui horizontal divider">OR</div>
+          </div>
+          <div class="row">
+            <h3 class="ui header">Create a custom order</h3>
+          </div>
+		 <div class="row">
+             <form id="custom-order-form" action="" method="post" enctype="multipart/form-data" style="width: 100%;">
+                <div class="ui celled centered grid image-picker grid">
+                    <span class="row" style="margin-bottom: 5px;">Select an image that depicts the product:</span>
+                    <p>
+                        <button type="button" id="file-button">
+                            CHOOSE A FILE
+                            <input type="file" name="custom-order-image" id="real-file" required>
+                        </button>
+                        <span id="custom-text">No file chosen.</span>
+                    </p>
+                </div>
+                <textarea name="custom-order-desc" placeholder="Add notes about this item..." style="width: 100%; height: 100px;"></textarea>
+                 <button type="submit" id="custom-order-submit" name="custom-order-submit" class="ui large green button">Send Order</button>
+             </form>
+         </div>
+         <div class="ui divider" style="width: 100%;"></div>
+         <button class="ui massive green button" id="order">View Orders Placed</button>
         </div>
       </div>
     </div>
 
-    <div class="ui basic modal">
+    <div class="ui basic modal" id="confirm-standard-order-modal">
       <div class="ui icon header">
         <i class="cart arrow down icon"></i>
         Send Order to Manufacturer
@@ -94,9 +106,19 @@
 
     <div class="ui modal" id="ready-order">
 			<div class="header">
-				Order Information
+                <span id="order-info-text">Order Information</span>
+                <div class="header-lr-filler"></div>
+                <div id="filter-options">
+                    <span id="filter-options-text">Filter orders:</span>
+                    <input id="in-progress" type="checkbox">
+                    <label for="in-progress">In progress</label>
+                    <input id="ready-for-inspection" type="checkbox" checked>
+                    <label for="ready-for-inspection">Ready for inspection</label>
+                    <input id="sent-to-customer" type="checkbox">
+                    <label for="sent-to-customer">Sent to customer</label>
+                </div>
 			</div>
-			<div class="image content">
+			<div id="order-display" class="image content">
 				<div class="ui image order-image-container">
 					<img id="order-image" src="">
 				</div>
@@ -105,6 +127,12 @@
 					<span id="order-info"></span>
 				</div>
 			</div>
+            <div id="no-order-message" class="ui hidden negative message">
+                <div class="ui centered header">
+                    No Orders Available
+                </div>
+                <p style="text-align: center;">No orders are available that match the selected filters.</p>
+            </div>
 			<div class="actions">
 				<div id="left" class="ui red button">
 					<i class="angle double left icon"></i>
@@ -121,5 +149,19 @@
 				</div>
 			</div>
 		</div>
+
+        <div class="ui basic modal" id="order-success-modal">
+            <div class="ui centered header">
+                The order was sent successfully!
+            </div>
+            <div class="ui centered grid">
+                <div class="actions">
+                    <div class="ui green inverted button modal-close-button">
+                        <i class="checkmark icon"></i>
+                        Okay
+                    </div>
+                </div>
+            </div>
+        </div>
   </body>
 </html>

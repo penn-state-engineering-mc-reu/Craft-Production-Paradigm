@@ -12,32 +12,38 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const GameLogicDatabaseConnector_1 = require("../controllers/GameLogicDatabaseConnector");
-const order_1 = require("../models/order");
+const CustOrderDatabaseConnector_1 = require("../models/CustOrderDatabaseConnector");
+const orderImage_1 = require("../models/orderImage");
+const SupplierOrderDatabaseConnector_1 = require("../models/SupplierOrderDatabaseConnector");
 class GameLogicController {
-    constructor() {
-        this.db = new GameLogicDatabaseConnector_1.GameLogicDatabaseConnector();
+    constructor(dbClient, gameController) {
+        this.gameController = gameController;
+        this.custOrderDBConnector = new CustOrderDatabaseConnector_1.CustOrderDatabaseConnector(dbClient);
+        this.supplierOrderDBConnector = new SupplierOrderDatabaseConnector_1.SupplierOrderDatabaseConnector(dbClient);
     }
-    placeOrder(pin, modelID, generated, max, skew) {
-        if (generated == true) {
-            this.generateOrders(pin, max, skew);
-        }
-        else {
-            let order = new order_1.default(pin);
-            order.setModelID(modelID);
-            order.setStage('Manufacturer');
-            this.db.addOrder(order.toJSON());
-        }
+    placeOrder(pin, modelID) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let order = { pin: pin, modelID: modelID };
+            yield this.custOrderDBConnector.addOrder(order);
+        });
     }
-    generateOrders(pin, max, skew) {
-        for (let i = 0; i < max; i++) {
-            let order = new order_1.default(pin);
-            let ID = Math.ceil(this.normalDistribution(skew));
-            order.setModelID(ID);
-            order.setStage('Manufacturer');
-            this.db.addOrder(order.toJSON());
-        }
+    placeCustomOrder(pin, orderDesc, imageData) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let order = { pin: pin, isCustomOrder: true, orderDesc: orderDesc, imageData: yield (new orderImage_1.OrderImage(imageData)).toBuffer() };
+            yield this.custOrderDBConnector.addOrder(order);
+        });
     }
+    /*
+    private generateOrders(pin: number, max:number, skew: number): void {
+      for (let i: number = 0; i < max; i++) {
+        let order = new Order(pin);
+        let ID: number = Math.ceil(this.normalDistribution(skew));
+        order.setModelID(ID);
+        order.setStage('Manufacturer');
+        this.db.addOrder(order.toJSON());
+      }
+    }
+    */
     /**
      * Found on StackOverflow
      * https://stackoverflow.com/questions/25582882/javascript-math-random-normal-distribution-gaussian-bell-curve
@@ -45,63 +51,85 @@ class GameLogicController {
      * @param max
      * @param skew
      */
-    normalDistribution(skew) {
-        const min = 0;
-        const max = 4;
+    /*  private normalDistribution(skew: number): number {
+        const min: number = 0;
+        const max: number = 4;
         var u = 0, v = 0;
-        while (u === 0)
-            u = Math.random(); //Converting [0,1) to (0,1)
-        while (v === 0)
-            v = Math.random();
-        let num = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+        while(u === 0) u = Math.random(); //Converting [0,1) to (0,1)
+        while(v === 0) v = Math.random();
+        let num = Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
+    
         num = num / 10.0 + 0.5; // Translate to 0 -> 1
-        if (num > 1 || num < 0)
-            num = this.normalDistribution(skew); // resample between 0 and 1 if out of range
+        if (num > 1 || num < 0) num = this.normalDistribution(skew); // resample between 0 and 1 if out of range
         num = Math.pow(num, skew); // Skew
         num *= max - min; // Stretch to fill range
         num += min; // offset to min
         return num;
+      }*/
+    getOrder(pin, orderID) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return yield this.custOrderDBConnector.getOrder(pin, orderID);
+        });
     }
     getOrders(pin) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db.getOrders(pin);
+            return yield this.custOrderDBConnector.getOrders(pin);
         });
     }
-    addSupplyOrder(pin, orderId, order, colors) {
-        this.db.addSupplyOrder(pin, orderId, order, colors);
-    }
-    getSupplyOrder(pin, orderId) {
+    getCustomOrderImage(pin, orderID) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db.getSupplyOrder(pin, orderId);
+            return yield this.custOrderDBConnector.getCustomOrderImage(pin, orderID);
         });
     }
-    getColors(pin, orderId) {
+    completeSupplyOrder(pin, orderId, parts) {
         return __awaiter(this, void 0, void 0, function* () {
-            let result = yield this.db.getColors(pin, orderId);
-            return result;
+            yield Promise.all([
+                this.supplierOrderDBConnector.completeOrder(pin, orderId, parts),
+                this.gameController.addAssemblerParts(pin, parts)
+            ]);
         });
     }
-    updatePieces(pin, orderId, pieces) {
-        return this.db.updatePieces(pin, orderId, pieces);
+    forwardManufacturerOrder(pin, orderID) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.custOrderDBConnector.setOrderStage(pin, orderID, 'Assembler');
+        });
     }
+    /*public async getSupplyOrder(pin: number, orderId: string): Promise<Array<PartInventory>> {
+      return await this.supplierOrderDBConnector.getSupplyOrder(pin, orderId);
+    }*/
+    /*public async getColors(pin: number, orderId: string): Promise<Array<any>> {
+      let result = await this.custOrderDBConnector.getColors(pin, orderId);
+      return result;
+    }*/
+    /*  public updatePieces(pin: string, orderId: string, pieces: Array<number>): number {
+        return this.custOrderDBConnector.updatePieces(pin, orderId, pieces);
+      }*/
     updateAssembledModel(pin, orderId, model) {
-        return this.db.updateAssembledModel(pin, orderId, model);
+        return this.custOrderDBConnector.updateAssembledModel(pin, orderId, model);
     }
     getAssembledModel(pin, orderId) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db.getAssembledModel(pin, orderId);
+            return yield this.custOrderDBConnector.getAssembledModel(pin, orderId);
         });
     }
-    getManufacturerRequest(pin, orderId) {
+    /*  public async getManufacturerRequest(pin: number, orderId: string): Promise<ISupplierOrder | null> {
+        return await this.supplierOrderDBConnector.getManufacturerRequest(pin, orderId);
+      }*/
+    addSupplyOrder(pin, request) {
+        console.log("At controller: " + JSON.stringify(request));
+        return this.supplierOrderDBConnector.addOrder(pin, request);
+    }
+    getSupplyOrders(pin) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.db.getManufacturerRequest(pin, orderId);
+            return this.supplierOrderDBConnector.getSupplyOrders(pin);
         });
     }
-    updateManufacturerRequest(pin, orderId, request) {
-        return this.db.updateManufacturerRequest(pin, orderId, request);
+    acceptOrder(pin, orderId) {
+        return this.custOrderDBConnector.acceptOrder(pin, orderId);
     }
     rejectOrder(pin, orderId) {
-        return this.db.rejectOrder(pin, orderId);
+        return this.custOrderDBConnector.rejectOrder(pin, orderId);
     }
 }
 exports.GameLogicController = GameLogicController;
+//# sourceMappingURL=GameLogicController.js.map

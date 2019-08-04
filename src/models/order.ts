@@ -1,3 +1,17 @@
+import {OrderImage} from './orderImage';
+
+class CustomOrderInfo
+{
+  public orderDesc: string;
+  public orderImage: OrderImage;
+
+  constructor(desc: string, image: OrderImage)
+  {
+    this.orderDesc = desc;
+    this.orderImage = image;
+  }
+}
+
 export default class Order {
   private _id: string;
   private pin: number;
@@ -13,6 +27,7 @@ export default class Order {
   // Customer -> Manufacturer -> Supplier -> Assembler -> Customer
   private stage: string;
   private modelID: number;
+  private customOrderInfo: (CustomOrderInfo | null) = null;
   private manufacturerReq: Array<number>;
   private supplyOrders: Array<number>;
   private assembledModel: object;
@@ -65,10 +80,17 @@ export default class Order {
   public setModelID(type: number): void {
     this.setLastModified();
     this.modelID = type;
+    this.customOrderInfo = null;
+  }
+
+  public setCustomOrder(desc: string, image: OrderImage)
+  {
+    this.setLastModified();
+    this.customOrderInfo = new CustomOrderInfo(desc, image);
   }
 
   // Allows me to easily convert the object and store it into the mongoDB database
-  public toJSON(): object {
+  public async toJSON(): Promise<object> {
     let jsonObj = {
       "_id": this._id,
       "pin": this.pin,
@@ -78,6 +100,9 @@ export default class Order {
       "status": this.status,
       "stage": this.stage,
       "modelID": this.modelID,
+      "isCustomOrder": (!!this.customOrderInfo),
+      "orderDesc": (this.customOrderInfo ? this.customOrderInfo.orderDesc : null),
+      "imageData": (this.customOrderInfo ? await this.customOrderInfo.orderImage.toBuffer() : null),
       "manufacturerReq": this.manufacturerReq,
       "supplyOrders": this.supplyOrders,
       "colors": this.colors,

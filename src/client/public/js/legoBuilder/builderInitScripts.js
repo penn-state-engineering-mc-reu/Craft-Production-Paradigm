@@ -17,10 +17,11 @@ var container;
 var camera, scene, renderer, controls;
 var plane, cube;
 var mouse, raycaster, isCtrlDown = false, isShiftDown = false;
-var rollOverMesh, material, collisionBox;
+var rollOverMesh = null, material, collisionBox;
+let partModelCache = {};
 const TILE_DIMENSIONS = new THREE.Vector2(24, 24);
 var objects = [], collisionObjects = [];
-var currentObj = twoByTwo;
+var currentObj = null;
 // var group = new THREE.Group();
 
 // Kicks off the program
@@ -36,7 +37,7 @@ function init() {
   createEnvironment(() => {
     createGridAndPlane(scene.getObjectByName('Environment').getObjectByName('Room')
       .getObjectByName('Workbenches').children[0]);
-  });
+  }, checkPieces);
 
   //objects.push(plane);
   raycaster = new THREE.Raycaster();
@@ -48,7 +49,10 @@ function init() {
   document.addEventListener('mousedown', onDocumentMouseDown, false);
   document.addEventListener('keydown', onDocumentKeyDown, false);
   document.addEventListener('keyup', onDocumentKeyUp, false);
+  renderer.domElement.addEventListener('wheel', onRendererMouseWheel, false);
   window.addEventListener('resize', onWindowResize, false);
+  window.addEventListener('beforeunload', onBeforePageUnload);
+  window.addEventListener('unload', onPageUnload);
 }
 
 // Initializes the camera -- Allows to use mouse wheel to zoom
@@ -168,7 +172,7 @@ function addMeshRow(templateMesh, newMeshParent, startX, yPos, zPos, spacing, nu
   }
 }
 
-function createEnvironment(onCompleted)
+function createEnvironment(onRoomCompleted, onBinsCompleted)
 {
   let modelLoader = new THREE.STLLoader();
   modelLoader.load('../objects/environment/workbench.stl', function(workbenchGeometry) {
@@ -211,7 +215,8 @@ function createEnvironment(onCompleted)
 
     modelLoader.load('../objects/environment/part_bin.stl', function(binGeometry) {
       let binStartX = 175; // -(bboxSize.x / 2) + 175;
-      let binZ = -450;
+      let backBinZ = -450,
+      frontBinZ = 75;
 
       let binMaterial = new THREE.MeshPhongMaterial({
         color: "#0000ff",
@@ -220,9 +225,15 @@ function createEnvironment(onCompleted)
       });
 
       let binTemplateMesh = new THREE.Mesh(binGeometry, binMaterial);
+      binTemplateMesh.name = "partBin";
 
-      addMeshRow(binTemplateMesh, workbenchGroup.children[0], binStartX, -cornerWorkbenchPos.y, binZ, 50, 12);
-      addMeshRow(binTemplateMesh, workbenchGroup.children[0], binStartX, 0, binZ, 50, 10);
+      addMeshRow(binTemplateMesh, workbenchGroup.children[0], binStartX, -cornerWorkbenchPos.y, frontBinZ, 50, 12);
+      addMeshRow(binTemplateMesh, workbenchGroup.children[0], binStartX, -cornerWorkbenchPos.y, backBinZ, 50, 12);
+      addMeshRow(binTemplateMesh, workbenchGroup.children[0], binStartX, 0, backBinZ, 50, 7);
+
+      if(onBinsCompleted) {
+        onBinsCompleted();
+      }
     }, undefined, function(ex) {
       console.trace(ex);
     });
@@ -289,9 +300,11 @@ function createEnvironment(onCompleted)
           thisWallMesh.setRotationFromEuler(elem.rotation);
 
           roomGroup.add(thisWallMesh);
-
-          onCompleted();
         });
+
+        if(onRoomCompleted) {
+          onRoomCompleted();
+        }
       }), undefined, function (ex) {
         console.trace(ex);
       });
