@@ -5,6 +5,7 @@ $(document).ready(() => {
   initPage();
   initProgressAndButtons();
   getGameInfo();
+  setInterval(getGameInfo, 3000);
 });
 
 /* 
@@ -66,10 +67,9 @@ function getGameInfo() {
   $.ajax({
     type: 'GET',
     url: GameAPI.rootURL + '/startGame/getGameInfo/' + pin,
-    timeout: 5000,
+    timeout: 3000,
     success: (result) => {
       applyGameInfo(result);
-      setTimeout(getGameInfo, 5000);
       if (result.activePlayers == result.maxPlayers)
         $('#start-game').removeClass('disabled');
     },
