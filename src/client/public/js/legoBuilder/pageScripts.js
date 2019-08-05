@@ -19,13 +19,13 @@ function initButtons() {
   $('#left').click(e => {
     let index = orderInformation.indexOf(currentOrder);
     currentOrder = --index < 0 ? orderInformation[orderInformation.length - 1] : orderInformation[index];
-    updateOrder();
+    updateOrderUI();
   });
 
   $('#right').click(e => {
     let index = orderInformation.indexOf(currentOrder);
     currentOrder = ++index == orderInformation.length ? orderInformation[0] : orderInformation[index];
-    updateOrder();
+    updateOrderUI();
   });
 
   $('#order').click(e => {openModal()});
@@ -66,42 +66,59 @@ function openModal() {
     $('#ready-order').modal('show');
 }
 
-function updateOrder() {
-  if(currentOrder.isCustomOrder)
+function updateCurrentOrderInfo()
+{
+  if(orderInformation.length === 0)
   {
-    $('#order-image').attr('src', `${GameAPI.rootURL}/gameLogic/getCustomOrderImage/${getPin()}/${currentOrder._id}`);
+    currentOrder = null;
   }
-  else
-  {
-    $('#order-image').attr('src', `/../images/Option ${currentOrder.modelID}.PNG`);
-  }
+  else {
+    if (currentOrder != null && !(jQuery.isEmptyObject(currentOrder))) {
+      let findObj = orderInformation.find((elem) => {
+        return elem._id === currentOrder._id;
+      });
 
+      currentOrder = (findObj ? findObj : orderInformation[0]);
+    } else {
+      currentOrder = orderInformation[0];
+    }
+  }
+}
+
+function updateOrderUI() {
   let orderNode = $('#order-info').empty();
 
-  orderNode.append('<p>Date Ordered: ' + new Date(currentOrder.createDate).toString() + '</p>')
-      .append('<p>Last Modified: ' + new Date(currentOrder.lastModified).toString() + '</p>');
+  if(currentOrder) {
+    if (currentOrder.isCustomOrder) {
+      $('#order-image').attr('src', `${GameAPI.rootURL}/gameLogic/getCustomOrderImage/${getPin()}/${currentOrder._id}`);
+    } else {
+      $('#order-image').attr('src', `/../images/Option ${currentOrder.modelID}.PNG`);
+    }
 
-  if (currentOrder.status === 'Completed') {
-    orderNode.append('<p>Finished: ' + new Date(currentOrder.finishedTime).toString() + '</p>');
-    $('#view-model').removeClass('disabled');
-  } else {
-    $('#view-model').addClass('disabled');
+    orderNode.append('<p>Date Ordered: ' + new Date(currentOrder.createDate).toString() + '</p>')
+        .append('<p>Last Modified: ' + new Date(currentOrder.lastModified).toString() + '</p>');
+
+    if (currentOrder.status === 'Completed') {
+      orderNode.append('<p>Finished: ' + new Date(currentOrder.finishedTime).toString() + '</p>');
+      $('#view-model').removeClass('disabled');
+    } else {
+      $('#view-model').addClass('disabled');
+    }
+
+    if (!(currentOrder.isCustomOrder)) {
+      orderNode.append('<p>Model ID: ' + currentOrder.modelID + '</p>');
+    }
+
+    orderNode.append('<p>Stage: ' + currentOrder.stage + '</p>')
+        .append('<p>Status: ' + currentOrder.status + '</p>');
+
+    if (currentOrder.isCustomOrder) {
+      orderNode.append('<span>Description:</span>')
+          .append($('<p></p>').text(currentOrder.orderDesc));
+    }
+
+    orderNode.append('<br>');
   }
-
-  if(!(currentOrder.isCustomOrder)) {
-    orderNode.append('<p>Model ID: ' + currentOrder.modelID + '</p>');
-  }
-
-  orderNode.append('<p>Stage: ' + currentOrder.stage + '</p>')
-      .append('<p>Status: ' + currentOrder.status + '</p>');
-
-  if(currentOrder.isCustomOrder)
-  {
-    orderNode.append('<span>Description:</span>')
-        .append($('<p></p>').text(currentOrder.orderDesc));
-  }
-
-  orderNode.append('<br>');
 }
 
 function checkOrders() {
@@ -110,26 +127,17 @@ function checkOrders() {
     url: GameAPI.rootURL + '/gameLogic/getOrders/' + getPin(),
     timeout: 30000,
     success: (data) => {
-      orderInformation = data;
-      // Need to find the oldest order that hasn't been finished or canceled
-      orderInformation = filterOrders(orderInformation);
-      let i = 0;
-      if (orderInformation.length != 0) {
-        while(orderInformation[i].status != 'In Progress') {
-          i++;
-          if (i >= orderInformation.length) break;
-        }
-        // if all the orders are complete, i just set the current as the first order
-        currentOrder = orderInformation[i] === undefined ? orderInformation[0] : orderInformation[i];
-      }
-      updateOrder();
+      orderInformation = filterOrders(data);
+
+      updateCurrentOrderInfo();
+      updateOrderUI();
     },
     error: (xhr, status, error) => { 
       console.log('Error: ' + error);
     }
   });
 
-  setTimeout(checkOrders, 10000);
+  setTimeout(checkOrders, 3000);
 }
 
 function filterOrders(orders) {
