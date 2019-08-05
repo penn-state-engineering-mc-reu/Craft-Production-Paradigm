@@ -73,6 +73,13 @@ function initButtons() {
         change: function (color) {
           let activeElement = $('.' + index + '-picker-container').find('.sp-thumb-el.sp-thumb-active');
           colors[index] = BrickColors.allPaletteData[$(activeElement).closest('.sp-palette-row').index()][$(activeElement).index()].colorID;
+        },
+        show: function (color) {
+          let paletteBoxes = $('.' + index + '-picker-container').find('.sp-thumb-el');
+          paletteBoxes.each(function(index, element) {
+            let colorInfo = BrickColors.allPaletteData[$(element).closest('.sp-palette-row').index()][$(element).index()];
+            $(element).attr('title', `${colorInfo.colorName} (${colorInfo.colorID})`);
+          });
         }
       });
     })(i);
@@ -86,18 +93,53 @@ function initButtons() {
   $('#left').click(e => {
     let index = orderInformation.indexOf(currentOrder);
     currentOrder = --index < 0 ? orderInformation[orderInformation.length - 1] : orderInformation[index];
-    updateOrder();
+    updateOrderUI();
   });
 
   $('#right').click(e => {
     let index = orderInformation.indexOf(currentOrder);
     currentOrder = ++index == orderInformation.length ? orderInformation[0] : orderInformation[index];
-    updateOrder();
+    updateOrderUI();
   });
 
   $('#send-supplier-order').click(e => {
-    sendPiecesOrder();
+    $('#send-supplier-order').addClass('loading');
+
+    sendPiecesOrder().then((data) => {
+      initArray();
+      $('.value').text('0');
+      for(let index = 0; index < partProperties.length; index++)
+      {
+        $('.' + index + '-picker').spectrum('set', BrickColors.defaultBrickColor.RGBString);
+      }
+
+      updateCostWeight();
+      $('#supply-order-sent').modal('show');
+    }).catch((xhr, status, error) => {
+      console.log(error);
+    }).always(() => {
+      $('#send-supplier-order').removeClass('loading');
+    });
   });
+}
+
+function updateCurrentOrderInfo()
+{
+  if(orderInformation.length === 0)
+  {
+    currentOrder = null;
+  }
+  else {
+    if (currentOrder != null && !(jQuery.isEmptyObject(currentOrder))) {
+      let findObj = orderInformation.find((elem) => {
+        return elem._id === currentOrder._id;
+      });
+
+      currentOrder = (findObj ? findObj : orderInformation[0]);
+    } else {
+      currentOrder = orderInformation[0];
+    }
+  }
 }
 
 /**
@@ -113,16 +155,9 @@ function checkOrders() {
       orderInformation = data.filter((elem) => {
         return elem.stage === "Manufacturer";
       });
-      // Need to find the oldest order that hasn't been finished or canceled
-      let i = 0;
-      if (orderInformation.length != 0) {
-        while(orderInformation[i].status != 'In Progress') {
-          i++;
-          if (i >= orderInformation.length) break;
-        }
-        currentOrder = orderInformation[i] === undefined ? orderInformation[0] : orderInformation[i];
-      }
-      updateOrder();
+
+      updateCurrentOrderInfo();
+      updateOrderUI();
     },
     error: (xhr, status, error) => {
       console.log('Error: ' + error);
@@ -155,24 +190,11 @@ function sendPiecesOrder() {
   });
 
   let postData = {'request': orderData};
-  $.ajax({
+  return $.ajax({
     type: 'POST',
     url: GameAPI.rootURL + '/gameLogic/addSupplyOrder/' + getPin(),
     data: JSON.stringify(postData),
-    contentType: 'application/json',
-    success: (data) => {
-      initArray();
-      $('.value').text('0');
-      for(let index = 0; index < partProperties.length; index++)
-      {
-        $('.' + index + '-picker').spectrum('set', BrickColors.defaultBrickColor.RGBString);
-      }
-
-      updateCostWeight();
-    },
-    error: (xhr, status, error) => {
-      console.log(error);
-    }
+    contentType: 'application/json'
   });
 }
 
@@ -192,42 +214,40 @@ function openModal() {
   }
 }
 
-function updateOrder() {
-  if(currentOrder.isCustomOrder)
-  {
-    $('#order-image').attr('src', `${GameAPI.rootURL}/gameLogic/getCustomOrderImage/${getPin()}/${currentOrder._id}`);
-  }
-  else
-  {
-    $('#order-image').attr('src', `/../images/Option ${currentOrder.modelID}.PNG`);
-  }
-
+function updateOrderUI() {
   let orderNode = $('#order-info').empty();
 
-  orderNode.append('<p>Date Ordered: ' + new Date(currentOrder.createDate).toString() + '</p>')
-      .append('<p>Last Modified: ' + new Date(currentOrder.lastModified).toString() + '</p>');
+  if(currentOrder) {
+    if (currentOrder.isCustomOrder) {
+      $('#order-image').attr('src', `${GameAPI.rootURL}/gameLogic/getCustomOrderImage/${getPin()}/${currentOrder._id}`);
+    } else {
+      $('#order-image').attr('src', `/../images/Option ${currentOrder.modelID}.PNG`);
+    }
 
-  if (currentOrder.status === 'Completed') {
-    orderNode.append('<p>Finished: ' + new Date(currentOrder.finishedTime).toString() + '</p>');
-    $('#view-model').removeClass('disabled');
-  } else {
-    $('#view-model').addClass('disabled');
+    orderNode.append('<p>Date Ordered: ' + new Date(currentOrder.createDate).toString() + '</p>')
+        .append('<p>Last Modified: ' + new Date(currentOrder.lastModified).toString() + '</p>');
+
+    if (currentOrder.status === 'Completed') {
+      orderNode.append('<p>Finished: ' + new Date(currentOrder.finishedTime).toString() + '</p>');
+      $('#view-model').removeClass('disabled');
+    } else {
+      $('#view-model').addClass('disabled');
+    }
+
+    if (!(currentOrder.isCustomOrder)) {
+      orderNode.append('<p>Model ID: ' + currentOrder.modelID + '</p>');
+    }
+
+    orderNode.append('<p>Stage: ' + currentOrder.stage + '</p>')
+        .append('<p>Status: ' + currentOrder.status + '</p>');
+
+    if (currentOrder.isCustomOrder) {
+      orderNode.append('<span>Description:</span>')
+          .append($('<p></p>').text(currentOrder.orderDesc));
+    }
+
+    orderNode.append('<br>');
   }
-
-  if(!(currentOrder.isCustomOrder)) {
-    orderNode.append('<p>Model ID: ' + currentOrder.modelID + '</p>');
-  }
-
-  orderNode.append('<p>Stage: ' + currentOrder.stage + '</p>')
-      .append('<p>Status: ' + currentOrder.status + '</p>');
-
-  if(currentOrder.isCustomOrder)
-  {
-    orderNode.append('<span>Description:</span>')
-        .append($('<p></p>').text(currentOrder.orderDesc));
-  }
-
-  orderNode.append('<br>');
 }
 
 function updateCostWeight()
