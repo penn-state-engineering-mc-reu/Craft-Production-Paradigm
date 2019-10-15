@@ -37,7 +37,7 @@ function initButtons() {
   for (let i = 0; i < partProperties.length; i++) {
     let num = '#' + i;
     $(num + '-plus').click(e => {
-      $('#error-message').addClass('hidden');
+      $('#send-supplier-order').removeClass('disabled');
       // $('#send-manufacturing-order').removeClass('disabled');
 
       let currentNum = parseInt($(num + '-value').html());
@@ -56,8 +56,7 @@ function initButtons() {
       });
       if(partSum <= 0)
       {
-        $('#error-message').removeClass('hidden');
-        // $('#send-manufacturing-order').addClass('disabled');
+        $('#send-supplier-order').addClass('disabled');
       }
       updateCostWeight();
     });
@@ -107,6 +106,7 @@ function initButtons() {
 
     sendPiecesOrder().then((data) => {
       initArray();
+      $('#send-supplier-order').addClass('disabled');
       $('.value').text('0');
       for(let index = 0; index < partProperties.length; index++)
       {
