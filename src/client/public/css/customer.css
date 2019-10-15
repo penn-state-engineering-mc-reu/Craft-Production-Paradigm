@@ -4,10 +4,6 @@
   display: table;
 }
 
-#order {
-  margin-bottom: 2em;
-}
-
 #filter-options, #order-info-text
 {
   display: table-cell;
