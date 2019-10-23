@@ -3,6 +3,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose = require("mongoose");
 const partInventory_1 = require("./partInventory");
 const Schema = mongoose.Schema;
+class PositionInfo {
+    constructor() {
+        this.positionName = String();
+        this.playerName = String();
+    }
+}
+exports.PositionInfo = PositionInfo;
+exports.PositionInfoSchema = new Schema({
+    positionName: { type: String },
+    playerName: { type: String }
+});
 exports.GameScheme = new Schema({
     pin: { type: Number, min: 0, max: 9999 },
     groupName: { type: String },
@@ -10,7 +21,7 @@ exports.GameScheme = new Schema({
     status: { type: String },
     maxPlayers: { type: Number, min: 2, max: 4 },
     activePlayers: { type: Number, min: 0, max: 4 },
-    positions: { type: Schema.Types.Mixed },
+    positions: { type: [exports.PositionInfoSchema], default: new Array() },
     createdDate: {
         type: Date,
         default: Date.now

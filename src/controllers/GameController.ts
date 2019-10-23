@@ -3,7 +3,7 @@
  */
 
 import * as mongoose from 'mongoose';
-import {GameScheme} from '../models/gameSchema';
+import {GameScheme, PositionInfo} from '../models/gameSchema';
 import {Request, Response} from 'express';
 import {GameDatabaseConnector} from '../models/GameDatabaseConnector';
 import DatabaseConnector from "../models/database";
@@ -29,8 +29,8 @@ export class GameController {
     return requestGame.pin;
   }
 
-  public joinGame(pin: number, position: string) {
-    this.db.joinGame(pin, position);
+  public joinGame(pin: number, positionName: string, playerName: string) {
+    this.db.joinGame(pin, {positionName: positionName, playerName: playerName});
   }
 
   /**

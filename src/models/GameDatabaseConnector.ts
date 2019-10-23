@@ -6,7 +6,7 @@
 import * as mongoose from 'mongoose';
 
 import DatabaseConnector from './database';
-import {IGame} from "./gameSchema";
+import {IGame, PositionInfo} from "./gameSchema";
 import {PartInventory} from "./partInventory";
 
 // let noop = (err: any, raw: any) => {};
@@ -82,8 +82,8 @@ export class GameDatabaseConnector {
     return await this.gameCollection.findOne({pin: pinNum}, {positions: 1});
   }
 
-  public joinGame(pinNum: number, position: string): void {
-    if (position != null && position != "" && position != undefined)
+  public joinGame(pinNum: number, position: PositionInfo): void {
+    if (position != null && position != undefined)
       this.gameCollection.update({pin: pinNum}, {$push: {positions: position}}).exec();
   }
 

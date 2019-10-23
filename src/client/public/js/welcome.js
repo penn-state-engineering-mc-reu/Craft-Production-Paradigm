@@ -43,7 +43,7 @@ function onApproveNewGame() {
   console.log('sending game info to server');
   $('#start-game-submit').removeClass('right labeled icon').addClass('loading');
   let postData = getPostData();
-  setTimeout(sendToServer, 2000, postData);
+  sendToServer(postData);
   return false; //Return false as to not close modal dialog
 }
 
@@ -54,7 +54,7 @@ function onApproveJoin() {
   let joinPositionType = getJoinPosition();
   // if the user doesn't choice a position type
   if (joinPositionType != undefined) {
-    setTimeout(joinGame, 2000, $('#pin').val(), joinPositionType);
+    joinGame($('#pin').val(), joinPositionType, $('#join-player-name').val());
     $('.invalid-pin').addClass('hidden');
   }
   else {
@@ -145,20 +145,22 @@ function getPossiblePositions(pin) {
  * Gets all of the field data for the post request
  */
 function getPostData() {
-  let data = {'positions': []};
-  data.pin = null; // this will be changed by the server anyway
   let name = $('#group-name').val();
-  data.groupName = name == null || name == '' ? 'Default' : name;
-  data.activePlayers = 1;
-  data.status = 'waiting';
   let gameType = $('#game-type').html();
-  data.gameType = gameType == 'Game Type' ? 'Craft Production' : gameType;
   let position = $("#position-dropdown").dropdown('get value');
   position = position === '' ? 'Assembler' : position;
+
+  let data = {
+    positions: [{positionName: position, playerName: $('#your-name').val()}],
+    pin: null,
+    groupName: (name == null || name == '') ? 'Default' : name,
+    activePlayers: 1,
+    status: 'waiting',
+    gameType: gameType == 'Game Type' ? 'Craft Production' : gameType,
+    maxPlayers: 4 // TODO: Add support for a variable number of players?
+  };
+
   sessionStorage.position = position;
-  data.positions.push(position);
-  let players = 4;
-  data.maxPlayers = players > 4 ? 4 : players < 2 ? 2 : players;
   return JSON.stringify(data);
 }
 
@@ -177,12 +179,13 @@ function getJoinPosition() {
 }
 
 /**
- * Joins a game by pin and position (obviously)
- * @param {number} pin 
- * @param {string} position 
+ * Joins a game by pin, position, and player name
+ * @param {number} pin
+ * @param {string} position
+ * @param {string} playerName
  */
-function joinGame(pin, position) {
-  let postData = {"position": position};
+function joinGame(pin, position, playerName) {
+  let postData = {positionName: position, playerName: playerName};
   $.ajax({
     type: 'POST',
     data: postData,

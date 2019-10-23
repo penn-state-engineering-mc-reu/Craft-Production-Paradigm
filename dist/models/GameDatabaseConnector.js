@@ -86,7 +86,7 @@ class GameDatabaseConnector {
         });
     }
     joinGame(pinNum, position) {
-        if (position != null && position != "" && position != undefined)
+        if (position != null && position != undefined)
             this.gameCollection.update({ pin: pinNum }, { $push: { positions: position } }).exec();
     }
     getAssemblerParts(pinNum) {

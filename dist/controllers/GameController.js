@@ -32,8 +32,8 @@ class GameController {
             return requestGame.pin;
         });
     }
-    joinGame(pin, position) {
-        this.db.joinGame(pin, position);
+    joinGame(pin, positionName, playerName) {
+        this.db.joinGame(pin, { positionName: positionName, playerName: playerName });
     }
     /**
      * Gets all of the game info from database using the pin
