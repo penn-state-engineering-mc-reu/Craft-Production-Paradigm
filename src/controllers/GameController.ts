@@ -49,19 +49,17 @@ export class GameController {
     this.db.removeActivePlayer(pin, position);
   }
 
+  public async getPlayerName(pin: number, position: string): Promise<string> {
+    // TODO
+    return '';
+  }
+
   public async checkIfPinExists(pin: number) {
     return await this.db.checkIfPinExists(pin);
   }
 
-  public async getPossiblePositions(pin: number): Promise<any> {
-    let possiblePositions: string[] = ['Customer', 'Manufacturer', 'Supplier', 'Assembler'];
-    let takenPositions = await this.db.getPossiblePositions(pin);
-    takenPositions.positions.forEach((element: string) => {
-      let index = possiblePositions.indexOf(element);
-      if (index != -1) 
-        possiblePositions.splice(index, 1);
-    });
-    return possiblePositions;
+  public async getPossiblePositions(pin: number): Promise<Array<string>> {
+    return this.db.getPossiblePositions(pin);
   }
 
   public async getAssemblerParts(pin: number): Promise<Array<PartInventory> | null>

@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose = require("mongoose");
 const partInventory_1 = require("./partInventory");
+const polyfill_1 = require("../polyfill");
 const Schema = mongoose.Schema;
 class PositionInfo {
     constructor() {
@@ -9,9 +10,10 @@ class PositionInfo {
         this.playerName = String();
     }
 }
+PositionInfo.POSITION_NAMES = { CUSTOMER: 'Customer', MANUFACTURER: 'Manufacturer', SUPPLIER: 'Supplier', ASSEMBLER: 'Assembler' };
 exports.PositionInfo = PositionInfo;
 exports.PositionInfoSchema = new Schema({
-    positionName: { type: String },
+    positionName: { type: String, enum: polyfill_1.objectValues(PositionInfo.POSITION_NAMES) },
     playerName: { type: String }
 });
 exports.GameScheme = new Schema({

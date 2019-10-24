@@ -8,6 +8,7 @@ import * as mongoose from 'mongoose';
 import DatabaseConnector from './database';
 import {IGame, PositionInfo} from "./gameSchema";
 import {PartInventory} from "./partInventory";
+import {objectValues} from "../polyfill";
 
 // let noop = (err: any, raw: any) => {};
 
@@ -48,11 +49,12 @@ export class GameDatabaseConnector {
   /**
    * When someone needs to exit the application, this handles removing the active player
    * it will also delete the database entry, if there are no active players
-   * @param pinNum string
+   * @param {number} pinNum
+   * @param {string} position
    */
   public removeActivePlayer(pinNum: number, position: string): void {
     let query = {pin: pinNum};
-    let change = {$inc: {activePlayers: -1}, $pull: {positions: position}};
+    let change = {$inc: {activePlayers: -1}, $pull: {positions: {positionName: position}}};
     this.gameCollection.update(query, change, () => {
       this.gameCollection.findOne(query, (err: any, result: any) => {
         if (err) console.log(err);
@@ -78,8 +80,24 @@ export class GameDatabaseConnector {
    * If no positions are returned, the game is full
    * @param pinNum string 
    */
-  public async getPossiblePositions(pinNum: number): Promise<any> {
-    return await this.gameCollection.findOne({pin: pinNum}, {positions: 1});
+  public async getPossiblePositions(pinNum: number): Promise<Array<string>> {
+    let filledPositions: (IGame | null) = await this.gameCollection.findOne({pin: pinNum}, {positions: 1});
+
+    if(filledPositions)
+    {
+      let resultList: Array<string> = objectValues(PositionInfo.POSITION_NAMES);
+      filledPositions.positions.forEach((element: PositionInfo) => {
+        let index = resultList.indexOf(element.positionName);
+        if (index != -1)
+          resultList.splice(index, 1);
+      });
+
+      return resultList;
+    }
+    else
+    {
+      return Promise.reject('PIN is invalid');
+    }
   }
 
   public joinGame(pinNum: number, position: PositionInfo): void {

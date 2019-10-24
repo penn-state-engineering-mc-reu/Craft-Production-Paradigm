@@ -57,14 +57,7 @@ class GameController {
     }
     getPossiblePositions(pin) {
         return __awaiter(this, void 0, void 0, function* () {
-            let possiblePositions = ['Customer', 'Manufacturer', 'Supplier', 'Assembler'];
-            let takenPositions = yield this.db.getPossiblePositions(pin);
-            takenPositions.positions.forEach((element) => {
-                let index = possiblePositions.indexOf(element);
-                if (index != -1)
-                    possiblePositions.splice(index, 1);
-            });
-            return possiblePositions;
+            return this.db.getPossiblePositions(pin);
         });
     }
     getAssemblerParts(pin) {

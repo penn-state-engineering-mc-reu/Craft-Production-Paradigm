@@ -11,6 +11,7 @@ import {SupplierOrderDatabaseConnector} from "../models/SupplierOrderDatabaseCon
 import {ISupplierOrder} from "../models/supplierOrderSchema";
 import {PartInventory} from "../models/partInventory";
 import {GameController} from "./GameController";
+import {PositionInfo} from "../models/gameSchema";
 
 export class GameLogicController {
   private gameController: GameController;
@@ -24,13 +25,15 @@ export class GameLogicController {
   }
 
   public async placeOrder(pin: number, modelID: number): Promise<void> {
-    let order = {pin: pin, modelID: modelID};
+    let order = {pin: pin, modelID: modelID,
+      createdBy: await this.gameController.getPlayerName(pin, PositionInfo.POSITION_NAMES.CUSTOMER)};
     await this.custOrderDBConnector.addOrder(order);
   }
 
   public async placeCustomOrder(pin: number, orderDesc: string, imageData: Buffer): Promise<void>
   {
-    let order = {pin: pin, isCustomOrder: true, orderDesc: orderDesc, imageData: await (new OrderImage(imageData)).toBuffer()};
+    let order = {pin: pin, isCustomOrder: true, orderDesc: orderDesc, imageData: await (new OrderImage(imageData)).toBuffer(),
+      createdBy: await this.gameController.getPlayerName(pin, PositionInfo.POSITION_NAMES.CUSTOMER)};
     await this.custOrderDBConnector.addOrder(order);
   }
 
