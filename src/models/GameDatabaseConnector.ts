@@ -63,6 +63,30 @@ export class GameDatabaseConnector {
     });
   }
 
+  public async getPlayerName(pin: number, position: string): Promise<string> {
+    let positionInfo: (IGame | null) = await this.gameCollection.findOne({pin: pin},
+        {'positions.positionName': 1, 'positions.playerName': 1});
+
+    if(positionInfo)
+    {
+      let foundPosition: (PositionInfo | undefined) = positionInfo.positions.find(
+          (value: PositionInfo) => value.positionName === position);
+
+      if(foundPosition)
+      {
+        return foundPosition.playerName;
+      }
+      else
+      {
+        return Promise.reject('This position was not filled.');
+      }
+    }
+    else
+    {
+      return Promise.reject('PIN is invalid');
+    }
+  }
+
   /**
    * Used for when looking up the game by pin
    * @param pinNum number

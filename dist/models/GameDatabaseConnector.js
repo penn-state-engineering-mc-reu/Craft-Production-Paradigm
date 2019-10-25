@@ -64,6 +64,23 @@ class GameDatabaseConnector {
             });
         });
     }
+    getPlayerName(pin, position) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let positionInfo = yield this.gameCollection.findOne({ pin: pin }, { 'positions.positionName': 1, 'positions.playerName': 1 });
+            if (positionInfo) {
+                let foundPosition = positionInfo.positions.find((value) => value.positionName === position);
+                if (foundPosition) {
+                    return foundPosition.playerName;
+                }
+                else {
+                    return Promise.reject('This position was not filled.');
+                }
+            }
+            else {
+                return Promise.reject('PIN is invalid');
+            }
+        });
+    }
     /**
      * Used for when looking up the game by pin
      * @param pinNum number

@@ -50,8 +50,7 @@ export class GameController {
   }
 
   public async getPlayerName(pin: number, position: string): Promise<string> {
-    // TODO
-    return '';
+    return this.db.getPlayerName(pin, position);
   }
 
   public async checkIfPinExists(pin: number) {

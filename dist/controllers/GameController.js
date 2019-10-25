@@ -50,6 +50,11 @@ class GameController {
     removeActivePlayer(pin, position) {
         this.db.removeActivePlayer(pin, position);
     }
+    getPlayerName(pin, position) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.db.getPlayerName(pin, position);
+        });
+    }
     checkIfPinExists(pin) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db.checkIfPinExists(pin);

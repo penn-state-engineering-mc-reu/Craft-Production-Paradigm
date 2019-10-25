@@ -98,10 +98,12 @@ function checkIfPinIsValid() {
       if (result) {
         $('.invalid-pin').addClass('hidden');
         $('#join-dropdown').removeClass('disabled');
+        $('.join-player-name-container').removeClass('disabled');
         getPossiblePositions(pin);
       }
       else {
         $('#join-dropdown').addClass('disabled');
+        $('.join-player-name-container').addClass('disabled');
         $('.invalid-pin').removeClass('hidden');
         $('.invalid-pin').html('That is not a valid pin!');
       }

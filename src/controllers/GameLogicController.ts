@@ -123,9 +123,10 @@ export class GameLogicController {
     return await this.supplierOrderDBConnector.getManufacturerRequest(pin, orderId);
   }*/
 
-  public addSupplyOrder(pin: number, request: Array<PartInventory>): Promise<ISupplierOrder> {
+  public async addSupplyOrder(pin: number, request: Array<PartInventory>): Promise<ISupplierOrder> {
     console.log("At controller: " + JSON.stringify(request));
-    return this.supplierOrderDBConnector.addOrder(pin, request);
+    return this.supplierOrderDBConnector.addOrder(pin,
+        await this.gameController.getPlayerName(pin, PositionInfo.POSITION_NAMES.MANUFACTURER), request);
   }
 
   public async getSupplyOrders(pin: number): Promise<Array<ISupplierOrder>>
