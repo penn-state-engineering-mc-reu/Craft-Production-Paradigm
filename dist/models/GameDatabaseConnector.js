@@ -12,6 +12,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const gameSchema_1 = require("./gameSchema");
+const polyfill_1 = require("../polyfill");
 // let noop = (err: any, raw: any) => {};
 class GameDatabaseConnector {
     constructor(dbConnection) {
@@ -47,11 +49,12 @@ class GameDatabaseConnector {
     /**
      * When someone needs to exit the application, this handles removing the active player
      * it will also delete the database entry, if there are no active players
-     * @param pinNum string
+     * @param {number} pinNum
+     * @param {string} position
      */
     removeActivePlayer(pinNum, position) {
         let query = { pin: pinNum };
-        let change = { $inc: { activePlayers: -1 }, $pull: { positions: position } };
+        let change = { $inc: { activePlayers: -1 }, $pull: { positions: { positionName: position } } };
         this.gameCollection.update(query, change, () => {
             this.gameCollection.findOne(query, (err, result) => {
                 if (err)
@@ -59,6 +62,23 @@ class GameDatabaseConnector {
                 if (result.activePlayers <= 0)
                     this.gameCollection.deleteOne(query).exec();
             });
+        });
+    }
+    getPlayerName(pin, position) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let positionInfo = yield this.gameCollection.findOne({ pin: pin }, { 'positions.positionName': 1, 'positions.playerName': 1 });
+            if (positionInfo) {
+                let foundPosition = positionInfo.positions.find((value) => value.positionName === position);
+                if (foundPosition) {
+                    return foundPosition.playerName;
+                }
+                else {
+                    return Promise.reject('This position was not filled.');
+                }
+            }
+            else {
+                return Promise.reject('PIN is invalid');
+            }
         });
     }
     /**
@@ -82,11 +102,23 @@ class GameDatabaseConnector {
      */
     getPossiblePositions(pinNum) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield this.gameCollection.findOne({ pin: pinNum }, { positions: 1 });
+            let filledPositions = yield this.gameCollection.findOne({ pin: pinNum }, { positions: 1 });
+            if (filledPositions) {
+                let resultList = polyfill_1.objectValues(gameSchema_1.PositionInfo.POSITION_NAMES);
+                filledPositions.positions.forEach((element) => {
+                    let index = resultList.indexOf(element.positionName);
+                    if (index != -1)
+                        resultList.splice(index, 1);
+                });
+                return resultList;
+            }
+            else {
+                return Promise.reject('PIN is invalid');
+            }
         });
     }
     joinGame(pinNum, position) {
-        if (position != null && position != "" && position != undefined)
+        if (position != null && position != undefined)
             this.gameCollection.update({ pin: pinNum }, { $push: { positions: position } }).exec();
     }
     getAssemblerParts(pinNum) {

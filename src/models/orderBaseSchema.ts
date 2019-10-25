@@ -16,6 +16,7 @@ export interface IOrder extends Document
 {
     pin: number;
     createDate: number;
+    createdBy: string;
     lastModified: number;
     finishedTime: number;
     status: string;
@@ -27,6 +28,7 @@ export const OrderSchema = new Schema({
     _id: {type: String, default: generateID},
     pin: {type: Number, default: null},
     createDate: {type: Date, default: Date.now},
+    createdBy: {type: String},
     lastModified: {type: Date, default: Date.now},
     finishedTime: {type: Date, default: null},
     status: {type: String, default: 'In Progress'}

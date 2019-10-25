@@ -12,9 +12,9 @@ class SupplierOrderDatabaseConnector {
     constructor(dbConnection) {
         this.orderModel = dbConnection.getSupplierOrderCollection();
     }
-    addOrder(pin, manufRequest) {
+    addOrder(pin, createdBy, manufRequest) {
         return __awaiter(this, void 0, void 0, function* () {
-            let newModel = new this.orderModel({ pin: pin, manufacturerReq: manufRequest });
+            let newModel = new this.orderModel({ pin: pin, createdBy: createdBy, manufacturerReq: manufRequest });
             return newModel.save();
         });
     }
