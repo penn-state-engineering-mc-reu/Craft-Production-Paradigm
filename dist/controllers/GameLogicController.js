@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const CustOrderDatabaseConnector_1 = require("../models/CustOrderDatabaseConnector");
 const orderImage_1 = require("../models/orderImage");
 const SupplierOrderDatabaseConnector_1 = require("../models/SupplierOrderDatabaseConnector");
+const gameSchema_1 = require("../models/gameSchema");
 class GameLogicController {
     constructor(dbClient, gameController) {
         this.gameController = gameController;
@@ -23,13 +24,15 @@ class GameLogicController {
     }
     placeOrder(pin, modelID) {
         return __awaiter(this, void 0, void 0, function* () {
-            let order = { pin: pin, modelID: modelID };
+            let order = { pin: pin, modelID: modelID,
+                createdBy: yield this.gameController.getPlayerName(pin, gameSchema_1.PositionInfo.POSITION_NAMES.CUSTOMER) };
             yield this.custOrderDBConnector.addOrder(order);
         });
     }
     placeCustomOrder(pin, orderDesc, imageData) {
         return __awaiter(this, void 0, void 0, function* () {
-            let order = { pin: pin, isCustomOrder: true, orderDesc: orderDesc, imageData: yield (new orderImage_1.OrderImage(imageData)).toBuffer() };
+            let order = { pin: pin, isCustomOrder: true, orderDesc: orderDesc, imageData: yield (new orderImage_1.OrderImage(imageData)).toBuffer(),
+                createdBy: yield this.gameController.getPlayerName(pin, gameSchema_1.PositionInfo.POSITION_NAMES.CUSTOMER) };
             yield this.custOrderDBConnector.addOrder(order);
         });
     }
@@ -116,8 +119,10 @@ class GameLogicController {
         return await this.supplierOrderDBConnector.getManufacturerRequest(pin, orderId);
       }*/
     addSupplyOrder(pin, request) {
-        console.log("At controller: " + JSON.stringify(request));
-        return this.supplierOrderDBConnector.addOrder(pin, request);
+        return __awaiter(this, void 0, void 0, function* () {
+            console.log("At controller: " + JSON.stringify(request));
+            return this.supplierOrderDBConnector.addOrder(pin, yield this.gameController.getPlayerName(pin, gameSchema_1.PositionInfo.POSITION_NAMES.MANUFACTURER), request);
+        });
     }
     getSupplyOrders(pin) {
         return __awaiter(this, void 0, void 0, function* () {

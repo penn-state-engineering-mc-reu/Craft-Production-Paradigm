@@ -3,7 +3,7 @@
  */
 
 import * as mongoose from 'mongoose';
-import {GameScheme} from '../models/gameSchema';
+import {GameScheme, PositionInfo} from '../models/gameSchema';
 import {Request, Response} from 'express';
 import {GameDatabaseConnector} from '../models/GameDatabaseConnector';
 import DatabaseConnector from "../models/database";
@@ -29,8 +29,8 @@ export class GameController {
     return requestGame.pin;
   }
 
-  public joinGame(pin: number, position: string) {
-    this.db.joinGame(pin, position);
+  public joinGame(pin: number, positionName: string, playerName: string) {
+    this.db.joinGame(pin, {positionName: positionName, playerName: playerName});
   }
 
   /**
@@ -49,19 +49,16 @@ export class GameController {
     this.db.removeActivePlayer(pin, position);
   }
 
+  public async getPlayerName(pin: number, position: string): Promise<string> {
+    return this.db.getPlayerName(pin, position);
+  }
+
   public async checkIfPinExists(pin: number) {
     return await this.db.checkIfPinExists(pin);
   }
 
-  public async getPossiblePositions(pin: number): Promise<any> {
-    let possiblePositions: string[] = ['Customer', 'Manufacturer', 'Supplier', 'Assembler'];
-    let takenPositions = await this.db.getPossiblePositions(pin);
-    takenPositions.positions.forEach((element: string) => {
-      let index = possiblePositions.indexOf(element);
-      if (index != -1) 
-        possiblePositions.splice(index, 1);
-    });
-    return possiblePositions;
+  public async getPossiblePositions(pin: number): Promise<Array<string>> {
+    return this.db.getPossiblePositions(pin);
   }
 
   public async getAssemblerParts(pin: number): Promise<Array<PartInventory> | null>

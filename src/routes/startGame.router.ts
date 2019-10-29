@@ -12,7 +12,7 @@ export function createRoutes(controller: GameController): Router {
   });
 
   router.post('/joinGame/:id', (req: Request, res: Response) => {
-    controller.joinGame(parseInt(req.params.id), req.body.position);
+    controller.joinGame(parseInt(req.params.id), req.body.positionName, req.body.playerName);
     res.status(200).send('OK');
   });
 
