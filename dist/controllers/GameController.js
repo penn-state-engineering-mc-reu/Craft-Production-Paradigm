@@ -32,8 +32,8 @@ class GameController {
             return requestGame.pin;
         });
     }
-    joinGame(pin, position) {
-        this.db.joinGame(pin, position);
+    joinGame(pin, positionName, playerName) {
+        this.db.joinGame(pin, { positionName: positionName, playerName: playerName });
     }
     /**
      * Gets all of the game info from database using the pin
@@ -50,6 +50,11 @@ class GameController {
     removeActivePlayer(pin, position) {
         this.db.removeActivePlayer(pin, position);
     }
+    getPlayerName(pin, position) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.db.getPlayerName(pin, position);
+        });
+    }
     checkIfPinExists(pin) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.db.checkIfPinExists(pin);
@@ -57,14 +62,7 @@ class GameController {
     }
     getPossiblePositions(pin) {
         return __awaiter(this, void 0, void 0, function* () {
-            let possiblePositions = ['Customer', 'Manufacturer', 'Supplier', 'Assembler'];
-            let takenPositions = yield this.db.getPossiblePositions(pin);
-            takenPositions.positions.forEach((element) => {
-                let index = possiblePositions.indexOf(element);
-                if (index != -1)
-                    possiblePositions.splice(index, 1);
-            });
-            return possiblePositions;
+            return this.db.getPossiblePositions(pin);
         });
     }
     getAssemblerParts(pin) {

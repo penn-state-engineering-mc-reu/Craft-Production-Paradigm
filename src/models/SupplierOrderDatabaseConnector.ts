@@ -11,8 +11,8 @@ export class SupplierOrderDatabaseConnector {
         this.orderModel = dbConnection.getSupplierOrderCollection();
     }
 
-    public async addOrder(pin: number, manufRequest: Array<PartInventory>): Promise<ISupplierOrder> {
-        let newModel = new this.orderModel({pin: pin, manufacturerReq: manufRequest});
+    public async addOrder(pin: number, createdBy: string, manufRequest: Array<PartInventory>): Promise<ISupplierOrder> {
+        let newModel = new this.orderModel({pin: pin, createdBy: createdBy, manufacturerReq: manufRequest});
         return newModel.save();
     }
 
