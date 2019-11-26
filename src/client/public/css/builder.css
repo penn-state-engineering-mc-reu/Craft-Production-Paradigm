@@ -53,11 +53,18 @@ canvas {
   margin-top: 10px;
 }
 
-.stopwatch
+.left-items
 {
   position: absolute;
+  display: flex;
   left: 0;
   top: 0;
+}
+
+#game-info-container
+{
+  margin-left: 10px;
+  margin-top: 2px;
 }
 
 .start, .stop, .reset
