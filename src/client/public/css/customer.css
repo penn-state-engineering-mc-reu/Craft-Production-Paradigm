@@ -79,3 +79,11 @@
 {
   height: 50px; 
 }
+
+#game-info-container
+{
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+}

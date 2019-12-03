@@ -3,6 +3,7 @@ let filteredOrderInformation = {};
 let currentOrder = {};
 
 $(document).ready(() => {
+  $('#game-info-container').gameInfo({ positionName: 'Customer' });
   checkOrders();
   initImages();
   initButtons();

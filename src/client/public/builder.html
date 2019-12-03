@@ -13,10 +13,12 @@
 		<script src="/../js/brickColors.js"></script>
 		<link rel="stylesheet" type="text/css" href="/../css/builder.css">
 		<link rel="stylesheet" type="text/css" href="/../css/orderInformation.css">
+		<link rel="stylesheet" type="text/css" href="/../css/gameInfoWidget.css">
 	</head>
 	<body>
     <div>
-			<div class="ui centered grid"  id="header-controls" style="margin: 0;">
+		<div class="ui centered grid"  id="header-controls" style="margin: 0;">
+			<div class="left-items">
 				<div class = "stopwatch">
 					<span class="description"><strong>Press start before assembly.</strong></span>
 					<div class ="controls">
@@ -28,11 +30,13 @@
 						<span class="minutes" id = "min">00</span><span class ="seconds" id = "sec">00</span><span class = "centiseconds" id = "cent">00</span>
 					</div>
 				</div>
-				<button class="ui massive yellow button" id="order">Order From Customer</button>
-				<!-- <button class="ui massive green button" id="pieces">Available Pieces</button> -->
-
-				<button class="ui massive green button" id="controls"><i class="question circle outline icon"></i>Controls</button>
+				<div id="game-info-container"></div>
 			</div>
+			<button class="ui massive yellow button" id="order">Order From Customer</button>
+			<!-- <button class="ui massive green button" id="pieces">Available Pieces</button> -->
+
+			<button class="ui massive green button" id="controls"><i class="question circle outline icon"></i>Controls</button>
+		</div>
 			<!-- THIS IS ONLY HERE FOR TESTING. WILL BE REMOVED LATER
       <div id="models" class="ui buttons">
         <button class="ui button" onclick="getModel('oneByOne');">1x1</button>
@@ -83,6 +87,7 @@
 
 		<!-- My own javascript files -->
 		<script src="/../js/gameAPI.js"></script>
+		<script src="/../js/gameInfoWidget.js"></script>
 		
 		<script src="/../js/legoBuilder/modelProperties.js"></script>
 		<script src="/../js/legoBuilder/pageScripts.js"></script>
