@@ -4,6 +4,7 @@ orderInformation = {};
 currentOrder = {};
 
 $(document).ready(() => {
+  $('#game-info-container').gameInfo({ positionName: 'Manufacturer' });
   generateSupplyGrid();
   initArray();
   updateCostWeight();
@@ -13,11 +14,6 @@ $(document).ready(() => {
   });
   checkOrders();
 });
-
-// gets the pin from the url
-function getPin() {
-  return /(\d+)(?!.*\d)/g.exec(window.location.href)[0];
-}
 
 function initArray() {
   for (let i = 0; i < partProperties.length; i++)
@@ -29,7 +25,7 @@ function initArray() {
 
 function initButtons() {
   $('#send-manufacturing-order').on('click', () => {
-    forwardCustomerOrder().then(() => {
+    GameAPI.forwardManufacturerOrder(currentOrder._id).then(() => {
       $('#ready-order').modal('hide');
     });
   });
@@ -146,34 +142,18 @@ function updateCurrentOrderInfo()
  * Function that runs constantly to update the orders
  */
 function checkOrders() {
-  $.ajax({
-    type: 'GET',
-    url: GameAPI.rootURL + '/gameLogic/getOrders/' + getPin(),
-    cache: false,
-    timeout: 5000,
-    success: (data) => {
-      orderInformation = data.filter((elem) => {
-        return elem.stage === "Manufacturer";
-      });
+  GameAPI.getCustOrders().then((data) => {
+    orderInformation = data.filter((elem) => {
+      return elem.stage === "Manufacturer";
+    });
 
-      updateCurrentOrderInfo();
-      updateOrderUI();
-    },
-    error: (xhr, status, error) => {
+    updateCurrentOrderInfo();
+    updateOrderUI();
+  }).catch((xhr, status, error) => {
       console.log('Error: ' + error);
-    }
   });
 
   setTimeout(checkOrders, 3000);
-}
-
-function forwardCustomerOrder()
-{
-  return $.ajax({
-    type: 'POST',
-    url: GameAPI.rootURL + '/gameLogic/forwardManufacturerOrder/' + getPin() + '/' + currentOrder._id,
-    timeout: 5000
-  });
 }
 
 function sendPiecesOrder() {
@@ -189,13 +169,7 @@ function sendPiecesOrder() {
     }
   });
 
-  let postData = {'request': orderData};
-  return $.ajax({
-    type: 'POST',
-    url: GameAPI.rootURL + '/gameLogic/addSupplyOrder/' + getPin(),
-    data: JSON.stringify(postData),
-    contentType: 'application/json'
-  });
+  return GameAPI.addSupplyOrder(orderData);
 }
 
 /**
@@ -219,7 +193,7 @@ function updateOrderUI() {
 
   if(currentOrder) {
     if (currentOrder.isCustomOrder) {
-      $('#order-image').attr('src', `${GameAPI.rootURL}/gameLogic/getCustomOrderImage/${getPin()}/${currentOrder._id}`);
+      $('#order-image').attr('src', `${GameAPI.rootURL}/gameLogic/getCustomOrderImage/${GameAPI.getPin()}/${currentOrder._id}`);
     } else {
       $('#order-image').attr('src', `/../images/Option ${currentOrder.modelID}.PNG`);
     }

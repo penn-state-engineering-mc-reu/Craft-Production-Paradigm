@@ -46,3 +46,11 @@
   margin-top: 0.2em;
   font-size: x-large;
 }
+
+#game-info-container
+{
+  position: absolute;
+  left: 0;
+  top: 20px;
+  height: calc(100% - 20px);
+}
