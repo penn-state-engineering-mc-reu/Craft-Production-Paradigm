@@ -4,8 +4,8 @@ let maxPlayers = -1;
 $(document).ready(() => {
   initPage();
   initProgressAndButtons();
-  getGameInfo();
-  setInterval(getGameInfo, 3000);
+  updateGameInfo();
+  setInterval(updateGameInfo, 3000);
 });
 
 /* 
@@ -22,13 +22,8 @@ function closingCode() {
   return "Are you sure you want to close?";
 }*/
 
-// gets the pin from the url
-function getPin() {
-  return /(\d+)(?!.*\d)/g.exec(window.location.href)[0];
-}
-
 function initPage() {
-  pin = getPin();
+  pin = GameAPI.getPin();
   $('#pin').html(Number(pin).pad(4));
 }
 
@@ -52,30 +47,16 @@ function initProgressAndButtons() {
   });
 
   $('#exit').click((e) => {
-    $.ajax({
-      type: 'GET',
-      timeout: 5000,
-      url: GameAPI.rootURL + '/startGame/removeActivePlayer/' + pin + '/' + sessionStorage.position,
-      success: (result) => window.location.href = '/',
-      error: (error) => console.log(error)
-    });
+    GameAPI.removeActivePlayer().then(() => window.location.href = '/').catch((error) => console.log(error));
   });
 }
 
-
-function getGameInfo() {
-  $.ajax({
-    type: 'GET',
-    url: GameAPI.rootURL + '/startGame/getGameInfo/' + pin,
-    timeout: 3000,
-    success: (result) => {
-      applyGameInfo(result);
-      if (result.activePlayers == result.maxPlayers)
-        $('#start-game').removeClass('disabled');
-    },
-    error: (xhr,status,error) => {
-      console.log(error);
-    }
+function updateGameInfo()
+{
+  return GameAPI.getGameInfo().then((data) => {
+    applyGameInfo(data);
+    if (data.activePlayers == data.maxPlayers)
+      $('#start-game').removeClass('disabled');
   });
 }
 
@@ -85,11 +66,13 @@ function getGameInfo() {
  */
 function applyGameInfo(result) {
   try {
-    let title = 'Group Name: ';
-    let gameType = 'Game Type: ';
-    $('#name').html(title + result.groupName);
-    $('#game-type').html(gameType + result.gameType);
-    $('#players').html(result.activePlayers);
+    let title = 'Group: ';
+    let gameType = 'Game: ';
+    let playerNamePrefix = 'Player: ';
+    $('#name').text(title + result.groupName);
+    $('#game-type').text(gameType + result.gameType);
+    $('#player-name').text(playerNamePrefix + result.positions.find(value => (value.positionName === sessionStorage.position)).playerName);
+    $('#players').text(result.activePlayers);
     $('#example4').attr('data-total', result.maxPlayers);
     $('#example4').progress('set total', result.maxPlayers);
     $('#example4').progress('update progress', result.activePlayers);

@@ -5,6 +5,7 @@ let currentOrder = {};
 let colors = [];
 
 $(document).ready(() => {
+  $('#game-info-container').gameInfo({ positionName: 'Supplier' });
   generateSupplyGrid();
   initArray();
   initButtons();
