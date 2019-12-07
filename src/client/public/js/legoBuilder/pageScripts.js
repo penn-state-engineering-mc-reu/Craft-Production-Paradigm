@@ -5,6 +5,7 @@ let currentOrder = {};
 // let colors = [];
 
 $(document).ready(() => {
+  $('#game-info-container').gameInfo({ positionName: 'Assembler', orientation: $.gameInfo.Orientation.HORIZONTAL});
   initButtons();
   checkOrders();
   setInterval(checkPieces, 3000);
@@ -95,7 +96,8 @@ function updateOrderUI() {
       $('#order-image').attr('src', `/../images/Option ${currentOrder.modelID}.PNG`);
     }
 
-    orderNode.append('<p>Date Ordered: ' + new Date(currentOrder.createDate).toString() + '</p>')
+    orderNode.append($('<p></p>').text('Ordered by: ' + (currentOrder.createdBy ? currentOrder.createdBy : '<Anonymous Player>')))
+        .append('<p>Date Ordered: ' + new Date(currentOrder.createDate).toString() + '</p>')
         .append('<p>Last Modified: ' + new Date(currentOrder.lastModified).toString() + '</p>');
 
     if (currentOrder.status === 'Completed') {

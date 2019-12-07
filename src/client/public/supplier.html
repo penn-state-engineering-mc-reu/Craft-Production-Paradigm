@@ -9,6 +9,7 @@
 		<link rel='stylesheet' type="text/css" href='/../spectrum/spectrum.css'/>
 		<link rel="stylesheet" type="text/css" href="/../css/supplier.css">
 	  	<link rel="stylesheet" type="text/css" href="/../css/orderInformation.css">
+	    <link rel="stylesheet" type="text/css" href="/../css/gameInfoWidget.css">
     <script
       src="https://code.jquery.com/jquery-3.1.1.min.js"
       integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
@@ -16,6 +17,7 @@
 		<script src="/../semantic/dist/semantic.min.js"></script>
 		<script src='/../spectrum/spectrum.js'></script>
 	  	<script src="/../js/gameAPI.js"></script>
+	    <script src="/../js/gameInfoWidget.js"></script>
 	    <script src="/../js/brickColors.js"></script>
 	    <script src="/../js/partProperties.js"></script>
 		<script src="/../js/supplier.js"></script>
@@ -24,15 +26,20 @@
     <div class="ui centered grid">
       <div class="nine wide column">
         <div class="ui centered grid">
-          <div class="row">
-            <h1 id="header" class="ui header">
-              <i class="truck icon"></i>
-              Supplier
-            </h1>
-					</div>
+			<div class="row">
+			  <div class="ui centered grid">
+				  <div class="row">
+					<h1 id="header" class="ui header">
+					  <i class="truck icon"></i>
+					  Supplier
+					</h1>
+							</div>
+					<div id="game-info-container"></div>
 					<button class="ui massive green button" id="order">Orders From Manufacturer</button>
+			  </div>
+			</div>
           <div id="supply-grid" class="ui celled grid">
-					</div>
+		  </div>
         </div>
       </div>
     </div>

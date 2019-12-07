@@ -5,6 +5,7 @@ let currentOrder = {};
 let colors = [];
 
 $(document).ready(() => {
+  $('#game-info-container').gameInfo({ positionName: 'Supplier' });
   generateSupplyGrid();
   initArray();
   initButtons();
@@ -238,7 +239,8 @@ function populateRequestData(data) {
 function updateOrder() {
   let orderNode = $('#order-info').empty();
 
-  orderNode.append('<p>Date Ordered: ' + new Date(currentOrder.createDate).toString() + '</p>')
+  orderNode.append($('<p></p>').text('Ordered by: ' + (currentOrder.createdBy ? currentOrder.createdBy : '<Anonymous Player>')))
+      .append('<p>Date Ordered: ' + new Date(currentOrder.createDate).toString() + '</p>')
       .append('<p>Last Modified: ' + new Date(currentOrder.lastModified).toString() + '</p>')
       .append('<p>Status: ' + currentOrder.status + '</p>')
       .append('<p>Requested Parts:</p>');

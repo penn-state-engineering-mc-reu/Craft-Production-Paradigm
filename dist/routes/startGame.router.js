@@ -18,7 +18,7 @@ function createRoutes(controller) {
         res.send(result);
     }));
     router.post('/joinGame/:id', (req, res) => {
-        controller.joinGame(parseInt(req.params.id), req.body.position);
+        controller.joinGame(parseInt(req.params.id), req.body.positionName, req.body.playerName);
         res.status(200).send('OK');
     });
     router.get('/getGameInfo/:id', cors(), (req, res) => __awaiter(this, void 0, void 0, function* () {
