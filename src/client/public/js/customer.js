@@ -112,49 +112,21 @@ function sendOrder() {
 
   let formData = new FormData();
   formData.append('model', type);
-  postOrder(formData).then(showOrderSentModal);
-}
-
-/**
- *
- * @param {FormData} formData
- * @returns {JQuery.jqXHR}
- */
-function postOrder(formData)
-{
-  formData.append('pin', getPin());
-
-  return $.ajax({
-    type: 'POST',
-    data: formData,
-    processData: false,
-    contentType: false,
-    timeout: 5000,
-    url: GameAPI.rootURL + '/gameLogic/sendOrder'
-  });
+  GameAPI.postCustOrder(formData).then(showOrderSentModal);
 }
 
 /**
  * Function that runs constantly to update the orders
  */
 function checkOrders() {
-  $.ajax({
-    type: 'GET',
-    url: GameAPI.rootURL + '/gameLogic/getOrders/' + getPin(),
-    cache: false,
-    timeout: 5000,
-    success: (data) => {
-      orderInformation = data;
-      updateFilteredOrdersFromPage();
-      updateCurrentOrderInfo();
-      updateOrderUI();
-    },
-    error: (xhr, status, error) => {
-      console.log('Error: ' + error);
-    }
+  GameAPI.getCustOrders().then((data) => {
+    orderInformation = data;
+    updateFilteredOrdersFromPage();
+    updateCurrentOrderInfo();
+    updateOrderUI();
+  }).catch((xhr, status, error) => {
+    console.log('Error: ' + error);
   });
-
-  
 
   setTimeout(checkOrders, 3000);
 }
@@ -261,7 +233,7 @@ function chooseFile(){
     let formInfo = new FormData(orderForm[0]);
 
     orderForm.children('#custom-order-submit').addClass('loading');
-    postOrder(formInfo).then(showOrderSentModal)
+    GameAPI.postCustOrder(formInfo).then(showOrderSentModal)
         .always(() => {
           orderForm.children('#custom-order-submit').removeClass('loading');
     });

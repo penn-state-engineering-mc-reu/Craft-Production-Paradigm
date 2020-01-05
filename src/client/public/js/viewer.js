@@ -114,26 +114,15 @@ function onDocumentMouseDown(event) {
  * ================================================================
  */
 
- // gets the pin from the url
-function getPin() {
-  let split = window.location.href.split('/');
-  return split[4];
-}
-
 function getOrderId() {
   return /(\w+)(?!.*\w)/g.exec(window.location.href)[0];
 }
 
 function getAssembledModel() {
-  $.ajax({
-    type: 'GET',
-    url: GameAPI.rootURL + '/gameLogic/getAssembledModel/' + getPin() + '/' + getOrderId(),
-    success: (data) => {
-      loadModel(data);
-    },
-    error: (xhr, status, error) => {
-      console.log(error);
-    }
+  GameAPI.getAssembledModel(getOrderId()).then((data) => {
+    loadModel(data);
+  }).catch((xhr, status, error) => {
+    console.log(error);
   });
 }
 
@@ -172,39 +161,28 @@ function loadModel(modelData) {
 }
 
 function initButtons() {
-  $.ajax({
-    type: 'GET',
-    url: GameAPI.rootURL + '/gameLogic/getOrder/' + getPin() + '/' + getOrderId(),
-    success: (data) => {
+  GameAPI.getCustOrder(getOrderId()).then((data) => {
       // TODO: Server-side validation for this
       if(data.stage === 'Inspection')
       {
         $('#complete').click(e => {
           e.preventDefault();
-          window.location.href = '/customer/' + getPin();
+          window.location.href = '/customer/' + GameAPI.getPin();
         });
 
         $('#reject').click(e => {
-          $.ajax({
-            type: 'POST',
-            url: GameAPI.rootURL + '/gameLogic/rejectOrder/' + getPin() + '/' + getOrderId(),
-            success: (data) => {
-              window.location.href = '/customer/' + getPin();
-            }
-          })
+          GameAPI.rejectCustOrder(getOrderId()).then((data) => {
+            window.location.href = '/customer/' + GameAPI.getPin();
+          });
         });
 
         $('#accept').click(e => {
-          $.ajax({
-            type: 'POST',
-            url: GameAPI.rootURL + '/gameLogic/acceptOrder/' + getPin() + '/' + getOrderId(),
-            success: (data) => {
-              $('#finish').modal('toggle');
-            }
+          GameAPI.acceptCustOrder(getOrderId()).then((data) => {
+            $('#finish').modal('toggle');
           });
         });
 
         $('#buttons').show();
       }
-    }});
+    });
 }

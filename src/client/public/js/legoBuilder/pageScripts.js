@@ -11,11 +11,6 @@ $(document).ready(() => {
   setInterval(checkPieces, 3000);
 });
 
-// gets the pin from the url
-function getPin() {
-  return /(\d+)(?!.*\d)/g.exec(window.location.href)[0];
-}
-
 function initButtons() {
   $('#left').click(e => {
     let index = orderInformation.indexOf(currentOrder);
@@ -91,7 +86,7 @@ function updateOrderUI() {
 
   if(currentOrder) {
     if (currentOrder.isCustomOrder) {
-      $('#order-image').attr('src', `${GameAPI.rootURL}/gameLogic/getCustomOrderImage/${getPin()}/${currentOrder._id}`);
+      $('#order-image').attr('src', `${GameAPI.rootURL}/gameLogic/getCustomOrderImage/${GameAPI.getPin()}/${currentOrder._id}`);
     } else {
       $('#order-image').attr('src', `/../images/Option ${currentOrder.modelID}.PNG`);
     }
@@ -124,19 +119,13 @@ function updateOrderUI() {
 }
 
 function checkOrders() {
-  $.ajax({
-    type: 'GET',
-    url: GameAPI.rootURL + '/gameLogic/getOrders/' + getPin(),
-    timeout: 30000,
-    success: (data) => {
-      orderInformation = filterOrders(data);
+  GameAPI.getCustOrders().then((data) => {
+    orderInformation = filterOrders(data);
 
-      updateCurrentOrderInfo();
-      updateOrderUI();
-    },
-    error: (xhr, status, error) => { 
-      console.log('Error: ' + error);
-    }
+    updateCurrentOrderInfo();
+    updateOrderUI();
+  }).catch((xhr, status, error) => {
+    console.log('Error: ' + error);
   });
 
   setTimeout(checkOrders, 3000);
@@ -170,35 +159,28 @@ function sendGroup() {
     console.log(gltf);
     let postData = {'model': JSON.stringify(gltf)};
     
-    $.ajax({
-      type: 'POST',
-      data: postData,
-      timeout: 10000,
-      url: GameAPI.rootURL + '/gameLogic/sendAssembledModel/' + getPin() + '/' + currentOrder._id,
-      success: (data) => {
-        console.log(data);
-        let elemsToRemove = []
-        scene.children.forEach(elem => {
-          if (elem.type === 'Mesh' && elem.name !== 'plane' && elem.name !== 'Environment')
-            elemsToRemove.push(elem);
-        });
-      
-        elemsToRemove.forEach(elem => {
-          scene.remove(elem);
-        });
+    GameAPI.sendAssembledModel(currentOrder._id, gltf).then((data) => {
+      console.log(data);
+      let elemsToRemove = [];
+      scene.children.forEach(elem => {
+        if (elem.type === 'Mesh' && elem.name !== 'plane' && elem.name !== 'Environment')
+          elemsToRemove.push(elem);
+      });
 
-        objects.length = 0;
-        collisionObjects = collisionObjects.filter((elem) => {
-          return (elem.name === 'plane');
-        });
-      },
-      error: (xhr, status, error) => {
-        objects.forEach((elem) => {
-          elem.position.add(midPoint);
-        });
+      elemsToRemove.forEach(elem => {
+        scene.remove(elem);
+      });
 
-        console.log('Group Error: ' + error);
-      }
+      objects.length = 0;
+      collisionObjects = collisionObjects.filter((elem) => {
+        return (elem.name === 'plane');
+      });
+    }).catch((xhr, status, error) => {
+      objects.forEach((elem) => {
+        elem.position.add(midPoint);
+      });
+
+      console.log('Group Error: ' + error);
     });
   }, options);
 }
@@ -208,22 +190,15 @@ function sendGroup() {
 //======================================================================================================
 
 function checkPieces() {
-  $.ajax({
-    type: 'GET',
-    cache: 'false',
-    url: GameAPI.rootURL + '/gameLogic/getAssemblerParts/' + getPin(),
-    timeout: 5000,
-    success: (data) => {
-      if (data != null && data != undefined && data != "") {
-        if (!samePieces(data, pieces)) {
-          pieces = data;
-          updateBinParts();
-        }
+  GameAPI.getAssemblerParts().then((data) => {
+    if (data != null && data != undefined && data != "") {
+      if (!samePieces(data, pieces)) {
+        pieces = data;
+        updateBinParts();
       }
-    },
-    error: (xhr, status, error) => {
-      console.log(error);
     }
+  }).catch((xhr, status, error) => {
+    console.log(error);
   });
 }
 
@@ -260,25 +235,9 @@ function samePieces(array1, array2) {
 }
 
 function updatePieces(pageUnloading) {
-  let postData = {'pieces': pieces};
-  let APIUrl = GameAPI.rootURL + '/gameLogic/setAssemblerParts/' + getPin();
-  if (pieces != null && pieces != undefined) {
-    if(pageUnloading)
-    {
-      return navigator.sendBeacon(APIUrl, JSON.stringify(postData));
-    }
-    else {
-      return $.ajax({
-        type: 'POST',
-        data: JSON.stringify(postData),
-        contentType: 'application/json',
-        url: APIUrl,
-        error: (xhr, status, error) => {
-          console.log(error);
-        }
-      });
-    }
-  }
+  return GameAPI.setAssemblerParts(pieces, pageUnloading).catch((xhr, status, error) => {
+    console.log(error);
+  });
 }
 
 /*
