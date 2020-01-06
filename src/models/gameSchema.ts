@@ -5,6 +5,7 @@ import {objectValues} from "../polyfill";
 
 const Schema = mongoose.Schema;
 
+export let GAME_TYPES = {CRAFT_PRODUCTION: 'Craft Production', MASS_PRODUCTION: 'Mass Production'};
 export interface IGame extends mongoose.Document
 {
   pin: number;
@@ -32,7 +33,7 @@ export const PositionInfoSchema = new Schema({
 export const GameScheme = new Schema({
   pin: {type: Number, min: 0, max: 9999},
   groupName: {type: String},
-  gameType: {type: String},
+  gameType: {type: String, enum: objectValues(GAME_TYPES)},
   status: {type: String},
   maxPlayers: {type: Number, min: 2, max: 4},
   activePlayers: {type: Number, min: 0, max: 4},
