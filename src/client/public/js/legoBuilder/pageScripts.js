@@ -240,6 +240,31 @@ function updatePieces(pageUnloading) {
   });
 }
 
+function getStation()
+{
+  let urlFragment = window.location.hash;
+
+  if(urlFragment.length >= 1)
+  {
+    urlFragment = urlFragment.slice(1);
+  }
+
+  let stationObj = null;
+
+  Object.keys(partProperties.STATIONS).find(value => {
+        if(partProperties.STATIONS[value].internalName === urlFragment)
+        {
+          stationObj = partProperties.STATIONS[value];
+          return true;
+        }
+        else
+        {
+          return false;
+        }
+  });
+
+  return stationObj;
+}
 /*
 function initSupplyButtons() {
   for (let i = 0; i < pieces.length; i++) {
