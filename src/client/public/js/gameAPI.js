@@ -1,5 +1,5 @@
 const GameAPI = {
-  rootURL: 'https://manufacturing-sim-game-api.herokuapp.com',
+  rootURL: 'https://mfgsim.herokuapp.com/',
   /**
    * @returns {string}
    */
