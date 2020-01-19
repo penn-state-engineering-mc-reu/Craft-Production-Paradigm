@@ -114,28 +114,17 @@ function sendSupplyOrder() {
     }
   });
 
-  let postData = {
-    order: orderData
-  };
-
-  $.ajax({
-    type: 'POST',
-    data: JSON.stringify(postData),
-    contentType: 'application/json',
-    url: GameAPI.rootURL + '/gameLogic/sendSupplyOrder/' + getPin() + '/' + currentOrder._id,
-    success: (data) => {
-      console.log('Order sent!');
-      $('#ready-order').modal('toggle');
-      initArray();
-      $('.value').text('0');
-      for(let index = 0; index < partProperties.length; index++)
-      {
-        $('.' + index + '-picker').spectrum('set', BrickColors.defaultBrickColor.RGBString);
-      }
-    },
-    error: (xhr, status, error) => {
-      console.log(error);
+  GameAPI.sendSupplyOrder(currentOrder._id, orderData).then((data) => {
+    console.log('Order sent!');
+    $('#ready-order').modal('toggle');
+    initArray();
+    $('.value').text('0');
+    for(let index = 0; index < partProperties.length; index++)
+    {
+      $('.' + index + '-picker').spectrum('set', BrickColors.defaultBrickColor.RGBString);
     }
+  }).catch((xhr, status, error) => {
+    console.log(error);
   });
 }
 
@@ -143,19 +132,12 @@ function sendSupplyOrder() {
  * Function that runs constantly to update the orders
  */
 function checkOrders() {
-  $.ajax({
-    type: 'GET',
-    url: GameAPI.rootURL + '/gameLogic/getSupplyOrders/' + getPin(),
-    cache: false,
-    timeout: 5000,
-    success: (data) => {
-      orderInformation = filterOrders(data);
-      updateCurrentOrderInfo();
-      updateOrder();
-    },
-    error: (xhr, status, error) => {
-      console.log('Error: ' + error);
-    }
+  GameAPI.getSupplyOrders().then((data) => {
+    orderInformation = filterOrders(data);
+    updateCurrentOrderInfo();
+    updateOrder();
+  }).catch((xhr, status, error) => {
+    console.log('Error: ' + error);
   });
 
   // checkRequestedPieces();
