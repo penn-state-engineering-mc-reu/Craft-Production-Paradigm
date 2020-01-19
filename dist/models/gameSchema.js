@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const partInventory_1 = require("./partInventory");
 const polyfill_1 = require("../polyfill");
 const Schema = mongoose.Schema;
+exports.GAME_TYPES = { CRAFT_PRODUCTION: 'Craft Production', MASS_PRODUCTION: 'Mass Production' };
 class PositionInfo {
     constructor() {
         this.positionName = String();
@@ -19,7 +20,7 @@ exports.PositionInfoSchema = new Schema({
 exports.GameScheme = new Schema({
     pin: { type: Number, min: 0, max: 9999 },
     groupName: { type: String },
-    gameType: { type: String },
+    gameType: { type: String, enum: polyfill_1.objectValues(exports.GAME_TYPES) },
     status: { type: String },
     maxPlayers: { type: Number, min: 2, max: 4 },
     activePlayers: { type: Number, min: 0, max: 4 },

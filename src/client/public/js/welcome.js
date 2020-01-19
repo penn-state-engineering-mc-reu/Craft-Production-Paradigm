@@ -70,50 +70,35 @@ function onApproveJoin() {
  * @param {Object} postData 
  */
 function sendToServer(postData) {
-  $.ajax({
-    type: 'POST',
-    data: postData,
-    dataType: 'json',
-    contentType: 'application/json',
-    timeout: 5000,
-    url: GameAPI.rootURL + '/startGame',
-    success: function(result) {
-      window.location.href = '/startGame/' + result.pin;
-    },
-    error: function(xhr,status,error) {
-      console.log(error);
-      $('#start-game-submit').removeClass('loading').addClass('right labeled icon');
-    }
+  GameAPI.startGame(postData).then((result) => {
+    window.location.href = '/startGame/' + result.pin;
+  }).catch((xhr,status,error) => {
+    console.log(error);
+    $('#start-game-submit').removeClass('loading').addClass('right labeled icon');
   });
 }
 
 // Does what the name implies
 function checkIfPinIsValid() {
   let pin = $('#pin').val();
-  $.ajax({
-    type: 'GET',
-    cache: false,
-    url: GameAPI.rootURL + '/startGame/checkIfPinExists/' + pin,
-    success: (result) => {
-      if (result) {
-        $('.invalid-pin').addClass('hidden');
-        $('#join-dropdown').removeClass('disabled');
-        $('.join-player-name-container').removeClass('disabled');
-        getPossiblePositions(pin);
-      }
-      else {
-        $('#join-dropdown').addClass('disabled');
-        $('.join-player-name-container').addClass('disabled');
-        $('.invalid-pin').removeClass('hidden');
-        $('.invalid-pin').html('That is not a valid pin!');
-      }
-    },
-    error: (xhr,status,error) => {
-      console.log(error);
-      console.log(pin);
-      $('.invalid-pin').removeClass('hidden');
-      $('.invalid-pin').html('That is not a valid pin!');      
+  GameAPI.gamePinExists(pin).then((result) => {
+    if (result) {
+      $('.invalid-pin').addClass('hidden');
+      $('#join-dropdown').removeClass('disabled');
+      $('.join-player-name-container').removeClass('disabled');
+      getPossiblePositions(pin);
     }
+    else {
+      $('#join-dropdown').addClass('disabled');
+      $('.join-player-name-container').addClass('disabled');
+      $('.invalid-pin').removeClass('hidden');
+      $('.invalid-pin').html('That is not a valid pin!');
+    }
+  }).catch((xhr,status,error) => {
+    console.log(error);
+    console.log(pin);
+    $('.invalid-pin').removeClass('hidden');
+    $('.invalid-pin').html('That is not a valid pin!');
   });
 }
 
@@ -123,23 +108,17 @@ function checkIfPinIsValid() {
  * @param {number} pin 
  */
 function getPossiblePositions(pin) {
-  $.ajax({
-    type: 'GET',
-    cache: false,
-    url: GameAPI.rootURL + '/startGame/getPossiblePositions/' + pin,
-    success: (result) => {
-      if (result.length == 0) {
-        $('.invalid-pin').removeClass('hidden');
-        $('.invalid-pin').html('Sorry. That game is already full.');   
-      }
-      result.forEach(element => {
-        if ($('#join-menu').children().length < result.length)
-          $('#join-menu').append('<div class="item">' + element + '</div>');
-      });
-    },
-    error: (xhr, status, error) => {
-      console.log(error);
+  GameAPI.getAvailablePositions(pin).then((result) => {
+    if (result.length == 0) {
+      $('.invalid-pin').removeClass('hidden');
+      $('.invalid-pin').html('Sorry. That game is already full.');
     }
+    result.forEach(element => {
+      if ($('#join-menu').children().length < result.length)
+        $('#join-menu').append('<div class="item">' + element + '</div>');
+    });
+  }).catch((xhr, status, error) => {
+    console.log(error);
   });
 }
 
@@ -187,20 +166,12 @@ function getJoinPosition() {
  * @param {string} playerName
  */
 function joinGame(pin, position, playerName) {
-  let postData = {positionName: position, playerName: playerName};
-  $.ajax({
-    type: 'POST',
-    data: postData,
-    url: GameAPI.rootURL + '/startGame/joinGame/' + pin,
-    timeout: 5000,
-    success: () => {
-      sessionStorage.position = position;
-      updateActivePlayers(pin);
-    },
-    error: (xhr,status,error) => {
-      console.log(error);
-      $('#join-game-submit').removeClass('loading').addClass('right labeled icon');
-    }
+  GameAPI.joinGame(pin, position, playerName).then(() => {
+    sessionStorage.position = position;
+    updateActivePlayers(pin);
+  }).catch((xhr,status,error) => {
+    console.log(error);
+    $('#join-game-submit').removeClass('loading').addClass('right labeled icon');
   });
 }
 
@@ -209,11 +180,7 @@ function joinGame(pin, position, playerName) {
  * @param {number} pin 
  */
 function updateActivePlayers(pin) {
-  $.ajax({
-    type: 'GET',
-    timeout: 5000,
-    url: GameAPI.rootURL + '/startGame/addActivePlayer/' + pin,
-    success: (result) => window.location.href = '/startGame/' + pin,
-    error: (error) => console.log(error)
-  });
+  GameAPI.addActivePlayer(pin)
+    .then((result) => window.location.href = '/startGame/' + pin)
+    .catch((error) => console.log(error));
 }
