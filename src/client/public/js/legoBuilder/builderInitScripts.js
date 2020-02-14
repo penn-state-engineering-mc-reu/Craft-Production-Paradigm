@@ -19,6 +19,7 @@ var plane, cube;
 var mouse, raycaster, isCtrlDown = false, isShiftDown = false;
 var rollOverMesh = null, material, collisionBox;
 let partModelCache = {};
+let binPartIDs = [];
 const TILE_DIMENSIONS = new THREE.Vector2(24, 24);
 var objects = [], collisionObjects = [];
 var currentObj = null;
@@ -35,8 +36,7 @@ function init() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0xf0f0f0);
   createEnvironment(() => {
-    createGridAndPlane(scene.getObjectByName('Environment').getObjectByName('Room')
-      .getObjectByName('Workbenches').children[0]);
+    createGridAndPlane(getActiveWorkbench());
   }, checkPieces);
 
   //objects.push(plane);
@@ -172,6 +172,13 @@ function addMeshRow(templateMesh, newMeshParent, startX, yPos, zPos, spacing, nu
   }
 }
 
+function getActiveWorkbench()
+{
+  let pageStation = getStation();
+  return scene.getObjectByName('Environment').getObjectByName('Room')
+      .getObjectByName('Workbenches').children[pageStation !== null ? pageStation.order : 0];
+}
+
 function createEnvironment(onRoomCompleted, onBinsCompleted)
 {
   let modelLoader = new THREE.STLLoader();
@@ -209,14 +216,22 @@ function createEnvironment(onRoomCompleted, onBinsCompleted)
     workbenchGroup.name = 'Workbenches';
     roomGroup.add(workbenchGroup);
 
-    const cornerWorkbenchPos = new THREE.Vector3(-(bboxSize.x / 2), 925, -1000);
-    addMeshRow(workbenchTemplateMesh, workbenchGroup, cornerWorkbenchPos.x, cornerWorkbenchPos.y, cornerWorkbenchPos.z, 200, 3);
+    const cornerWorkbenchPos = new THREE.Vector3(-(bboxSize.x / 2), 925, -1000),
+      pageStation = getStation(),
+      workbenchSpacing = 200;
+
+    addMeshRow(workbenchTemplateMesh, workbenchGroup, cornerWorkbenchPos.x, cornerWorkbenchPos.y, cornerWorkbenchPos.z,
+        workbenchSpacing, Object.keys(partProperties.STATIONS).length);
+
+    let activeWorkbench = getActiveWorkbench();
+
     // scene.add(workbenchTemplateMesh);
 
     modelLoader.load('../objects/environment/part_bin.stl', function(binGeometry) {
-      let binStartX = 175; // -(bboxSize.x / 2) + 175;
-      let backBinZ = -450,
-      frontBinZ = 75;
+      const binStartX = 175, // -(bboxSize.x / 2) + 175;
+        backBinZ = -450,
+        frontBinZ = 75,
+        maxBinsPerRow = 12;
 
       let binMaterial = new THREE.MeshPhongMaterial({
         color: "#0000ff",
@@ -224,12 +239,29 @@ function createEnvironment(onRoomCompleted, onBinsCompleted)
         specular: "#d6d0ff"
       });
 
+      if(pageStation !== null)
+      {
+        binPartIDs = partProperties.getPartIDsByStation(pageStation.order);
+      }
+      else
+      {
+        binPartIDs = Object.keys(partProperties.PARTS).map(value => parseInt(value));
+      }
+
       let binTemplateMesh = new THREE.Mesh(binGeometry, binMaterial);
       binTemplateMesh.name = "partBin";
 
-      addMeshRow(binTemplateMesh, workbenchGroup.children[0], binStartX, -cornerWorkbenchPos.y, frontBinZ, 50, 12);
-      addMeshRow(binTemplateMesh, workbenchGroup.children[0], binStartX, -cornerWorkbenchPos.y, backBinZ, 50, 12);
-      addMeshRow(binTemplateMesh, workbenchGroup.children[0], binStartX, 0, backBinZ, 50, 7);
+      for(let partRowNum = 0; partRowNum < (binPartIDs.length / maxBinsPerRow); partRowNum++)
+      {
+        let binsRemaining = binPartIDs.length - (partRowNum * maxBinsPerRow);
+
+        addMeshRow(binTemplateMesh, activeWorkbench, binStartX,
+            cornerWorkbenchPos.y * (Math.floor(partRowNum / 2) - 1), // Starting at -cornerWorkbenchPos.y,
+                                                                              // move up cornerWorkbenchPos.y every two rows
+            (partRowNum === 1 ? frontBinZ : backBinZ), // Even rows in the front, odd rows in the back
+            50,
+            Math.min(binsRemaining, maxBinsPerRow));
+      }
 
       if(onBinsCompleted) {
         onBinsCompleted();

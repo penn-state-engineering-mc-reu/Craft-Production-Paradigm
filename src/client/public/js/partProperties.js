@@ -229,4 +229,10 @@
 
     return totalWeight;
   };
+
+  partProperties.getPartIDsByStation = function(stationOrder)
+  {
+    return Object.keys(window.partProperties.PARTS).map(value => parseInt(value))
+      .filter(partID => window.partProperties.PARTS[partID].stations.some(thisStation => thisStation.order === stationOrder));
+  }
 })();
