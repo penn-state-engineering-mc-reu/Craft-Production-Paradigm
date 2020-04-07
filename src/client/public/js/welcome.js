@@ -24,7 +24,7 @@ function initNewGameForm()
       {
         $('#position-dropdown').dropdown('change values',
             Object.keys(GameObjects.GameTypes[value].positions)
-                .map(posID => { return {value: posID, name: GameObjects.GameTypes[value].positions[posID] }}));
+                .map(posID => { return {value: posID, name: GameObjects.GameTypes[value].positions[posID].name }}));
       }
     }
   });

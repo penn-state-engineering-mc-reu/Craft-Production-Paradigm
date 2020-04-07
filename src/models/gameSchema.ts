@@ -53,7 +53,7 @@ export function getTypeInfoByName(typeName: string)
   }
 }
 
-export function getAllPositions(typeName: string): Array<string>
+export function getAllPositions(typeName: string): Array<any>
 {
     return objectValues(getTypeInfoByName(typeName).positions);
 }
@@ -61,9 +61,9 @@ export function getAllPositions(typeName: string): Array<string>
 // Use a single schema for now, since only position names differ; creating two schemas would involve creating two
 // collections for games, which would involve significant refactoring.
 
-let allPositionNames = {};
-Object.assign(allPositionNames, GameObjects.GameTypes.CraftProduction.positions);
-Object.assign(allPositionNames, GameObjects.GameTypes.MassProduction.positions);
+let allPositions = {};
+Object.assign(allPositions, GameObjects.GameTypes.CraftProduction.positions);
+Object.assign(allPositions, GameObjects.GameTypes.MassProduction.positions);
 
 let maxSchemaPlayers: number = Object.keys(GameObjects.GameTypes).map(
     value => Object.keys(GameObjects.GameTypes[value].positions).length).reduce(
@@ -72,7 +72,7 @@ let maxSchemaPlayers: number = Object.keys(GameObjects.GameTypes).map(
 // console.log(maxSchemaPlayers.toString() + " max players");
 
 export const PositionInfoSchema = new Schema({
-  positionName: {type: String, enum: objectValues(allPositionNames)},
+  positionName: {type: String, enum: objectValues(allPositions).map(value => value.name)},
   playerName: {type: String}
 });
 
@@ -103,7 +103,7 @@ GameScheme.methods.getCustomer = function(): (PositionInfo | undefined)
   switch(this.gameType)
   {
     case GameObjects.GameTypes.CraftProduction.name:
-      positionName = GameObjects.GameTypes.CraftProduction.positions.CUSTOMER;
+      positionName = GameObjects.GameTypes.CraftProduction.positions.CUSTOMER.name;
       break;
     default:
       throw 'Customer position not available for this game type.';
@@ -118,10 +118,10 @@ GameScheme.methods.getManufacturer = function(): (PositionInfo | undefined)
   switch(this.gameType)
   {
     case GameObjects.GameTypes.CraftProduction.name:
-      positionName = GameObjects.GameTypes.CraftProduction.positions.MANUFACTURER;
+      positionName = GameObjects.GameTypes.CraftProduction.positions.MANUFACTURER.name;
       break;
     case GameObjects.GameTypes.MassProduction.name:
-      positionName = GameObjects.GameTypes.MassProduction.positions.MANUFACTURER;
+      positionName = GameObjects.GameTypes.MassProduction.positions.MANUFACTURER.name;
       break;
     default:
       throw 'Manufacturer position not available for this game type.';

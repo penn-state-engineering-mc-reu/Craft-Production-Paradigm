@@ -101,10 +101,10 @@ class GameDatabaseConnector {
      */
     getPossiblePositions(pinNum) {
         return __awaiter(this, void 0, void 0, function* () {
-            let filledPositions = yield this.gameCollection.findOne({ pin: pinNum }, { positions: 1, gameType: 1 });
-            if (filledPositions) {
-                let resultList = gameSchema_1.getAllPositions(filledPositions.gameType);
-                filledPositions.positions.forEach((element) => {
+            let partialGameInfo = yield this.gameCollection.findOne({ pin: pinNum }, { positions: 1, gameType: 1 });
+            if (partialGameInfo) {
+                let resultList = gameSchema_1.getAllPositions(partialGameInfo.gameType).map(value => value.name);
+                partialGameInfo.positions.forEach((element) => {
                     let index = resultList.indexOf(element.positionName);
                     if (index != -1)
                         resultList.splice(index, 1);

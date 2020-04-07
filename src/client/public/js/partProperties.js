@@ -4,17 +4,20 @@
       BODY_STATION: {
         order: 0,
         internalName: 'body',
-        dispName: 'Body Station'
+        dispName: 'Body Station',
+        getPlayerPosition: () => GameObjects.GameTypes.MassProduction.positions.ASSEMBLER_BODY
       },
       WHEEL_AXLE_STATION: {
         order: 1,
         internalName: 'wheel-axle',
-        dispName: 'Wheel and Axle Station'
+        dispName: 'Wheel and Axle Station',
+        getPlayerPosition: () => GameObjects.GameTypes.MassProduction.positions.ASSEMBLER_WHEEL_AXLE
       },
       INTERIOR_STATION: {
         order: 2,
         internalName: 'interior',
-        dispName: 'Interior Station'
+        dispName: 'Interior Station',
+        getPlayerPosition: () => GameObjects.GameTypes.MassProduction.positions.ASSEMBLER_INTERIOR
       },
     }
   };

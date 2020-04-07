@@ -3,15 +3,47 @@ export let GameObjects = {
         CraftProduction: {
             name: 'Craft Production',
             positions: {
-                CUSTOMER: 'Customer', MANUFACTURER: 'Manufacturer', SUPPLIER: 'Supplier', ASSEMBLER: 'Assembler'
+                CUSTOMER: {
+                    name: 'Customer',
+                    getURL: pin => '/customer/' + pin
+                },
+                MANUFACTURER: {
+                    name: 'Manufacturer',
+                    getURL: pin => '/manufacturer/' + pin
+                },
+                SUPPLIER: {
+                    name:'Supplier',
+                    getURL: pin => '/supplier/' + pin
+                },
+                ASSEMBLER: {
+                    name: 'Assembler',
+                    getURL: pin => '/builder/' + pin
+                }
             }
         },
         MassProduction: {
             name: 'Mass Production',
             positions: {
-                MANUFACTURER: 'Manufacturer', SUPPLIER: 'Supplier',
-                ASSEMBLER_BODY: 'Assembler - Body', ASSEMBLER_WHEEL_AXLE: 'Assembler - Wheel and Axle',
-                ASSEMBLER_INTERIOR: 'Assembler - Interior'
+                MANUFACTURER: {
+                    name: 'Manufacturer',
+                    getURL: pin => '/manufacturer/' + pin
+                },
+                SUPPLIER: {
+                    name:'Supplier',
+                    getURL: pin => '/supplier/' + pin
+                },
+                ASSEMBLER_BODY: {
+                    name: 'Assembler - Body',
+                    getURL: pin => '/builder/' + pin + '#body'
+                },
+                ASSEMBLER_WHEEL_AXLE: {
+                    name: 'Assembler - Wheel and Axle',
+                    getURL: pin => '/builder/' + pin + '#wheel-axle'
+                },
+                ASSEMBLER_INTERIOR: {
+                    name: 'Assembler - Interior',
+                    getURL: pin => '/builder/' + pin + '#interior'
+                }
             }
         }
     }

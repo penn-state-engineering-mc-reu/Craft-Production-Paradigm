@@ -104,12 +104,12 @@ export class GameDatabaseConnector {
    * @param pinNum string 
    */
   public async getPossiblePositions(pinNum: number): Promise<Array<string>> {
-    let filledPositions: (IGame | null) = await this.gameCollection.findOne({pin: pinNum}, {positions: 1, gameType: 1});
+    let partialGameInfo: (IGame | null) = await this.gameCollection.findOne({pin: pinNum}, {positions: 1, gameType: 1});
 
-    if(filledPositions)
+    if(partialGameInfo)
     {
-      let resultList: Array<string> = getAllPositions(filledPositions.gameType);
-      filledPositions.positions.forEach((element: PositionInfo) => {
+      let resultList: Array<string> = getAllPositions(partialGameInfo.gameType).map(value => value.name);
+      partialGameInfo.positions.forEach((element: PositionInfo) => {
         let index = resultList.indexOf(element.positionName);
         if (index != -1)
           resultList.splice(index, 1);

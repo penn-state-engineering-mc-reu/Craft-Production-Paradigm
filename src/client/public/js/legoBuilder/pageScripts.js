@@ -5,7 +5,9 @@ let currentOrder = {};
 // let colors = [];
 
 $(document).ready(() => {
-  $('#game-info-container').gameInfo({ positionName: 'Assembler', orientation: $.gameInfo.Orientation.HORIZONTAL});
+  let currentStation = getStation();
+  let positionName = (currentStation === null ? 'Assembler' : currentStation.getPlayerPosition().name);
+  $('#game-info-container').gameInfo({ positionName: positionName, orientation: $.gameInfo.Orientation.HORIZONTAL});
   initButtons();
   checkOrders();
   setInterval(checkPieces, 3000);
