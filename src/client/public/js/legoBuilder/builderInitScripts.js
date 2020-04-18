@@ -21,6 +21,7 @@ var rollOverMesh = null, material, collisionBox;
 let partModelCache = {};
 let binPartIDs = [];
 const TILE_DIMENSIONS = new THREE.Vector2(24, 24);
+const DEFAULT_VIEW_CAMERA_OFFSET = new THREE.Vector3(0.0, 1420.0, 2300.0);
 var objects = [], collisionObjects = [];
 var currentObj = null;
 // var group = new THREE.Group();
@@ -36,7 +37,9 @@ function init() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0xf0f0f0);
   createEnvironment(() => {
-    createGridAndPlane(getActiveWorkbench());
+    let activeWorkbench = getActiveWorkbench();
+    createGridAndPlane(activeWorkbench);
+    moveCameraToWorkbench(activeWorkbench);
   }, checkPieces);
 
   //objects.push(plane);
@@ -59,7 +62,7 @@ function init() {
 function initCamera() {
   //camera = new THREE.PerspectiveCamera(60, window.innerWidth / (window.innerHeight + (window.innerHeight * .1)), 1, 10000);
   camera = new THREE.PerspectiveCamera(60, $(renderer.domElement).width() / $(renderer.domElement).height(), 1, 100000);
-  camera.position.set(0, 500, 800);
+  camera.position.copy(DEFAULT_VIEW_CAMERA_OFFSET);
   camera.lookAt(new THREE.Vector3());
   controls = new THREE.OrbitControls(camera, renderer.domElement);
   // controls.addEventListener( 'change', render );
@@ -72,6 +75,18 @@ function initCamera() {
   controls.dampingFactor = 0.75;
   controls.minDistance = 200;
 	controls.maxDistance = 10000;
+}
+
+function moveCameraToWorkbench(workbench)
+{
+  workbench.geometry.computeBoundingBox();
+  let avgX = workbench.position.x +
+      (workbench.geometry.boundingBox.min.x + workbench.geometry.boundingBox.max.x) / 2.0,
+    avgXVector = new THREE.Vector3(avgX, 0.0, 0.0);
+  camera.position.copy(DEFAULT_VIEW_CAMERA_OFFSET);
+  camera.position.add(avgXVector);
+  controls.target.copy(avgXVector);
+  controls.update();
 }
 
 function computeRendererSize()
