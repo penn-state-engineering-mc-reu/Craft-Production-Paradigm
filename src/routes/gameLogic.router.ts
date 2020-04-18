@@ -5,6 +5,7 @@ import {GameLogicController} from '../controllers/GameLogicController'
 import * as cors from 'cors';
 import {PartInventory} from "../models/partInventory";
 import {GameController} from "../controllers/GameController";
+import {text as textParser} from "body-parser";
 
 export function createRoutes(gameController: GameController, gameLogicController: GameLogicController): Router {
   const router: Router = Router();
@@ -61,8 +62,14 @@ export function createRoutes(gameController: GameController, gameLogicController
     res.send(await gameLogicController.forwardManufacturerOrder(parseInt(req.params.id), req.params.orderID));
   });
 
-  router.post('/setAssemblerParts/:id', async (req: Request, res: Response) => {
-    res.send(await gameController.setAssemblerParts(parseInt(req.params.id), req.body.pieces));
+  router.post('/setAssemblerParts/:id', textParser(), async (req: Request, res: Response) => {
+    if(req.body.pieces !== undefined) {
+      res.send(await gameController.setAssemblerParts(parseInt(req.params.id), req.body.pieces));
+    }
+    else
+    {
+      res.send(await gameController.setAssemblerParts(parseInt(req.params.id), JSON.parse(req.body).pieces));
+    }
   });
 
   router.post('/sendAssembledModel/:id/:orderId', (req: Request, res: Response) => {

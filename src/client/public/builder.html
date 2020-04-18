@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<title>Assembler - Lean Manufacturing Simulation</title>
+		<title>Assembler - Manufacturing Simulation</title>
     <link rel="stylesheet" type="text/css" href="/../semantic/dist/semantic.min.css">
     <script
       src="https://code.jquery.com/jquery-3.1.1.min.js"
@@ -13,14 +13,30 @@
 		<script src="/../js/brickColors.js"></script>
 		<link rel="stylesheet" type="text/css" href="/../css/builder.css">
 		<link rel="stylesheet" type="text/css" href="/../css/orderInformation.css">
+		<link rel="stylesheet" type="text/css" href="/../css/gameInfoWidget.css">
 	</head>
 	<body>
     <div>
-			<div class="ui centered grid" style="margin: 0;">
-				<button class="ui massive yellow button" id="order">Order From Customer</button>
-				<!-- <button class="ui massive green button" id="pieces">Available Pieces</button> -->
-				<button class="ui massive green button" id="controls"><i class="question circle outline icon"></i>Controls</button>
+		<div class="ui centered grid"  id="header-controls" style="margin: 0;">
+			<div class="left-items">
+				<div class = "stopwatch">
+					<span class="description"><strong>Press start before assembly.</strong></span>
+					<div class ="controls">
+						<button class ="start" id ="start">Start</button>
+						<button class ="stop" id ="stop">Stop</button>
+						<button class ="reset" id ="reset">Reset</button>
+					</div>
+					<div class ="display">
+						<span class="minutes" id = "min">00</span><span class ="seconds" id = "sec">00</span><span class = "centiseconds" id = "cent">00</span>
+					</div>
+				</div>
+				<div id="game-info-container"></div>
 			</div>
+			<button class="ui massive yellow button" id="order">Order From Customer</button>
+			<!-- <button class="ui massive green button" id="pieces">Available Pieces</button> -->
+
+			<button class="ui massive green button" id="controls"><i class="question circle outline icon"></i>Controls</button>
+		</div>
 			<!-- THIS IS ONLY HERE FOR TESTING. WILL BE REMOVED LATER
       <div id="models" class="ui buttons">
         <button class="ui button" onclick="getModel('oneByOne');">1x1</button>
@@ -50,6 +66,9 @@
 			<div id="header-info">
 					Powered by: <a href="http://threejs.org" target="_blank" rel="noopener">three.js</a>
 					<br>
+				    <div class="Rules" id="rules">
+        				<span class="rule"><strong>Build from the bottom up!</strong></span>
+    				</div>
 			</div>
 		</div>
 		<!-- All the libraries I need to run the three.js stuff properly -->
@@ -68,11 +87,14 @@
 
 		<!-- My own javascript files -->
 		<script src="/../js/gameAPI.js"></script>
-		
+		<script src="/../js/gameInfoWidget.js"></script>
+		<script src="/../js/shared/gameObjects.js" type="module"></script>
+		<script src="/../js/partProperties.js"></script>
 		<script src="/../js/legoBuilder/modelProperties.js"></script>
 		<script src="/../js/legoBuilder/pageScripts.js"></script>
 		<script src="/../js/legoBuilder/builderInitScripts.js"></script>
 		<script src="/../js/legoBuilder/builderScripts.js"></script>
+		<script src="/../js/legoBuilder/stopwatch.js"></script>
 
 		<!-- Modals for the different shit -->
 		<div class="ui basic modal" id="no-orders">

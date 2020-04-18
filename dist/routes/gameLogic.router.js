@@ -10,6 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const multer = require("multer");
+const body_parser_1 = require("body-parser");
 function createRoutes(gameController, gameLogicController) {
     const router = express_1.Router();
     let fileUpload = multer();
@@ -53,8 +54,13 @@ function createRoutes(gameController, gameLogicController) {
     router.post('/forwardManufacturerOrder/:id/:orderID', (req, res) => __awaiter(this, void 0, void 0, function* () {
         res.send(yield gameLogicController.forwardManufacturerOrder(parseInt(req.params.id), req.params.orderID));
     }));
-    router.post('/setAssemblerParts/:id', (req, res) => __awaiter(this, void 0, void 0, function* () {
-        res.send(yield gameController.setAssemblerParts(parseInt(req.params.id), req.body.pieces));
+    router.post('/setAssemblerParts/:id', body_parser_1.text(), (req, res) => __awaiter(this, void 0, void 0, function* () {
+        if (req.body.pieces !== undefined) {
+            res.send(yield gameController.setAssemblerParts(parseInt(req.params.id), req.body.pieces));
+        }
+        else {
+            res.send(yield gameController.setAssemblerParts(parseInt(req.params.id), JSON.parse(req.body).pieces));
+        }
     }));
     router.post('/sendAssembledModel/:id/:orderId', (req, res) => {
         console.log('Assembled model has been sent');

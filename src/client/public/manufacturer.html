@@ -3,11 +3,12 @@
   <head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<title>Manufacturer - Lean Manufacturing Simulation</title>
+		<title>Manufacturer - Manufacturing Simulation</title>
 		<link rel="stylesheet" type="text/css" href="/../semantic/dist/semantic.min.css">
 	    <link rel='stylesheet' type="text/css" href='/../spectrum/spectrum.css'/>
 		<link rel="stylesheet" type="text/css" href="/../css/supplier.css">
 	  	<link rel="stylesheet" type="text/css" href="/../css/orderInformation.css">
+	  	<link rel="stylesheet" type="text/css" href="/../css/gameInfoWidget.css">
     <script
       src="https://code.jquery.com/jquery-3.1.1.min.js"
       integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
@@ -15,9 +16,12 @@
     <script src="/../semantic/dist/semantic.min.js"></script>
 	<script src='/../spectrum/spectrum.js'></script>
 	<script src="/../js/gameAPI.js"></script>
+    <script src="/../js/gameInfoWidget.js"></script>
+    <script src="/../js/shared/gameObjects.js" type="module"></script>
 	<script src="/../js/partProperties.js"></script>
 	<script src="/../js/brickColors.js"></script>
-		<script src="/../js/manufacturer.js"></script>
+    <script src="/../js/partGridWidget.js"></script>
+	<script src="/../js/manufacturer.js"></script>
   </head>
   <body>
     <div class="ui centered grid">
@@ -33,8 +37,9 @@
 			  </div>
 			  <div class="row">
 				<button class="ui large yellow button" id="order">Orders From Customer</button>
-				<button class="ui large green button" id="send-supplier-order">Send Supplier Order</button>
+				<button class="ui large disabled green button" id="send-supplier-order">Send Supplier Order</button>
 			  </div>
+				<div id="game-info-container"></div>
 				<div class="total-cost-weight">
 					<div class="ui celled centered grid total-cost-weight-grid">
 						<div class="row total-cost">
@@ -53,8 +58,7 @@
 				</div>
 		    </div>
 		  </div>
-          <div id="supply-grid" class="ui celled grid">
-					</div>
+          <div id="supply-grid"></div>
         </div>
       </div>
     </div>
@@ -73,6 +77,21 @@
 				</div>
 			</div>
 		</div>
+
+	<div class="ui basic modal" id="supply-order-sent">
+		<div class="ui icon header">
+			<i class="clipboard outline icon"></i>
+			The supplier order was sent successfully!
+		</div>
+		<div class="ui centered grid">
+			<div class="actions">
+				<div class="ui green ok inverted button">
+					<i class="checkmark icon"></i>
+					Okay
+				</div>
+			</div>
+		</div>
+	</div>
 
 		<div class="ui modal" id="ready-order">
 			<div class="header">

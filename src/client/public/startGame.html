@@ -3,7 +3,7 @@
   <head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<title>Lean Manufacturing Simulation</title>
+		<title>Manufacturing Simulation</title>
     <link rel="stylesheet" type="text/css" href="/../semantic/dist/semantic.min.css">
     <script
       src="https://code.jquery.com/jquery-3.1.1.min.js"
@@ -11,6 +11,7 @@
       crossorigin="anonymous"></script>
     <script src="/../semantic/dist/semantic.min.js"></script>
     <script src="/../js/gameAPI.js"></script>
+    <script src="/../js/shared/gameObjects.js" type="module"></script>
     <script src="/../js/startGame.js"></script>
     <link rel="stylesheet" type="text/css" href="/../css/startGame.css">
   </head>
@@ -18,11 +19,18 @@
     <div class="ui centered grid">
       <div class="nine wide column">
         <div class="ui centered celled grid">
-          <div class="eight wide centered column">
-            <h1 class="ui header" id="name">Group Name: </h1>
+          <div class="row">
+            <div class="eight wide centered column">
+              <h1 class="ui header" id="name">Group: </h1>
+            </div>
+            <div class="eight wide centered column">
+              <h1 class="ui header" id="game-type">Game: </h1>
+            </div>
           </div>
-          <div class="eight wide centered column">
-            <h1 class="ui header" id="game-type">Game Type: </h1>
+          <div class="row">
+            <div class="column">
+              <h1 class="ui header" id="player-name">Player: </h1>
+            </div>
           </div>
           <div class="row">
             <div class="eight wide centered column">

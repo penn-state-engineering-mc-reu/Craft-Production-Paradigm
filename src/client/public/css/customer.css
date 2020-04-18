@@ -4,10 +4,6 @@
   display: table;
 }
 
-#order {
-  margin-bottom: 2em;
-}
-
 #filter-options, #order-info-text
 {
   display: table-cell;
@@ -82,4 +78,12 @@
 #generate
 {
   height: 50px; 
+}
+
+#game-info-container
+{
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
 }

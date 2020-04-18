@@ -23,14 +23,32 @@ class GameLogicController {
     }
     placeOrder(pin, modelID) {
         return __awaiter(this, void 0, void 0, function* () {
-            let order = { pin: pin, modelID: modelID };
-            yield this.custOrderDBConnector.addOrder(order);
+            let gameObj = yield this.gameController.getGameInfo(pin);
+            if (gameObj !== null) {
+                let custPosition = gameObj.getCustomer();
+                if (custPosition !== undefined) {
+                    let order = {
+                        pin: pin, modelID: modelID,
+                        createdBy: custPosition.playerName
+                    };
+                    yield this.custOrderDBConnector.addOrder(order);
+                }
+            }
         });
     }
     placeCustomOrder(pin, orderDesc, imageData) {
         return __awaiter(this, void 0, void 0, function* () {
-            let order = { pin: pin, isCustomOrder: true, orderDesc: orderDesc, imageData: yield (new orderImage_1.OrderImage(imageData)).toBuffer() };
-            yield this.custOrderDBConnector.addOrder(order);
+            let gameObj = yield this.gameController.getGameInfo(pin);
+            if (gameObj !== null) {
+                let custPosition = gameObj.getCustomer();
+                if (custPosition !== undefined) {
+                    let order = {
+                        pin: pin, isCustomOrder: true, orderDesc: orderDesc, imageData: yield (new orderImage_1.OrderImage(imageData)).toBuffer(),
+                        createdBy: custPosition.playerName
+                    };
+                    yield this.custOrderDBConnector.addOrder(order);
+                }
+            }
         });
     }
     /*
@@ -116,8 +134,22 @@ class GameLogicController {
         return await this.supplierOrderDBConnector.getManufacturerRequest(pin, orderId);
       }*/
     addSupplyOrder(pin, request) {
-        console.log("At controller: " + JSON.stringify(request));
-        return this.supplierOrderDBConnector.addOrder(pin, request);
+        return __awaiter(this, void 0, void 0, function* () {
+            console.log("At controller: " + JSON.stringify(request));
+            let gameObj = yield this.gameController.getGameInfo(pin);
+            if (gameObj !== null) {
+                let manufPosition = gameObj.getManufacturer();
+                if (manufPosition !== undefined) {
+                    return this.supplierOrderDBConnector.addOrder(pin, manufPosition.playerName, request);
+                }
+                else {
+                    return Promise.reject('No manufacturer exists for this game.');
+                }
+            }
+            else {
+                return Promise.reject('The game specified does not exist.');
+            }
+        });
     }
     getSupplyOrders(pin) {
         return __awaiter(this, void 0, void 0, function* () {

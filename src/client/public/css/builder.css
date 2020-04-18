@@ -46,3 +46,45 @@ canvas {
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
 }
+.display {
+  font-size: 30px;
+  font-family: sans-serif;
+  text-align: left;
+  margin-top: 10px;
+}
+
+.left-items
+{
+  position: absolute;
+  display: flex;
+  left: 0;
+  top: 0;
+}
+
+#game-info-container
+{
+  margin-left: 10px;
+  margin-top: 2px;
+}
+
+.start, .stop, .reset
+{
+  font-size: 20px;
+  font-family: sans-serif;
+  margin: 0;
+  border-radius: 5px;
+  cursor: pointer;
+}
+#min.minutes:after
+{
+  content: ':';
+}
+#sec.seconds:after
+{
+  content: ':';
+}
+.Rules
+{
+  font-size: 18px;
+  font-family: sans-serif;
+}

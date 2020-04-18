@@ -3,7 +3,7 @@
  */
 
 import * as mongoose from 'mongoose';
-import {GameScheme} from '../models/gameSchema';
+import {GameScheme, getTypeInfoByName, IGame, PositionInfo} from '../models/gameSchema';
 import {Request, Response} from 'express';
 import {GameDatabaseConnector} from '../models/GameDatabaseConnector';
 import DatabaseConnector from "../models/database";
@@ -22,22 +22,23 @@ export class GameController {
    * @param req 
    */
   public async addNewGame(req: Request): Promise<number> {
-    let requestGame = req.body;
+    let requestGame: IGame = req.body;
     requestGame.pin = await this.generatePin();
+    requestGame.maxPlayers = Object.keys(getTypeInfoByName(requestGame.gameType).positions).length;
     let game = new Game(requestGame);
     this.db.addToDatabase(game);
     return requestGame.pin;
   }
 
-  public joinGame(pin: number, position: string) {
-    this.db.joinGame(pin, position);
+  public joinGame(pin: number, positionName: string, playerName: string) {
+    this.db.joinGame(pin, {positionName: positionName, playerName: playerName});
   }
 
   /**
    * Gets all of the game info from database using the pin
    * @param pin JavaScript decided for me that it will be a string
    */
-  public async getGameInfo(pin: number): Promise<any> {
+  public async getGameInfo(pin: number): Promise<IGame | null> {
     return await this.db.getGameObject(pin);
   }
 
@@ -49,19 +50,16 @@ export class GameController {
     this.db.removeActivePlayer(pin, position);
   }
 
+  public async getPlayerName(pin: number, position: string): Promise<string> {
+    return this.db.getPlayerName(pin, position);
+  }
+
   public async checkIfPinExists(pin: number) {
     return await this.db.checkIfPinExists(pin);
   }
 
-  public async getPossiblePositions(pin: number): Promise<any> {
-    let possiblePositions: string[] = ['Customer', 'Manufacturer', 'Supplier', 'Assembler'];
-    let takenPositions = await this.db.getPossiblePositions(pin);
-    takenPositions.positions.forEach((element: string) => {
-      let index = possiblePositions.indexOf(element);
-      if (index != -1) 
-        possiblePositions.splice(index, 1);
-    });
-    return possiblePositions;
+  public async getPossiblePositions(pin: number): Promise<Array<string>> {
+    return this.db.getPossiblePositions(pin);
   }
 
   public async getAssemblerParts(pin: number): Promise<Array<PartInventory> | null>

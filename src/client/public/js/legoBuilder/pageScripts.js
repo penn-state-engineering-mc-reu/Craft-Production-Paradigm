@@ -1,9 +1,3 @@
-const names = ["1x1", "2x2", "2x3x2", "1x2 Pin", 
-              "2x2 Pin", "2x2x2 Pin", "2x2 Double", "Tire 1",
-              "Tire 2", "Tire 3", "Rim 1", "Rim 2",
-              "Rim 3", "1x2", "1x4", "1x2 Plate",
-              "4x6 Plate", "6x8 Plate", "2x10 Plate", "Windshield",
-              "Steering Wheel", "Lego Man"];
 let pieces = [];
 // let pieceIndex = -1; // used to modify the supply of the piece type
 let orderInformation = {};
@@ -11,27 +5,25 @@ let currentOrder = {};
 // let colors = [];
 
 $(document).ready(() => {
+  let currentStation = getStation();
+  let positionName = (currentStation === null ? 'Assembler' : currentStation.getPlayerPosition().name);
+  $('#game-info-container').gameInfo({ positionName: positionName, orientation: $.gameInfo.Orientation.HORIZONTAL});
   initButtons();
   checkOrders();
   setInterval(checkPieces, 3000);
 });
 
-// gets the pin from the url
-function getPin() {
-  return /(\d+)(?!.*\d)/g.exec(window.location.href)[0];
-}
-
 function initButtons() {
   $('#left').click(e => {
     let index = orderInformation.indexOf(currentOrder);
     currentOrder = --index < 0 ? orderInformation[orderInformation.length - 1] : orderInformation[index];
-    updateOrder();
+    updateOrderUI();
   });
 
   $('#right').click(e => {
     let index = orderInformation.indexOf(currentOrder);
     currentOrder = ++index == orderInformation.length ? orderInformation[0] : orderInformation[index];
-    updateOrder();
+    updateOrderUI();
   });
 
   $('#order').click(e => {openModal()});
@@ -72,70 +64,73 @@ function openModal() {
     $('#ready-order').modal('show');
 }
 
-function updateOrder() {
-  if(currentOrder.isCustomOrder)
+function updateCurrentOrderInfo()
+{
+  if(orderInformation.length === 0)
   {
-    $('#order-image').attr('src', `${GameAPI.rootURL}/gameLogic/getCustomOrderImage/${getPin()}/${currentOrder._id}`);
+    currentOrder = null;
   }
-  else
-  {
-    $('#order-image').attr('src', `/../images/Option ${currentOrder.modelID}.PNG`);
-  }
+  else {
+    if (currentOrder != null && !(jQuery.isEmptyObject(currentOrder))) {
+      let findObj = orderInformation.find((elem) => {
+        return elem._id === currentOrder._id;
+      });
 
+      currentOrder = (findObj ? findObj : orderInformation[0]);
+    } else {
+      currentOrder = orderInformation[0];
+    }
+  }
+}
+
+function updateOrderUI() {
   let orderNode = $('#order-info').empty();
 
-  orderNode.append('<p>Date Ordered: ' + new Date(currentOrder.createDate).toString() + '</p>')
-      .append('<p>Last Modified: ' + new Date(currentOrder.lastModified).toString() + '</p>');
+  if(currentOrder) {
+    if (currentOrder.isCustomOrder) {
+      $('#order-image').attr('src', `${GameAPI.rootURL}/gameLogic/getCustomOrderImage/${GameAPI.getPin()}/${currentOrder._id}`);
+    } else {
+      $('#order-image').attr('src', `/../images/Option ${currentOrder.modelID}.PNG`);
+    }
 
-  if (currentOrder.status === 'Completed') {
-    orderNode.append('<p>Finished: ' + new Date(currentOrder.finishedTime).toString() + '</p>');
-    $('#view-model').removeClass('disabled');
-  } else {
-    $('#view-model').addClass('disabled');
+    orderNode.append($('<p></p>').text('Ordered by: ' + (currentOrder.createdBy ? currentOrder.createdBy : '<Anonymous Player>')))
+        .append('<p>Date Ordered: ' + new Date(currentOrder.createDate).toString() + '</p>')
+        .append('<p>Last Modified: ' + new Date(currentOrder.lastModified).toString() + '</p>');
+
+    if (currentOrder.status === 'Completed') {
+      orderNode.append('<p>Finished: ' + new Date(currentOrder.finishedTime).toString() + '</p>');
+      $('#view-model').removeClass('disabled');
+    } else {
+      $('#view-model').addClass('disabled');
+    }
+
+    if (!(currentOrder.isCustomOrder)) {
+      orderNode.append('<p>Model ID: ' + currentOrder.modelID + '</p>');
+    }
+
+    orderNode.append('<p>Stage: ' + currentOrder.stage + '</p>')
+        .append('<p>Status: ' + currentOrder.status + '</p>');
+
+    if (currentOrder.isCustomOrder) {
+      orderNode.append('<span>Description:</span>')
+          .append($('<p></p>').text(currentOrder.orderDesc));
+    }
+
+    orderNode.append('<br>');
   }
-
-  if(!(currentOrder.isCustomOrder)) {
-    orderNode.append('<p>Model ID: ' + currentOrder.modelID + '</p>');
-  }
-
-  orderNode.append('<p>Stage: ' + currentOrder.stage + '</p>')
-      .append('<p>Status: ' + currentOrder.status + '</p>');
-
-  if(currentOrder.isCustomOrder)
-  {
-    orderNode.append('<span>Description:</span>')
-        .append($('<p></p>').text(currentOrder.orderDesc));
-  }
-
-  orderNode.append('<br>');
 }
 
 function checkOrders() {
-  $.ajax({
-    type: 'GET',
-    url: GameAPI.rootURL + '/gameLogic/getOrders/' + getPin(),
-    timeout: 30000,
-    success: (data) => {
-      orderInformation = data;
-      // Need to find the oldest order that hasn't been finished or canceled
-      orderInformation = filterOrders(orderInformation);
-      let i = 0;
-      if (orderInformation.length != 0) {
-        while(orderInformation[i].status != 'In Progress') {
-          i++;
-          if (i >= orderInformation.length) break;
-        }
-        // if all the orders are complete, i just set the current as the first order
-        currentOrder = orderInformation[i] === undefined ? orderInformation[0] : orderInformation[i];
-      }
-      updateOrder();
-    },
-    error: (xhr, status, error) => { 
-      console.log('Error: ' + error);
-    }
+  GameAPI.getCustOrders().then((data) => {
+    orderInformation = filterOrders(data);
+
+    updateCurrentOrderInfo();
+    updateOrderUI();
+  }).catch((xhr, status, error) => {
+    console.log('Error: ' + error);
   });
 
-  setTimeout(checkOrders, 10000);
+  setTimeout(checkOrders, 3000);
 }
 
 function filterOrders(orders) {
@@ -166,35 +161,28 @@ function sendGroup() {
     console.log(gltf);
     let postData = {'model': JSON.stringify(gltf)};
     
-    $.ajax({
-      type: 'POST',
-      data: postData,
-      timeout: 10000,
-      url: GameAPI.rootURL + '/gameLogic/sendAssembledModel/' + getPin() + '/' + currentOrder._id,
-      success: (data) => {
-        console.log(data);
-        let elemsToRemove = []
-        scene.children.forEach(elem => {
-          if (elem.type === 'Mesh' && elem.name !== 'plane' && elem.name !== 'Environment')
-            elemsToRemove.push(elem);
-        });
-      
-        elemsToRemove.forEach(elem => {
-          scene.remove(elem);
-        });
+    GameAPI.sendAssembledModel(currentOrder._id, gltf).then((data) => {
+      console.log(data);
+      let elemsToRemove = [];
+      scene.children.forEach(elem => {
+        if (elem.type === 'Mesh' && elem.name !== 'plane' && elem.name !== 'Environment')
+          elemsToRemove.push(elem);
+      });
 
-        objects.length = 0;
-        collisionObjects = collisionObjects.filter((elem) => {
-          return (elem.name === 'plane');
-        });
-      },
-      error: (xhr, status, error) => {
-        objects.forEach((elem) => {
-          elem.position.add(midPoint);
-        });
+      elemsToRemove.forEach(elem => {
+        scene.remove(elem);
+      });
 
-        console.log('Group Error: ' + error);
-      }
+      objects.length = 0;
+      collisionObjects = collisionObjects.filter((elem) => {
+        return (elem.name === 'plane');
+      });
+    }).catch((xhr, status, error) => {
+      objects.forEach((elem) => {
+        elem.position.add(midPoint);
+      });
+
+      console.log('Group Error: ' + error);
     });
   }, options);
 }
@@ -204,22 +192,15 @@ function sendGroup() {
 //======================================================================================================
 
 function checkPieces() {
-  $.ajax({
-    type: 'GET',
-    cache: 'false',
-    url: GameAPI.rootURL + '/gameLogic/getAssemblerParts/' + getPin(),
-    timeout: 5000,
-    success: (data) => {
-      if (data != null && data != undefined && data != "") {
-        if (!samePieces(data, pieces)) {
-          pieces = data;
-          updateBinParts();
-        }
+  GameAPI.getAssemblerParts().then((data) => {
+    if (data != null && data != undefined && data != "") {
+      if (!samePieces(data, pieces)) {
+        pieces = data;
+        updateBinParts();
       }
-    },
-    error: (xhr, status, error) => {
-      console.log(error);
     }
+  }).catch((xhr, status, error) => {
+    console.log(error);
   });
 }
 
@@ -255,21 +236,37 @@ function samePieces(array1, array2) {
   return true;
 }
 
-function updatePieces() {
-  let postData = {'pieces': pieces};
-  if (pieces != null && pieces != undefined) {
-    return $.ajax({
-      type: 'POST',
-      data: JSON.stringify(postData),
-      contentType: 'application/json',
-      url: GameAPI.rootURL + '/gameLogic/setAssemblerParts/' + getPin(),
-      error: (xhr, status, error) => {
-        console.log(error);
-      }
-    });
-  }
+function updatePieces(pageUnloading) {
+  return GameAPI.setAssemblerParts(pieces, pageUnloading).catch((xhr, status, error) => {
+    console.log(error);
+  });
 }
 
+function getStation()
+{
+  let urlFragment = window.location.hash;
+
+  if(urlFragment.length >= 1)
+  {
+    urlFragment = urlFragment.slice(1);
+  }
+
+  let stationObj = null;
+
+  Object.keys(partProperties.STATIONS).find(value => {
+        if(partProperties.STATIONS[value].internalName === urlFragment)
+        {
+          stationObj = partProperties.STATIONS[value];
+          return true;
+        }
+        else
+        {
+          return false;
+        }
+  });
+
+  return stationObj;
+}
 /*
 function initSupplyButtons() {
   for (let i = 0; i < pieces.length; i++) {
