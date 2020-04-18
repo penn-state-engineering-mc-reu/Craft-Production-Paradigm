@@ -1,33 +1,19 @@
-let pieceOrders = [];
 let manufacturingPieces = [];
 let orderInformation = {};
 let currentOrder = {};
-let colors = [];
 
 $(document).ready(() => {
   $('#game-info-container').gameInfo({ positionName: 'Supplier' });
-  generateSupplyGrid();
-  initArray();
+
+  $('#supply-grid').partGrid();
+
   initButtons();
   $('#order').click(e => openModal());
   $('#request').click(e => openManufacturingModal());
   checkOrders();
 });
 
-// gets the pin from the url
-function getPin() {
-  return /(\d+)(?!.*\d)/g.exec(window.location.href)[0];
-}
-
-function initArray() {
-  for (let i = 0; i < partProperties.length; i++) {
-    pieceOrders[i] = 0; 
-    colors[i] = BrickColors.defaultBrickColor.colorID;
-  }
-}
-
 function initButtons() {
-  initGridButtons();
   $('#left').click(e => {
     let index = orderInformation.indexOf(currentOrder);
     currentOrder = --index < 0 ? orderInformation[orderInformation.length - 1] : orderInformation[index];
@@ -51,65 +37,26 @@ function initButtons() {
   });
 }
 
-/**
- * Refreshes the buttons when the supply grid gets regenerated
- */
-function initGridButtons() {
-  for (let i = 0; i < partProperties.length; i++) {
-    let num = '#' + i;
-    $(num + '-plus').click(e => {
-      let currentNum = parseInt($(num + '-value').html());
-      $(num + '-value').html(currentNum < 10 ? ++currentNum : 10);
-      pieceOrders[i] = currentNum;
-    });
-    $(num + '-minus').click(e => {
-      let currentNum = parseInt($(num + '-value').html());
-      $(num + '-value').html(currentNum == 0 ? 0 : --currentNum);
-      pieceOrders[i] = currentNum;
-    });
-
-    (function(index) {
-      $('.' + index + '-picker').spectrum({
-        showPalette: true,
-        showPaletteOnly: true,
-        showAlpha: true,
-        containerClassName: index + '-picker-container',
-        palette: BrickColors.spectrumPalette,
-        color: BrickColors.defaultBrickColor.RGBString,
-        change: function (color) {
-          let activeElement = $('.' + index + '-picker-container').find('.sp-thumb-el.sp-thumb-active');
-          colors[index] = BrickColors.allPaletteData[$(activeElement).closest('.sp-palette-row').index()][$(activeElement).index()].colorID;
-        },
-        show: function (color) {
-          let paletteBoxes = $('.' + index + '-picker-container').find('.sp-thumb-el');
-          paletteBoxes.each(function(index, element) {
-            let colorInfo = BrickColors.allPaletteData[$(element).closest('.sp-palette-row').index()][$(element).index()];
-            $(element).attr('title', `${colorInfo.colorName} (${colorInfo.colorID})`);
-          });
-        }
-      });
-    })(i);
-
-  }
-}
-
 // the supply order needs to match (it can have more pieces) the manufacturer order
 function checkSupplyMatchesManufacturer() {
+  let partCounts = $('#supply-grid').partGrid('getCounts');
   for (let i = 0; i < currentOrder.manufacturerReq.length; i++) {
-    if (pieceOrders[currentOrder.manufacturerReq[i].partID] < currentOrder.manufacturerReq[i].count) return false;
+    if (partCounts[currentOrder.manufacturerReq[i].partID] < currentOrder.manufacturerReq[i].count) return false;
   }
   return true;
 }
 
 function sendSupplyOrder() {
-  let orderData = [];
+  let orderData = [],
+      partCounts = $('#supply-grid').partGrid('getCounts'),
+      partColors = $('#supply-grid').partGrid('getColors');
 
-  partProperties.forEach((value, index) => {
-    if(pieceOrders[index] > 0) {
+  Object.keys(partCounts).map(value => parseInt(value)).forEach((thisPartID) => {
+    if(partCounts[thisPartID] > 0) {
       orderData.push({
-        partID: index,
-        color: colors[index],
-        count: pieceOrders[index],
+        partID: thisPartID,
+        color: partColors[thisPartID],
+        count: partCounts[thisPartID],
       });
     }
   });
@@ -117,12 +64,7 @@ function sendSupplyOrder() {
   GameAPI.sendSupplyOrder(currentOrder._id, orderData).then((data) => {
     console.log('Order sent!');
     $('#ready-order').modal('toggle');
-    initArray();
-    $('.value').text('0');
-    for(let index = 0; index < partProperties.length; index++)
-    {
-      $('.' + index + '-picker').spectrum('set', BrickColors.defaultBrickColor.RGBString);
-    }
+    $('#supply-grid').partGrid('reset');
   }).catch((xhr, status, error) => {
     console.log(error);
   });
@@ -228,39 +170,8 @@ function updateOrder() {
       .append('<p>Requested Parts:</p>');
 
   currentOrder.manufacturerReq.forEach(value => {
-    orderNode.append(`<p>${value.count} ${partProperties[value.partID].name} (${BrickColors.findByColorID(value.color).colorName} (${value.color}))</p>`);
+    orderNode.append(`<p>${value.count} ${partProperties.PARTS[value.partID].name} (${BrickColors.findByColorID(value.color).colorName} (${value.color}))</p>`);
   });
 
   orderNode.append('<br>');
-}
-
-/**
- * Dynamically generate all the squares to add to a supply order
- * This would have been terrible to do by hand
- */
-function generateSupplyGrid() {
-  let html = "";
-  for (let i = 0; i < partProperties.length / 4; i++) {
-    html += '<div class="row">';
-    for (let j = 0; j < 4; j++) {
-      let partNumber = i * 4 + j;
-      if (partNumber < partProperties.length) {
-        html += '<div class="four wide column">';
-        html += `<p align="left">${partProperties[partNumber].name}</p>`;
-        html += `<p> <img class = "piece" src= "/../images/Lego pieces/${partProperties[partNumber].name}.jpg"> </p>`;
-        // Start off each piece with an order of 0
-        html += `<div class="row"><div class="ui statistic"><div id="${partNumber}-value" class="value">0</div></div></div>`;
-        html += `<div class="row picker"><input type="text" class="${partNumber}-picker" value="${BrickColors.defaultBrickColor.RGBString}"/></div>`;
-        // Adds the plus and minus buttons to each piece
-        html += '<div class="row"><div class="ui icon buttons">' +
-            `<button id="${partNumber}-minus" class="ui button"><i class="minus icon"></i></button>` +
-            `<button id="${partNumber}-plus" class="ui button"><i class="plus icon"></i></button></div></div></div>`;
-      }
-    }
-    // I want there to be vertical lines between each cube so I need to add a blank space 
-    if (i + 1 >= partProperties.length / 4) html += '<div class="five wide column"></div>';
-    html += '</div>';
-  }
-
-  $('#supply-grid').html(html);
 }

@@ -11,6 +11,7 @@ let supplierRouter = require('./routes/supplier.router');
 let manufacturerRouter = require('./routes/manufacturer.router');
 let viewerRouter = require('./routes/viewer.router');
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/js/shared', express.static(path.join(__dirname, '../shared')));
 app.use('/startGame', startGameRouter);
 app.use('/builder', builderRouter);
 app.use('/customer', customerRouter);

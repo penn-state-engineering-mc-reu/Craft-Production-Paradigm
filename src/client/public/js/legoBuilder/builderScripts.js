@@ -276,8 +276,7 @@ function onDocumentMouseDown(event) {
   }
   else if(isShiftDown)
   {
-    let binCollection = scene.getObjectByName('Environment').getObjectByName('Room').getObjectByName('Workbenches')
-        .children[0].children;
+    let binCollection = getActiveWorkbench().children;
 
     let binObject = null;
     let binObjectHit = binCollection.some(thisBin => {
@@ -370,8 +369,7 @@ function updateBinParts()
         PART_ROW_SPACING = new THREE.Vector3(0, 0, 30),
         PART_LEVEL_SPACING = new THREE.Vector3(0, 20, 0);
 
-  let binCollection = scene.getObjectByName('Environment').getObjectByName('Room').getObjectByName('Workbenches')
-      .children[0].children;
+  let binCollection = getActiveWorkbench().children;
   binCollection.forEach(thisBin => {
     for(let i = thisBin.children.length - 1; i >= 0; i--)
     {
@@ -388,79 +386,80 @@ function updateBinParts()
   let binIntersectZDist = binRaycaster.intersectObject(binCollection[0])[0].distance;
 
   pieces.forEach((thisPieceInfo, thisPieceIndex) => {
-    getPartGeometry(thisPieceInfo.partID, function(geometry) {
-      geometry.computeBoundingBox();
-      let modelColor = tinycolor(BrickColors.findByColorID(thisPieceInfo.color).RGBString);
-      let material = new THREE.MeshPhongMaterial({transparent: true, opacity: modelColor.getAlpha(),
-        color: modelColor.toHexString(), shininess: 30, specular: 0x111111});
+    let binIndex = binPartIDs.findIndex(value => value === thisPieceInfo.partID);
 
-      let templateMesh = new THREE.Mesh(geometry, material);
-
-      let adjustedBoundingBox = (new THREE.Box3()).setFromPoints([geometry.boundingBox.max, geometry.boundingBox.min]);
-      let adjustedBoundingBoxSize = (new THREE.Vector3()).copy(adjustedBoundingBox.max).sub(adjustedBoundingBox.min);
-
-      templateMesh.userData.isPart = true;
-      templateMesh.userData.dimensions = adjustedBoundingBoxSize;
-      templateMesh.userData.modelType = thisPieceInfo.partID;
-      templateMesh.userData.colorInfo = thisPieceInfo.color;
-
-      let parentBin = binCollection[thisPieceInfo.partID];
-
-      let newColGroupOffset = (new THREE.Vector3()).setX(adjustedBoundingBoxSize.x).add(PART_COL_SPACING)
-          .multiplyScalar(parentBin.children.length);
-      let columnGroup;
-
-      let partLevel;
-      if(parentBin.children.length === 0 || newColGroupOffset.x + adjustedBoundingBoxSize.x <= binIntersectXDist)
-      {
-        columnGroup = new THREE.Group();
-        parentBin.add(columnGroup);
-        columnGroup.position.copy(BASE_PART_OFFSET).sub(adjustedBoundingBox.min).add(newColGroupOffset);
-
-        partLevel = 0;
-      }
-      else
-      {
-        let allGroupMinLevel = Number.POSITIVE_INFINITY;
-        let minLevelGroup = null;
-
-        parentBin.children.forEach(thisGroup => {
-          if(thisGroup.userData.maxLevel < allGroupMinLevel)
-          {
-            minLevelGroup = thisGroup;
-            allGroupMinLevel = thisGroup.userData.maxLevel;
-          }
+    if(binIndex !== -1)
+    {
+      getPartGeometry(thisPieceInfo.partID, function (geometry) {
+        geometry.computeBoundingBox();
+        let modelColor = tinycolor(BrickColors.findByColorID(thisPieceInfo.color).RGBString);
+        let material = new THREE.MeshPhongMaterial({
+          transparent: true, opacity: modelColor.getAlpha(),
+          color: modelColor.toHexString(), shininess: 30, specular: 0x111111
         });
 
-        partLevel = allGroupMinLevel + 1;
-        columnGroup = minLevelGroup;
-      }
+        let templateMesh = new THREE.Mesh(geometry, material);
 
-      let partColorGroup = new THREE.Group();
-      partColorGroup.name = thisPieceInfo.color.toString();
-      columnGroup.add(partColorGroup);
+        let adjustedBoundingBox = (new THREE.Box3()).setFromPoints([geometry.boundingBox.max, geometry.boundingBox.min]);
+        let adjustedBoundingBoxSize = (new THREE.Vector3()).copy(adjustedBoundingBox.max).sub(adjustedBoundingBox.min);
 
-      let partRow = 0;
-      for(let partNum = 0; partNum < thisPieceInfo.count; partNum++, partRow++)
-      {
-        if(adjustedBoundingBoxSize.z * (partRow + 1) + PART_ROW_SPACING.z * partRow > binIntersectZDist)
-        {
-          partLevel++;
-          partRow = 0;
+        templateMesh.userData.isPart = true;
+        templateMesh.userData.dimensions = adjustedBoundingBoxSize;
+        templateMesh.userData.modelType = thisPieceInfo.partID;
+        templateMesh.userData.colorInfo = thisPieceInfo.color;
+
+        let parentBin = binCollection[binIndex];
+
+        let newColGroupOffset = (new THREE.Vector3()).setX(adjustedBoundingBoxSize.x).add(PART_COL_SPACING)
+            .multiplyScalar(parentBin.children.length);
+        let columnGroup;
+
+        let partLevel;
+        if (parentBin.children.length === 0 || newColGroupOffset.x + adjustedBoundingBoxSize.x <= binIntersectXDist) {
+          columnGroup = new THREE.Group();
+          parentBin.add(columnGroup);
+          columnGroup.position.copy(BASE_PART_OFFSET).sub(adjustedBoundingBox.min).add(newColGroupOffset);
+
+          partLevel = 0;
+        } else {
+          let allGroupMinLevel = Number.POSITIVE_INFINITY;
+          let minLevelGroup = null;
+
+          parentBin.children.forEach(thisGroup => {
+            if (thisGroup.userData.maxLevel < allGroupMinLevel) {
+              minLevelGroup = thisGroup;
+              allGroupMinLevel = thisGroup.userData.maxLevel;
+            }
+          });
+
+          partLevel = allGroupMinLevel + 1;
+          columnGroup = minLevelGroup;
         }
 
-        let thisPieceMesh = templateMesh.clone();
-        let rowOffset = (new THREE.Vector3()).setZ(adjustedBoundingBoxSize.z).add(PART_ROW_SPACING)
-            .multiplyScalar(partRow);
-        let levelOffset = (new THREE.Vector3()).setY(adjustedBoundingBoxSize.y).add(PART_LEVEL_SPACING)
-            .multiplyScalar(partLevel);
-        thisPieceMesh.position.copy(rowOffset).add(levelOffset);
+        let partColorGroup = new THREE.Group();
+        partColorGroup.name = thisPieceInfo.color.toString();
+        columnGroup.add(partColorGroup);
 
-        partColorGroup.add(thisPieceMesh);
-      }
+        let partRow = 0;
+        for (let partNum = 0; partNum < thisPieceInfo.count; partNum++, partRow++) {
+          if (adjustedBoundingBoxSize.z * (partRow + 1) + PART_ROW_SPACING.z * partRow > binIntersectZDist) {
+            partLevel++;
+            partRow = 0;
+          }
 
-      columnGroup.userData.maxLevel = partLevel;
-    });
+          let thisPieceMesh = templateMesh.clone();
+          let rowOffset = (new THREE.Vector3()).setZ(adjustedBoundingBoxSize.z).add(PART_ROW_SPACING)
+              .multiplyScalar(partRow);
+          let levelOffset = (new THREE.Vector3()).setY(adjustedBoundingBoxSize.y).add(PART_LEVEL_SPACING)
+              .multiplyScalar(partLevel);
+          thisPieceMesh.position.copy(rowOffset).add(levelOffset);
+
+          partColorGroup.add(thisPieceMesh);
+        }
+
+        columnGroup.userData.maxLevel = partLevel;
+      });
+    }
   });
 }
 

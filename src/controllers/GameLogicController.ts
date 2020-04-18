@@ -11,7 +11,7 @@ import {SupplierOrderDatabaseConnector} from "../models/SupplierOrderDatabaseCon
 import {ISupplierOrder} from "../models/supplierOrderSchema";
 import {PartInventory} from "../models/partInventory";
 import {GameController} from "./GameController";
-import {PositionInfo} from "../models/gameSchema";
+import {IGame} from "../models/gameSchema";
 
 export class GameLogicController {
   private gameController: GameController;
@@ -25,16 +25,36 @@ export class GameLogicController {
   }
 
   public async placeOrder(pin: number, modelID: number): Promise<void> {
-    let order = {pin: pin, modelID: modelID,
-      createdBy: await this.gameController.getPlayerName(pin, PositionInfo.POSITION_NAMES.CUSTOMER)};
-    await this.custOrderDBConnector.addOrder(order);
+    let gameObj : IGame | null = await this.gameController.getGameInfo(pin);
+
+    if(gameObj !== null) {
+      let custPosition = gameObj.getCustomer();
+
+      if(custPosition !== undefined) {
+        let order = {
+          pin: pin, modelID: modelID,
+          createdBy: custPosition.playerName
+        };
+        await this.custOrderDBConnector.addOrder(order);
+      }
+    }
   }
 
   public async placeCustomOrder(pin: number, orderDesc: string, imageData: Buffer): Promise<void>
   {
-    let order = {pin: pin, isCustomOrder: true, orderDesc: orderDesc, imageData: await (new OrderImage(imageData)).toBuffer(),
-      createdBy: await this.gameController.getPlayerName(pin, PositionInfo.POSITION_NAMES.CUSTOMER)};
-    await this.custOrderDBConnector.addOrder(order);
+    let gameObj : IGame | null = await this.gameController.getGameInfo(pin);
+
+    if(gameObj !== null) {
+      let custPosition = gameObj.getCustomer();
+
+      if (custPosition !== undefined) {
+        let order = {
+          pin: pin, isCustomOrder: true, orderDesc: orderDesc, imageData: await (new OrderImage(imageData)).toBuffer(),
+          createdBy: custPosition.playerName
+        };
+        await this.custOrderDBConnector.addOrder(order);
+      }
+    }
   }
 
   /*
@@ -125,8 +145,25 @@ export class GameLogicController {
 
   public async addSupplyOrder(pin: number, request: Array<PartInventory>): Promise<ISupplierOrder> {
     console.log("At controller: " + JSON.stringify(request));
-    return this.supplierOrderDBConnector.addOrder(pin,
-        await this.gameController.getPlayerName(pin, PositionInfo.POSITION_NAMES.MANUFACTURER), request);
+
+    let gameObj : IGame | null = await this.gameController.getGameInfo(pin);
+
+    if(gameObj !== null) {
+      let manufPosition = gameObj.getManufacturer();
+
+      if (manufPosition !== undefined) {
+        return this.supplierOrderDBConnector.addOrder(pin,
+            manufPosition.playerName, request);
+      }
+      else
+      {
+        return Promise.reject('No manufacturer exists for this game.');
+      }
+    }
+    else
+    {
+      return Promise.reject('The game specified does not exist.');
+    }
   }
 
   public async getSupplyOrders(pin: number): Promise<Array<ISupplierOrder>>

@@ -13,7 +13,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const gameSchema_1 = require("./gameSchema");
-const polyfill_1 = require("../polyfill");
 // let noop = (err: any, raw: any) => {};
 class GameDatabaseConnector {
     constructor(dbConnection) {
@@ -102,10 +101,10 @@ class GameDatabaseConnector {
      */
     getPossiblePositions(pinNum) {
         return __awaiter(this, void 0, void 0, function* () {
-            let filledPositions = yield this.gameCollection.findOne({ pin: pinNum }, { positions: 1 });
-            if (filledPositions) {
-                let resultList = polyfill_1.objectValues(gameSchema_1.PositionInfo.POSITION_NAMES);
-                filledPositions.positions.forEach((element) => {
+            let partialGameInfo = yield this.gameCollection.findOne({ pin: pinNum }, { positions: 1, gameType: 1 });
+            if (partialGameInfo) {
+                let resultList = gameSchema_1.getAllPositions(partialGameInfo.gameType).map(value => value.name);
+                partialGameInfo.positions.forEach((element) => {
                     let index = resultList.indexOf(element.positionName);
                     if (index != -1)
                         resultList.splice(index, 1);
