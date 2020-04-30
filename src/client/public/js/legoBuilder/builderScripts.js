@@ -276,7 +276,7 @@ function onDocumentMouseDown(event) {
   }
   else if(isShiftDown)
   {
-    let binCollection = getActiveWorkbench().children;
+    let binCollection = getActiveWorkbench().getObjectByName('Bins').children;
 
     let binObject = null;
     let binObjectHit = binCollection.some(thisBin => {
@@ -369,7 +369,7 @@ function updateBinParts()
         PART_ROW_SPACING = new THREE.Vector3(0, 0, 30),
         PART_LEVEL_SPACING = new THREE.Vector3(0, 20, 0);
 
-  let binCollection = getActiveWorkbench().children;
+  let binCollection = getActiveWorkbench().getObjectByName('Bins').children;
   binCollection.forEach(thisBin => {
     for(let i = thisBin.children.length - 1; i >= 0; i--)
     {

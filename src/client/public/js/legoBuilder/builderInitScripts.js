@@ -39,6 +39,7 @@ function init() {
   createEnvironment(() => {
     let activeWorkbench = getActiveWorkbench();
     createGridAndPlane(activeWorkbench);
+    createSigns();
     moveCameraToWorkbench(activeWorkbench);
   }, checkPieces);
 
@@ -128,6 +129,68 @@ function addSceneLights() {
 
   let initialRendererSize = computeRendererSize();
   renderer.setSize(initialRendererSize.width, initialRendererSize.height);
+}
+
+function createTextTexture(text, font, width, height, padX, padY)
+{
+  let renderingCanvas = document.createElement('canvas');
+  renderingCanvas.width = width + 2 * padX;
+  renderingCanvas.height = height + 2 * padY;
+
+  let context2D = renderingCanvas.getContext('2d');
+  context2D.font = height + 'px ' + font;
+  context2D.fillStyle = '#ffffff';
+  context2D.fillRect(0, 0, renderingCanvas.width, renderingCanvas.height);
+  context2D.fillStyle = '#000000';
+  context2D.textAlign = 'center';
+  context2D.fillText(text, renderingCanvas.width / 2, padY + height, width);
+
+  // document.body.appendChild(renderingCanvas);
+
+  return new THREE.CanvasTexture(renderingCanvas);
+}
+
+function createSigns()
+{
+  const SIGN_DIMS = new THREE.Vector3(1000.0, 500.0, 30.0);
+  let signGeometry = new THREE.BoxGeometry(SIGN_DIMS.x, SIGN_DIMS.y, SIGN_DIMS.z);
+  let signTemplateMatPlain = new THREE.MeshPhongMaterial({
+    color: '#deb887',
+    shininess: 30,
+    specular: '#ffdcac'
+  });
+
+  let roomObj = scene.getObjectByName('Environment').getObjectByName('Room');
+  let workbenchGroup = roomObj.getObjectByName('Workbenches');
+
+  for(let stationOrder = 0; stationOrder < Object.keys(partProperties.STATIONS).length; stationOrder++)
+  {
+    let thisWorkbench = workbenchGroup.children[stationOrder];
+    let signText;
+
+    if(getStation() !== null)
+    {
+      let thisStation = partProperties.STATIONS[Object.keys(partProperties.STATIONS)
+          .find(key => partProperties.STATIONS[key].order === stationOrder)];
+
+      signText = thisStation.dispName;
+    }
+    else
+    {
+      signText = "Craft Station #" + (stationOrder + 1);
+    }
+
+    let newSignMatImg = signTemplateMatPlain.clone();
+    newSignMatImg.map = createTextTexture(signText, 'sans-serif', 800, 200, 112, 156);
+    let newSignMesh = new THREE.Mesh(signGeometry,
+        [signTemplateMatPlain, signTemplateMatPlain, signTemplateMatPlain, signTemplateMatPlain,
+          newSignMatImg, signTemplateMatPlain]);
+
+    thisWorkbench.geometry.computeBoundingBox();
+    let avgX = (thisWorkbench.geometry.boundingBox.min.x + thisWorkbench.geometry.boundingBox.max.x) / 2.0;
+    newSignMesh.position.set(avgX, 1000.0, thisWorkbench.geometry.boundingBox.min.z + SIGN_DIMS.z / 2.0);
+    thisWorkbench.add(newSignMesh);
+  }
 }
 
 function makeGrid(startX, startZ, endX, endZ, elemSizeX, elemSizeZ)
@@ -266,11 +329,15 @@ function createEnvironment(onRoomCompleted, onBinsCompleted)
       let binTemplateMesh = new THREE.Mesh(binGeometry, binMaterial);
       binTemplateMesh.name = "partBin";
 
+      let binGroup = new THREE.Group();
+      binGroup.name = 'Bins';
+      activeWorkbench.add(binGroup);
+
       for(let partRowNum = 0; partRowNum < (binPartIDs.length / maxBinsPerRow); partRowNum++)
       {
         let binsRemaining = binPartIDs.length - (partRowNum * maxBinsPerRow);
 
-        addMeshRow(binTemplateMesh, activeWorkbench, binStartX,
+        addMeshRow(binTemplateMesh, binGroup, binStartX,
             cornerWorkbenchPos.y * (Math.floor(partRowNum / 2) - 1), // Starting at -cornerWorkbenchPos.y,
                                                                               // move up cornerWorkbenchPos.y every two rows
             (partRowNum === 1 ? frontBinZ : backBinZ), // Even rows in the front, odd rows in the back
