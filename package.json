@@ -9,6 +9,7 @@
     "client": "nodemon ./src/client/server.js",
     "database": "mongod --dbpath=./data",
     "compile": "tsc --watch --skipLibCheck",
+    "compile-nowatch": "tsc --skipLibCheck",
     "dev": "nodemon ./dist/server.js --watch",
     "stop": "mongo admin --eval 'db.shutdownServer()'",
     "pretest": "mongod --dbpath data --fork --logpath /dev/null",
