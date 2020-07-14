@@ -13,6 +13,8 @@ import {PartInventory} from "../models/partInventory";
 import {GameController} from "./GameController";
 import {IGame} from "../models/gameSchema";
 
+import {GameObjects} from "../shared/gameObjects";
+
 export class GameLogicController {
   private gameController: GameController;
   private custOrderDBConnector: CustOrderDatabaseConnector;
@@ -115,7 +117,7 @@ export class GameLogicController {
 
   public async forwardManufacturerOrder(pin: number, orderID: string): Promise<ICustomerOrder | null>
   {
-    return this.custOrderDBConnector.setOrderStage(pin, orderID, 'Assembler');
+    return this.custOrderDBConnector.setOrderStage(pin, orderID, GameObjects.GameTypes.CraftProduction.custOrderStages.AT_ASSEMBLER.name);
   }
 
   /*public async getSupplyOrder(pin: number, orderId: string): Promise<Array<PartInventory>> {
@@ -131,8 +133,30 @@ export class GameLogicController {
     return this.custOrderDBConnector.updatePieces(pin, orderId, pieces);
   }*/
 
-  public updateAssembledModel(pin: number, orderId: string, model: string): number {
-    return this.custOrderDBConnector.updateAssembledModel(pin, orderId, model);
+  public async updateAssembledModel(pin: number, orderId: string, model: string): Promise<void> {
+    let gameInfo: IGame | null = await this.gameController.getGameInfo(pin);
+    let craftStages = GameObjects.GameTypes.CraftProduction.custOrderStages,
+      massStages = GameObjects.GameTypes.MassProduction.custOrderStages;
+    if(gameInfo !== null) {
+      switch (gameInfo.gameType) {
+        case GameObjects.GameTypes.CraftProduction.name:
+          return this.custOrderDBConnector.updateAssembledModel(pin, orderId, model, true, craftStages.INSPECTION.name);
+        case GameObjects.GameTypes.MassProduction.name:
+          let orderInfo: ICustomerOrder | null = await this.custOrderDBConnector.getOrder(pin, orderId);
+          if(orderInfo !== null)
+          {
+            let newStage: string;
+            try {
+              newStage = GameObjects.GameTypes.MassProduction.getCustOrderModelDest(orderInfo.stage).name;
+            }
+            catch (ex) {
+              return Promise.reject(ex);
+            }
+
+            return this.custOrderDBConnector.updateAssembledModel(pin, orderId, model, false, newStage);
+          }
+      }
+    }
   }
 
   public async getAssembledModel(pin: number, orderId: string): Promise<string> {

@@ -29,11 +29,22 @@ function initButtons() {
   $('#order').click(e => {openModal()});
   $('#controls').click(e => {displayControls()});
 
+  let nextStage, currentStation = getStation();
+  if(currentStation !== null)
+  {
+    nextStage = GameObjects.GameTypes.MassProduction.getCustOrderModelDest(
+        currentStation.getPlayerPosition().getCustOrderStage().name);
+  }
+  else
+  {
+    nextStage = GameObjects.GameTypes.CraftProduction.custOrderStages.INSPECTION;
+  }
+
   $('#send-model').click(e => {
     if (!$.isEmptyObject(objects)) {
       sendGroup();
     }
-  });
+  }).children('.send-action-text').text("Send to " + nextStage.dispName);
 }
 
 /*function cycle() {

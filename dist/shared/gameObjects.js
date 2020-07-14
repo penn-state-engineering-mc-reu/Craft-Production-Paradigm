@@ -21,6 +21,28 @@ exports.GameObjects = {
                     name: 'Assembler',
                     getURL: pin => '/builder/' + pin
                 }
+            },
+            custOrderStages: {
+                AT_CUSTOMER: {
+                    name: 'Customer',
+                    dispName: 'Customer'
+                },
+                AT_MANUFACTURER: {
+                    name: 'Manufacturer',
+                    dispName: 'Manufacturer'
+                },
+                AT_ASSEMBLER: {
+                    name: 'Assembler',
+                    dispName: 'Assembler'
+                },
+                INSPECTION: {
+                    name: 'Inspection',
+                    dispName: 'Inspection'
+                },
+                SENT_TO_CUSTOMER: {
+                    name: 'Sent to Customer',
+                    dispName: 'Customer'
+                }
             }
         },
         MassProduction: {
@@ -28,7 +50,8 @@ exports.GameObjects = {
             positions: {
                 MANUFACTURER: {
                     name: 'Manufacturer',
-                    getURL: pin => '/manufacturer/' + pin
+                    getURL: pin => '/manufacturer/' + pin,
+                    getCustOrderStage: () => exports.GameObjects.GameTypes.MassProduction.custOrderStages.AT_MANUFACTURER
                 },
                 SUPPLIER: {
                     name: 'Supplier',
@@ -36,16 +59,59 @@ exports.GameObjects = {
                 },
                 ASSEMBLER_BODY: {
                     name: 'Assembler - Body',
-                    getURL: pin => '/builder/' + pin + '#body'
+                    getURL: pin => '/builder/' + pin + '#body',
+                    getCustOrderStage: () => exports.GameObjects.GameTypes.MassProduction.custOrderStages.AT_ASSEMBLER_BODY
                 },
                 ASSEMBLER_WHEEL_AXLE: {
                     name: 'Assembler - Wheel and Axle',
-                    getURL: pin => '/builder/' + pin + '#wheel-axle'
+                    getURL: pin => '/builder/' + pin + '#wheel-axle',
+                    getCustOrderStage: () => exports.GameObjects.GameTypes.MassProduction.custOrderStages.AT_ASSEMBLER_WHEEL_AXLE
                 },
                 ASSEMBLER_INTERIOR: {
                     name: 'Assembler - Interior',
-                    getURL: pin => '/builder/' + pin + '#interior'
+                    getURL: pin => '/builder/' + pin + '#interior',
+                    getCustOrderStage: () => exports.GameObjects.GameTypes.MassProduction.custOrderStages.AT_ASSEMBLER_INTERIOR
                 }
+            },
+            custOrderStages: {
+                AT_MANUFACTURER: {
+                    name: 'Manufacturer',
+                    dispName: 'Manufacturer'
+                },
+                AT_ASSEMBLER_BODY: {
+                    name: 'Assembler - Body',
+                    dispName: 'Assembler (Body Station)'
+                },
+                AT_ASSEMBLER_WHEEL_AXLE: {
+                    name: 'Assembler - Wheel and Axle',
+                    dispName: 'Assembler (Wheel and Axle Station)'
+                },
+                AT_ASSEMBLER_INTERIOR: {
+                    name: 'Assembler - Interior',
+                    dispName: 'Assembler (Interior Station)'
+                },
+                SENT_TO_CUSTOMER: {
+                    name: 'Sent to Customer',
+                    dispName: 'Customer'
+                }
+            },
+            getCustOrderModelDest(currentStageName) {
+                let massStages = exports.GameObjects.GameTypes.MassProduction.custOrderStages;
+                let newStage;
+                switch (currentStageName) {
+                    case massStages.AT_ASSEMBLER_BODY.name:
+                        newStage = massStages.AT_ASSEMBLER_WHEEL_AXLE;
+                        break;
+                    case massStages.AT_ASSEMBLER_WHEEL_AXLE.name:
+                        newStage = massStages.AT_ASSEMBLER_INTERIOR;
+                        break;
+                    case massStages.AT_ASSEMBLER_INTERIOR.name:
+                        newStage = massStages.SENT_TO_CUSTOMER;
+                        break;
+                    default:
+                        throw 'Invalid order stage for updating assembled model.';
+                }
+                return newStage;
             }
         }
     }

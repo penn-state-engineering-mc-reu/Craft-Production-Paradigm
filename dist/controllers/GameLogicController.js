@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const CustOrderDatabaseConnector_1 = require("../models/CustOrderDatabaseConnector");
 const orderImage_1 = require("../models/orderImage");
 const SupplierOrderDatabaseConnector_1 = require("../models/SupplierOrderDatabaseConnector");
+const gameObjects_1 = require("../shared/gameObjects");
 class GameLogicController {
     constructor(dbClient, gameController) {
         this.gameController = gameController;
@@ -109,7 +110,7 @@ class GameLogicController {
     }
     forwardManufacturerOrder(pin, orderID) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.custOrderDBConnector.setOrderStage(pin, orderID, 'Assembler');
+            return this.custOrderDBConnector.setOrderStage(pin, orderID, gameObjects_1.GameObjects.GameTypes.CraftProduction.custOrderStages.AT_ASSEMBLER.name);
         });
     }
     /*public async getSupplyOrder(pin: number, orderId: string): Promise<Array<PartInventory>> {
@@ -123,7 +124,28 @@ class GameLogicController {
         return this.custOrderDBConnector.updatePieces(pin, orderId, pieces);
       }*/
     updateAssembledModel(pin, orderId, model) {
-        return this.custOrderDBConnector.updateAssembledModel(pin, orderId, model);
+        return __awaiter(this, void 0, void 0, function* () {
+            let gameInfo = yield this.gameController.getGameInfo(pin);
+            let craftStages = gameObjects_1.GameObjects.GameTypes.CraftProduction.custOrderStages, massStages = gameObjects_1.GameObjects.GameTypes.MassProduction.custOrderStages;
+            if (gameInfo !== null) {
+                switch (gameInfo.gameType) {
+                    case gameObjects_1.GameObjects.GameTypes.CraftProduction.name:
+                        return this.custOrderDBConnector.updateAssembledModel(pin, orderId, model, true, craftStages.INSPECTION.name);
+                    case gameObjects_1.GameObjects.GameTypes.MassProduction.name:
+                        let orderInfo = yield this.custOrderDBConnector.getOrder(pin, orderId);
+                        if (orderInfo !== null) {
+                            let newStage;
+                            try {
+                                newStage = gameObjects_1.GameObjects.GameTypes.MassProduction.getCustOrderModelDest(orderInfo.stage).name;
+                            }
+                            catch (ex) {
+                                return Promise.reject(ex);
+                            }
+                            return this.custOrderDBConnector.updateAssembledModel(pin, orderId, model, false, newStage);
+                        }
+                }
+            }
+        });
     }
     getAssembledModel(pin, orderId) {
         return __awaiter(this, void 0, void 0, function* () {

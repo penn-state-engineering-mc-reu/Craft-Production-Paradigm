@@ -110,14 +110,20 @@ class CustOrderDatabaseConnector {
      * @param orderId
      * @param model
      */
-    updateAssembledModel(pin, orderId, model) {
-        if (model != null && model != undefined) {
-            let time = new Date().getTime();
-            let update = { $set: { assembledModel: model, status: 'Completed', finishedTime: time, stage: 'Inspection' } };
-            this.orderModel.update({ pin: pin, _id: orderId }, update).exec();
-            return 200;
-        }
-        return 400;
+    updateAssembledModel(pin, orderId, model, partCompleted, newStage) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (model != null && model != undefined) {
+                let time = new Date().getTime();
+                let update = { assembledModel: model, lastModified: time, stage: newStage };
+                if (partCompleted) {
+                    update.status = 'Completed';
+                    update.finishedTime = time;
+                }
+                yield this.orderModel.update({ pin: pin, _id: orderId }, { $set: update }).exec();
+                return Promise.resolve();
+            }
+            return Promise.reject('Argument for parameter "model" cannot be null/undefined.');
+        });
     }
     getAssembledModel(pin, orderId) {
         return __awaiter(this, void 0, void 0, function* () {
