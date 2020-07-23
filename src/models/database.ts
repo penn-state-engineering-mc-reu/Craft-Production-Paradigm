@@ -15,10 +15,22 @@ export default class DatabaseConnector {
   constructor() {
     const RECONNECTION_INTERVAL: number = 10000;
 
-    if (process.env.NODE_ENV == 'production')
-      this.url = 'mongodb+srv://' + process.env.DB_USER + ':' + process.env.DB_PASS + '@' + process.env.DB_HOST;
-    else 
-      this.url = 'mongodb://localhost/local';
+    let userPassStr = (process.env.DB_USER !== undefined) ? (process.env.DB_USER + ':' + process.env.DB_PASS + '@') : '';
+    let authDBStr = (process.env.DB_AUTH_DB !== undefined) ? ('/' + process.env.DB_AUTH_DB) : '';
+
+
+    switch (process.env.DB_TYPE) {
+      case 'mongo-srv':
+        this.url = 'mongodb+srv://' + userPassStr + process.env.DB_HOST + authDBStr;
+        break;
+      case 'mongo':
+        this.url = 'mongodb://' + userPassStr + process.env.DB_HOST + authDBStr;
+        break;
+      default:
+        this.url = 'mongodb://localhost/local';
+        break;
+    }
+    
     console.log(this.url);
     let connectionObj = this.db = mongoose.createConnection(this.url);
     let connString = this.url;
