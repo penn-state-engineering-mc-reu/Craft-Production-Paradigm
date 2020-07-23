@@ -7,6 +7,7 @@ const routes_1 = require("../routes");
 const database_1 = require("./database");
 const GameLogicController_1 = require("../controllers/GameLogicController");
 const GameController_1 = require("../controllers/GameController");
+const TimerManager_1 = require("./TimerManager");
 class App {
     constructor() {
         this.app = express();
@@ -31,7 +32,7 @@ class App {
         this.app.use(bodyParser({ limit: '50mb' }));
     }
     setRoutes() {
-        let gameController = new GameController_1.GameController(this.dbConnection);
+        let gameController = new GameController_1.GameController(this.dbConnection, new TimerManager_1.TimerManager());
         this.app.use('/startGame', routes_1.createGameRoutes(gameController));
         this.app.use('/gameLogic', routes_1.createGameLogicRoutes(gameController, new GameLogicController_1.GameLogicController(this.dbConnection, gameController)));
     }

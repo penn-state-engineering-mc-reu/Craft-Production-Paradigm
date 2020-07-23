@@ -8,13 +8,16 @@ import {Request, Response} from 'express';
 import {GameDatabaseConnector} from '../models/GameDatabaseConnector';
 import DatabaseConnector from "../models/database";
 import {PartInventory} from "../models/partInventory";
+import {TimerManager} from "../models/TimerManager";
 
 const Game: mongoose.Model<any> = mongoose.model('Game', GameScheme);
 
 export class GameController {
   private db: GameDatabaseConnector;
-  constructor(dbClient: DatabaseConnector) {
+  private timerManager: TimerManager;
+  constructor(dbClient: DatabaseConnector, timerManager: TimerManager) {
     this.db = new GameDatabaseConnector(dbClient);
+    this.timerManager = timerManager;
   }
 
   /**

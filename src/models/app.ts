@@ -6,6 +6,7 @@ import {createGameRoutes, createGameLogicRoutes} from '../routes';
 import DatabaseConnector from "./database";
 import {GameLogicController} from "../controllers/GameLogicController";
 import {GameController} from "../controllers/GameController";
+import {TimerManager} from "./TimerManager";
 
 class App {
   public app: express.Application;
@@ -36,7 +37,7 @@ class App {
   }
 
   private setRoutes(): void {
-    let gameController = new GameController(this.dbConnection);
+    let gameController = new GameController(this.dbConnection, new TimerManager());
     this.app.use('/startGame', createGameRoutes(gameController));
     this.app.use('/gameLogic', createGameLogicRoutes(gameController, new GameLogicController(this.dbConnection, gameController)));
   }

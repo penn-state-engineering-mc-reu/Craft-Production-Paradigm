@@ -16,8 +16,9 @@ const gameSchema_1 = require("../models/gameSchema");
 const GameDatabaseConnector_1 = require("../models/GameDatabaseConnector");
 const Game = mongoose.model('Game', gameSchema_1.GameScheme);
 class GameController {
-    constructor(dbClient) {
+    constructor(dbClient, timerManager) {
         this.db = new GameDatabaseConnector_1.GameDatabaseConnector(dbClient);
+        this.timerManager = timerManager;
     }
     /**
      * Takes data sent and creates database entry
