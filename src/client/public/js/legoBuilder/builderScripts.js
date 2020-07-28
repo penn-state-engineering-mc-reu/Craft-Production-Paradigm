@@ -210,41 +210,71 @@ function removePartFromStock(partID, colorID)
   }
 }
 
+function setRolloverObject(objMesh)
+{
+  if(objMesh.parent !== null) objMesh.parent.remove(objMesh);
+  objMesh.name = 'rollOverMesh';
+  scene.remove(rollOverMesh);
+  rollOverMesh = objMesh;
+  currentRollOverModel = objMesh.userData.modelType;
+  currentObj = allModels[objMesh.userData.modelType];
+
+  updateRolloverMesh(mouse);
+}
+
+function clearRolloverObject()
+{
+  rollOverMesh = null;
+  currentRollOverModel = null;
+  currentObj = null;
+}
+
+function removeEditorObject(collisionObj)
+{
+  if (collisionObj.children[1]) scene.remove(collisionObj.children[1]);
+  scene.remove(collisionObj);
+  scene.remove(collisionObj.children[0]);
+  objects.splice(objects.indexOf(collisionObj.children[0]), 1);
+  collisionObjects.splice(collisionObjects.indexOf(collisionObj), 1);
+}
+
 function onDocumentMouseDown(event) {
   event.preventDefault();
   mouse = getNormalizedMousePosition(event);
   raycaster.setFromCamera(mouse, camera);
-  var intersects = raycaster.intersectObjects(collisionObjects);
-  var objIntersect = raycaster.intersectObjects(objects);
-  if (intersects.length > 0 || objIntersect.length > 0) {
-    var intersect = intersects[0];
-    var objIntersect = objIntersect[0];
+  let collisionIntersects = raycaster.intersectObjects(collisionObjects);
+  // let objIntersect = raycaster.intersectObjects(objects);
+  if (collisionIntersects.length > 0) {
+    let collisionIntersect = collisionIntersects[0];
+    let modelObj = collisionIntersect.object.children[0];
     // pieceIndex = names.indexOf(currentRollOverModel);
     // delete cube
     if (isCtrlDown) {
-      if (intersect.object != plane) {
-        if (intersect) {
-          if (intersect.object.children[1]) scene.remove(intersect.object.children[1]);
-          scene.remove(intersect.object);
-          scene.remove(intersect.object.children[0]);
-          objects.splice(objects.indexOf(intersect.object.children[0]), 1);
-          collisionObjects.splice(collisionObjects.indexOf(intersect.object), 1);
-          returnPartToStock(intersect.object.children[0]);
-          updatePieces().then(() => {
-            updateBinParts();
-          });
-          updateRolloverMesh(mouse);
-        }
+      if (collisionIntersect && collisionIntersect.object !== plane) {
+        removeEditorObject(collisionIntersect.object);
+        returnPartToStock(modelObj);
+        updatePieces().then(() => {
+          updateBinParts();
+        });
+        updateRolloverMesh(mouse);
       }
     }
-    else if(isShiftDown && rollOverMesh !== null)
+    else if(isShiftDown)
     {
-      placeLego(intersect, (placement, modelMesh, collisionMesh) => {
-        if(placement)
-        {
-          placementOffset.set(0, 0, 0);
-        }
-      });
+      if(rollOverMesh !== null)
+      {
+        placeLego(collisionIntersect, (placement, modelMesh, collisionMesh) => {
+          if (placement)
+          {
+            placementOffset.set(0, 0, 0);
+          }
+        });
+      }
+      else if(collisionIntersect && collisionIntersect.object !== plane)
+      {
+        removeEditorObject(collisionIntersect.object);
+        setRolloverObject(modelObj);
+      }
     }
     /*else if (isShiftDown && pieces[pieceIndex].count > 0) {
       placeLego(intersect, (placement, modelMesh, collisionMesh) => {
@@ -304,12 +334,7 @@ function onDocumentMouseDown(event) {
 
         removePartFromStock(binObject.userData.modelType, binObject.userData.colorInfo);
 
-        binObject.parent.remove(binObject);
-        binObject.name = 'rollOverMesh';
-        scene.remove(rollOverMesh);
-        rollOverMesh = binObject;
-        currentRollOverModel = binObject.userData.modelType;
-        currentObj = allModels[binObject.userData.modelType];
+        setRolloverObject(binObject);
 
         updatePieces().then(() => {
           updateBinParts();
@@ -318,9 +343,7 @@ function onDocumentMouseDown(event) {
       else if(binObject.name === 'partBin' && rollOverMesh !== null)
       {
         returnPartToStock(rollOverMesh);
-        rollOverMesh = null;
-        currentRollOverModel = null;
-        currentObj = null;
+        clearRolloverObject();
         updatePieces().then(() => {
           updateBinParts();
         });
@@ -511,9 +534,7 @@ function placeLego(intersect, cb) {
       scene.add(modelObj);
       objects.push(modelObj);
       collisionCube = generateCollisionCube(modelObj, size);
-      rollOverMesh = null;
-      currentRollOverModel = null;
-      currentObj = null;
+      clearRolloverObject();
   }
 
   cb(placementPossible, modelObj, collisionCube);
