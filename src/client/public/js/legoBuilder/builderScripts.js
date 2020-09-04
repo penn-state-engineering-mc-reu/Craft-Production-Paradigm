@@ -50,55 +50,52 @@ function getNormalizedMousePosition(event)
   return new THREE.Vector2((event.clientX / window.innerWidth) * 2 - 1, - ( (event.clientY - canvasPosition.top) / canvasHeight ) * 2 + 1);
 }
 
-function onDocumentMouseMove(event)
+function onDocumentMouseMove(event, rolloverGroup)
 {
   event.preventDefault();
   mouse = getNormalizedMousePosition(event);
-  updateRolloverMesh(mouse);
+  updateRolloverMesh(mouse, rolloverGroup);
 }
 
-function updateRolloverMesh(mousePos) {
+/**
+ *
+ * @param {RolloverGroup} rolloverGroup
+ * @param mousePos
+ */
+function updateRolloverMesh( mousePos, rolloverGroup) {
   raycaster.setFromCamera(mousePos, camera);
   var intersects = raycaster.intersectObjects(collisionObjects);
   // pieceIndex = names.indexOf(currentRollOverModel);
-  if (rollOverMesh !== null) {
-    clearPreviousRollOverObject();
-    if (intersects.length > 0 && currentRollOverModel !== null) {
-      // Need to load the rollOverMesh once the user enters the plane one again
-      // this is to avoid lingering rollOverMeshes when you cycle through different pieces
-      if (scene.children.indexOf(rollOverMesh) == -1) scene.add(rollOverMesh);
-      else {
-        // rollOverMesh.position.copy(intersects[0].point);
-        let collisionObj = rollOverMesh.children[0];
-        let collisionObjDims =
-            new THREE.Vector3(collisionObj.geometry.parameters.width, collisionObj.geometry.parameters.height,
-                collisionObj.geometry.parameters.depth);
-        let intersect = intersects[0];
-        let normalVec = intersect.face.normal.clone().normalize()
-            .multiply(collisionObjDims);
-        normalVec.y -= collisionObjDims.y;
-        normalVec.divideScalar(2);
-        rollOverMesh.position.copy(intersect.point).add(normalVec);
+  if (rolloverGroup.models.size > 0 && intersects.length > 0) {
+    // clearPreviousRollOverObject();
+    // Need to load the rollOverMesh once the user enters the plane one again
+    // this is to avoid lingering rollOverMeshes when you cycle through different pieces
+    rolloverGroup.visible = true;
+    // rollOverMesh.position.copy(intersects[0].point);
+    // let collisionObj = rolloverGroup.movementBasisObj.children[0];
+    let collisionObjDims = new THREE.Vector3();
+    rolloverGroup.collisionBox.getSize(collisionObjDims);
+        // new THREE.Vector3(collisionObj.geometry.parameters.width, collisionObj.geometry.parameters.height,
+        //     collisionObj.geometry.parameters.depth);
+    let intersect = intersects[0];
+    let normalVec = intersect.face.normal.clone().normalize()
+        .multiply(collisionObjDims);
+    normalVec.y -= collisionObjDims.y;
+    normalVec.divideScalar(2);
+    rolloverGroup.position.copy(intersect.point).add(normalVec);
 
-        moveToSnappedPosition(rollOverMesh);
-        rollOverMesh.position.add(placementOffset);
-      }
-    }
-    else {
-      // solves issue that if you rapidly click the cylce button
-      // it would place unremovable rollOverMeshes on the scene
-      scene.children.forEach(element => {
-        if (element.name == 'rollOverMesh')
-          scene.remove(element);
-      });
-    }
+    moveToSnappedPosition(rolloverGroup);
+    rolloverGroup.position.add(placementOffset);
+  }
+  else {
+    rolloverGroup.visible = false;
   }
   // render();
 }
 
 // handles all the keyboard presses
 // TODO: Handle multiple keypresses
-function onDocumentKeyDown(event) {
+function onDocumentKeyDown(event, rolloverGroup) {
   switch (event.keyCode) {
     case 16: isShiftDown = true; break; // Shift
     case 17: isCtrlDown = true; break;  // Ctrl
@@ -106,13 +103,13 @@ function onDocumentKeyDown(event) {
     case 65: placementOffset.add(new THREE.Vector3(-TILE_DIMENSIONS.x, 0, 0)); break;  // A
     case 83: placementOffset.add(new THREE.Vector3(0, 0, TILE_DIMENSIONS.y)); break; // S
     case 68: placementOffset.add(new THREE.Vector3(TILE_DIMENSIONS.x, 0, 0)); break; // D
-    case 81: rollOverMesh.rotation.y += Math.PI / 2; /* render(); */ break; // Q
-    case 69: rollOverMesh.rotation.y -= Math.PI / 2; /* render(); */ break; // E
+    case 81: rolloverGroup.rotation.y += Math.PI / 2; /* render(); */ break; // Q
+    case 69: rolloverGroup.rotation.y -= Math.PI / 2; /* render(); */ break; // E
       // Manually updating the camera's world matrix seems to be necessary for raytracing (used during the rollover mesh
       // update) when the camera is moved/rotated in the same frame.
     case 32: controls.reset(); camera.updateMatrixWorld(); break;   // Space
   }
-  updateRolloverMesh(mouse);
+  updateRolloverMesh(mouse, rolloverGroup);
 }
 
 function onDocumentKeyUp(event) {
@@ -122,31 +119,30 @@ function onDocumentKeyUp(event) {
   }
 }
 
-function onRendererMouseWheel(event)
+function onRendererMouseWheel(event, rolloverGroup)
 {
   camera.updateMatrixWorld();
-  updateRolloverMesh(mouse);
+  updateRolloverMesh(mouse, rolloverGroup);
 }
 
-function onBeforePageUnload(event)
+function onBeforePageUnload(event, rolloverGroup)
 {
-  if(objects.length > 0 || rollOverMesh !== null)
+  if(objects.length > 0 || rolloverGroup.models.size > 0)
   {
     event.preventDefault();
     event.returnValue = 'The parts and model that you are working on will be lost.';
   }
 }
 
-function onPageUnload(event)
+function onPageUnload(event, rolloverGroup)
 {
   objects.forEach(value => {
     returnPartToStock(value);
   });
 
-  if(rollOverMesh)
-  {
-    returnPartToStock(rollOverMesh);
-  }
+  rolloverGroup.models.forEach(thisMesh => {
+    returnPartToStock(thisMesh);
+  });
 
   updatePieces(true);
 }
@@ -218,38 +214,50 @@ function removePartFromStock(partID, colorID)
 }
 
 /**
- *
+ * @param {RolloverGroup} rolloverGroup
  * @param {THREE.Mesh} objMesh
  * @returns {void}
  */
-function setRolloverObject(objMesh)
+function setSingleRolloverObject(rolloverGroup, objMesh)
 {
-  if(objMesh.parent !== null) objMesh.parent.remove(objMesh);
-  objMesh.name = 'rollOverMesh';
-  scene.remove(rollOverMesh);
+  objMesh.name = 'RolloverMesh';
+  // scene.remove(rollOverMesh);
 
-  if(objMesh.getObjectByName('CollisionBox') === undefined)
-  {
-    let collisionCube = generateCollisionCube(objMesh);
-    collisionCube.name = 'CollisionBox';
-    objMesh.add(collisionCube);
-  }
+  // if(objMesh.getObjectByName('CollisionBox') === undefined)
+  // {
+  //   let collisionCube = generateCollisionCube(objMesh);
+  //   collisionCube.name = 'CollisionBox';
+  //   objMesh.add(collisionCube);
+  // }
 
   // objMesh.userData.dimensions = size;
   // objMesh.userData.obj = currentObj;
 
-  rollOverMesh = objMesh;
-  currentRollOverModel = objMesh.userData.modelType;
-  currentObj = allModels[objMesh.userData.modelType];
+  rolloverGroup.clear();
+  rolloverGroup.add(objMesh);
+  rolloverGroup.positionRelativeTo(objMesh);
+  // currentRollOverModel = objMesh.userData.modelType;
+  // currentObj = allModels[objMesh.userData.modelType];
 
-  updateRolloverMesh(mouse);
+  updateRolloverMesh(mouse, rolloverGroup);
 }
 
-function clearRolloverObject()
+/**
+ *
+ * @param {RolloverGroup} rolloverGroup
+ * @param {Set<THREE.Mesh>} objSet
+ * @param {THREE.Mesh} movementObj
+ */
+function setMultipleRolloverObjects(rolloverGroup, objSet, movementObj)
 {
-  rollOverMesh = null;
-  currentRollOverModel = null;
-  currentObj = null;
+  rolloverGroup.clear();
+  objSet.forEach(thisMesh => {
+    thisMesh.name = 'RolloverMesh';
+    rolloverGroup.add(thisMesh);
+  });
+  rolloverGroup.positionRelativeTo(movementObj);
+
+  updateRolloverMesh(mouse, rolloverGroup);
 }
 
 function removeEditorObject(editorObj)
@@ -261,7 +269,66 @@ function removeEditorObject(editorObj)
   collisionObjects.splice(collisionObjects.indexOf(editorObj.children[0]), 1);
 }
 
-function onDocumentMouseDown(event) {
+/**
+ *
+ * @param {number} colorID
+ * @return {{hexStr: string, alpha: number}}
+ */
+function getBrickColorInfo(colorID)
+{
+  let colorInfo = tinycolor(BrickColors.findByColorID(colorID).RGBString);
+  return {hexStr: colorInfo.toHexString(), alpha: colorInfo.getAlpha()};
+}
+
+/**
+ * Styles editorObj as a selected object and adds it to selectedItems.
+ * @param {Set<THREE.Mesh>} selectedItems
+ * @param {THREE.Mesh} editorObj
+ */
+function selectObject(selectedItems, editorObj)
+{
+  const SELECTED_COLOR = '#36faff';
+  editorObj.userData.selected = true;
+  editorObj.userData.originalColor = new THREE.Color(editorObj.material.color);
+  editorObj.material.color.setStyle(SELECTED_COLOR);
+  selectedItems.add(editorObj);
+}
+
+/**
+ * Removes selected-object styling from editorObj and removes it from selectedItems.
+ * @param {Set<THREE.Mesh>} selectedItems
+ * @param {THREE.Mesh} editorObj
+ * @param {boolean} removeFromItems
+ */
+function deselectObject(selectedItems, editorObj, removeFromItems = true)
+{
+  if(editorObj.userData.selected)
+  {
+    editorObj.material.color.copy(editorObj.userData.originalColor);
+    delete editorObj.userData.selected;
+    delete editorObj.userData.originalColor;
+
+    if(removeFromItems) selectedItems.delete(editorObj);
+  }
+}
+
+/**
+ *
+ * @param {Set<THREE.Mesh>} selectedItems
+ */
+function clearSelection(selectedItems)
+{
+  selectedItems.forEach(thisItem => deselectObject(selectedItems, thisItem, false));
+  selectedItems.clear();
+}
+
+/**
+ *
+ * @param {MouseEvent} event
+ * @param {RolloverGroup} rolloverGroup
+ * @param {Set<THREE.Mesh>} selectedItems
+ */
+function onDocumentMouseDown(event, rolloverGroup, selectedItems) {
   event.preventDefault();
   mouse = getNormalizedMousePosition(event);
   raycaster.setFromCamera(mouse, camera);
@@ -272,31 +339,70 @@ function onDocumentMouseDown(event) {
     let modelObj = collisionIntersect.object.parent;
     // pieceIndex = names.indexOf(currentRollOverModel);
     // delete cube
-    if (isCtrlDown) {
-      if (collisionIntersect && collisionIntersect.object !== plane) {
-        removeEditorObject(modelObj);
-        returnPartToStock(modelObj);
-        updatePieces().then(() => {
-          updateBinParts();
-        });
-        updateRolloverMesh(mouse);
+    if (event.button === MouseButtons.MAIN_BUTTON)
+    {
+      if (isShiftDown)
+      {
+        if (rolloverGroup.models.size > 0)
+        {
+          placeLego(rolloverGroup, collisionIntersect, (placement, modelMesh) => {
+            if (placement)
+            {
+              placementOffset.set(0, 0, 0);
+            }
+          });
+        }
+        else if (collisionIntersect && collisionIntersect.object !== plane)
+        {
+          if(selectedItems.has(modelObj))
+          {
+            selectedItems.forEach(thisMesh => removeEditorObject(thisMesh));
+            setMultipleRolloverObjects(rolloverGroup, selectedItems, modelObj);
+          }
+          else
+          {
+            removeEditorObject(modelObj);
+            setSingleRolloverObject(rolloverGroup, modelObj);
+          }
+        }
+      }
+      else if(isCtrlDown)
+      {
+        if(collisionIntersect && collisionIntersect.object !== plane)
+        {
+          if(rolloverGroup.models.size === 0)
+          {
+            let editorObj = collisionIntersect.object.parent;
+
+            if (selectedItems.has(editorObj))
+            {
+              deselectObject(selectedItems, editorObj);
+            }
+            else
+            {
+              selectObject(selectedItems, editorObj);
+            }
+          }
+        }
+        else
+        {
+          clearSelection(selectedItems);
+        }
       }
     }
-    else if(isShiftDown)
+    else if(event.button === MouseButtons.SECONDARY_BUTTON)
     {
-      if(rollOverMesh !== null)
+      if (isCtrlDown)
       {
-        placeLego(collisionIntersect, (placement, modelMesh) => {
-          if (placement)
-          {
-            placementOffset.set(0, 0, 0);
-          }
-        });
-      }
-      else if(collisionIntersect && collisionIntersect.object !== plane)
-      {
-        removeEditorObject(modelObj);
-        setRolloverObject(modelObj);
+        if (collisionIntersect && collisionIntersect.object !== plane)
+        {
+          removeEditorObject(modelObj);
+          returnPartToStock(modelObj);
+          updatePieces().then(() => {
+            updateBinParts();
+          });
+          updateRolloverMesh(mouse, rolloverGroup);
+        }
       }
     }
     /*else if (isShiftDown && pieces[pieceIndex].count > 0) {
@@ -350,23 +456,20 @@ function onDocumentMouseDown(event) {
     {
       if(binObject.userData.isPart)
       {
-        if (rollOverMesh)
-        {
-          returnPartToStock(rollOverMesh);
-        }
+        rolloverGroup.models.forEach(thisMesh => returnPartToStock(thisMesh));
 
         removePartFromStock(binObject.userData.modelType, binObject.userData.colorInfo);
 
-        setRolloverObject(binObject);
+        setSingleRolloverObject(rolloverGroup, binObject);
 
         updatePieces().then(() => {
           updateBinParts();
         });
       }
-      else if(binObject.name === 'partBin' && rollOverMesh !== null)
+      else if(binObject.name === 'partBin' && rolloverGroup.models.size > 0)
       {
-        returnPartToStock(rollOverMesh);
-        clearRolloverObject();
+        rolloverGroup.models.forEach(thisMesh => returnPartToStock(thisMesh));
+        rolloverGroup.clear();
         updatePieces().then(() => {
           updateBinParts();
         });
@@ -378,12 +481,12 @@ function onDocumentMouseDown(event) {
 /**
  * There is a bug when changing rollOverMeshes where there will be more than one on the scene at the same time
  */
-function clearPreviousRollOverObject() {
-  scene.children.forEach(elem => {
-    if (elem.name == 'rollOverMesh' && elem.userData.modelType != currentRollOverModel)
-      scene.remove(elem);
-  });
-}
+// function clearPreviousRollOverObject() {
+//   scene.children.forEach(elem => {
+//     if (elem.name == 'rollOverMesh' && elem.userData.modelType != currentRollOverModel)
+//       scene.remove(elem);
+//   });
+// }
 
 function getPartGeometry(partID, onLoaded)
 {
@@ -438,10 +541,10 @@ function updateBinParts()
     {
       getPartGeometry(thisPieceInfo.partID, function (geometry) {
         geometry.computeBoundingBox();
-        let modelColor = tinycolor(BrickColors.findByColorID(thisPieceInfo.color).RGBString);
+        let modelColorInfo = getBrickColorInfo(thisPieceInfo.color);
         let material = new THREE.MeshPhongMaterial({
-          transparent: true, opacity: modelColor.getAlpha(),
-          color: modelColor.toHexString(), shininess: 30, specular: 0x111111
+          transparent: true, opacity: modelColorInfo.alpha,
+          color: modelColorInfo.hexStr, shininess: 30, specular: 0x111111
         });
 
         let templateMesh = new THREE.Mesh(geometry, material);
@@ -511,24 +614,27 @@ function updateBinParts()
 
 /**
  * Handles placing the object on the scene and creating the collision object
+ * @param {RolloverGroup} rolloverGroup
  * @param {THREE.Intersection} intersect
  * @param {function} cb this is to return whether or not the object has been placed
  */
-function placeLego(intersect, cb) {
+function placeLego(rolloverGroup, intersect, cb) {
   let placementPossible = true;
   let index = allModels.indexOf(currentObj);
 
   // getPartGeometry(index, function(geometry) {
   // i wanted to break up this function so i needed to pass these variables by reference
-  let modelObj = rollOverMesh, size = new THREE.Vector3();
+  let modelObj = rolloverGroup.movementBasisObj; // , size = new THREE.Vector3();
   // generateObjFromModel(geometry, modelObj, size);
 
-  let box = new THREE.Box3().setFromObject(modelObj);
-  box.getSize(size);
+  // let box = new THREE.Box3().setFromObject(modelObj);
+  // box.getSize(size);
+
+  let mName = allModels[modelObj.userData.modelType].name.split(' ');
 
   if (intersect.object.name === 'plane') {
       //changeObjPosOnPlane(modelObj, intersect, size);
-      let mName = allModels[currentRollOverModel].name.split(' ');
+
       if (mName[0] === 'Rim' || mName[0] === 'Tire') {
         placementPossible = false;
       }
@@ -538,15 +644,14 @@ function placeLego(intersect, cb) {
       dim.normalize();
       // TODO: THERE SEEMS TO BE A PROBLEM WITH A SLIGHTLY LOWER PLACEMENT THAN IT SHOULD BE
       let iName = allModels[intersect.object.parent.userData.modelType].name.split(' ');
-      let mName = allModels[currentRollOverModel].name.split(' ');
 
       // this is lazy programming. i don't want to handle the array bounds
       // i did this all already in a better manner but it was lost with my desktop. RIP
-      if ((iName[1] == 'Pin' || iName[1] == 'Double' || iName[0] == 'Rim') && (mName[0] == 'Rim' || mName[0] == 'Tire')) {
+      if ((iName[1] === 'Pin' || iName[1] === 'Double' || iName[0] === 'Rim') && (mName[0] === 'Rim' || mName[0] === 'Tire')) {
           placementPossible = determineWheelPosition(modelObj, intersect, dim);
       }
       else {
-          placementPossible = determineModelPosition(modelObj, intersect, size, dim);
+          placementPossible = determineModelPosition(modelObj, intersect, dim);
       }
   }
 
@@ -554,12 +659,17 @@ function placeLego(intersect, cb) {
   // let collisionCube;
   // If the piece can't be placed on another, I don't want it to create and add the modelObj to the scene
   if (placementPossible) {
-      modelObj.name = "EditorPart";
-      scene.add(modelObj);
-      objects.push(modelObj);
-      collisionObjects.push(modelObj.children[0]);
+    // Array of children must be copied, as adding these items to the scene
+    // removes them from rolloverGroup's children.
+    Array.from(rolloverGroup.models).forEach(thisMesh => {
+      thisMesh.name = "EditorPart";
+      scene.attach(thisMesh);
+      objects.push(thisMesh);
+      collisionObjects.push(thisMesh.children[0]);
       // collisionCube = generateCollisionCube(modelObj, size);
-      clearRolloverObject();
+    });
+
+    rolloverGroup.clear();
   }
 
   cb(placementPossible, modelObj);
@@ -661,33 +771,24 @@ function invertRotation(eulerAngles)
  * Determines which face of the model the object is being placed on
  * and then adjusts the objects position in the scene accoridingly 
  * @param {THREE.Mesh} modelObj 
- * @param {THREE.Intersection} intersect 
- * @param {THREE.Vector3} size 
+ * @param {THREE.Intersection} intersect
  * @param {THREE.Vector3} dim 
  */
-function determineModelPosition(modelObj, intersect, size, dim) {
-  let rollPos = rollOverMesh.position;
+function determineModelPosition(modelObj, intersect, dim) {
+  // let rollPos = rollOverMesh.position;
   let interPos = intersect.object.position;
   let collisionModel = allModels[intersect.object.parent.userData.modelType];
   // let rotation = (modelObj.rotation.z / (Math.PI / 2)) % 4;
-  let origModelRelativeDim = dim.applyEuler(invertRotation(modelObj.rotation));
+  // let origModelRelativeDim = dim.applyEuler(invertRotation(modelObj.rotation));
 
   // let rotationMatrix = determineRotationMatrix(intersect, rotation);
 
-  if ((origModelRelativeDim.z === 1 && collisionModel.front === 1) ||
-      (origModelRelativeDim.x === 1 && collisionModel.right === 1) ||
-      (origModelRelativeDim.y === 1 && collisionModel.top === 1) ||
-      (origModelRelativeDim.z === -1 && collisionModel.back === 1) ||
-      (origModelRelativeDim.x === -1 && collisionModel.left === 1) ||
-      (origModelRelativeDim.y === -1 && collisionModel.bottom === 1))
-  {
-    modelObj.position.copy(rollPos);
-    return true;
-  }
-  else {
-    scene.remove(modelObj);
-    return false;
-  }
+  return (dim.z === 1 && collisionModel.front === 1) ||
+      (dim.x === 1 && collisionModel.right === 1) ||
+      (dim.y === 1 && collisionModel.top === 1) ||
+      (dim.z === -1 && collisionModel.back === 1) ||
+      (dim.x === -1 && collisionModel.left === 1) ||
+      (dim.y === -1 && collisionModel.bottom === 1);
 
   /*const gridSize = new THREE.Vector2(24, 24),
         gridOffset = new THREE.Vector2(12, 12);
@@ -735,18 +836,19 @@ function getSnapBasisValue(snapBasis, minValue, maxValue)
 
 /**
  * This function moves objToMove to a grid-snapped position.
- * @param {THREE.Mesh} objToMove
+ * @param {RolloverGroup} objToMove
  */
 function moveToSnappedPosition(objToMove)
 {
-  objToMove.geometry.computeBoundingBox();
-  let partID = objToMove.userData.modelType;
-  let gridOffset = new THREE.Vector2(allModels[partID].snapOffsetX, allModels[partID].snapOffsetZ);
+  // objToMove.movementBasisObj.geometry.computeBoundingBox();
+  let boundingBox = objToMove.collisionBox;
+  let partID = objToMove.movementBasisObj.userData.modelType;
+  // let gridOffset = new THREE.Vector2(allModels[partID].snapOffsetX, allModels[partID].snapOffsetZ);
 
   let snapPoint = (new THREE.Vector3(
-    getSnapBasisValue(allModels[partID].snapOffsetBasisX, objToMove.geometry.boundingBox.min.x, objToMove.geometry.boundingBox.max.x),
+    getSnapBasisValue(allModels[partID].snapOffsetBasisX, boundingBox.min.x, boundingBox.max.x),
     0,
-    getSnapBasisValue(allModels[partID].snapOffsetBasisZ, objToMove.geometry.boundingBox.min.z, objToMove.geometry.boundingBox.max.z)
+    getSnapBasisValue(allModels[partID].snapOffsetBasisZ, boundingBox.min.z, boundingBox.max.z)
   )).add(new THREE.Vector3(
     allModels[partID].snapOffsetX * TILE_DIMENSIONS.x,
     0,
@@ -778,16 +880,16 @@ function determineWheelPosition(modelObj, intersect, dim) {
 
   let typeColl = collisionModel.name.split(' ');
   let typeModel = allModels[modelObj.userData.modelType].name.split(' ');
-  if (typeColl.length == 1) {
+  if (typeColl.length === 1) {
     scene.remove(modelObj);
     return false;
   }
 
-  if ((typeColl[1] == 'Pin' || typeColl[1] == 'Double') && typeModel[0] == 'Rim') {
+  if ((typeColl[1] === 'Pin' || typeColl[1] === 'Double') && typeModel[0] === 'Rim') {
     return attachRimToPin(modelObj, intersect, dim);
   }
 
-  if (typeColl[0] == 'Rim' && typeModel[0] == 'Tire' && typeColl[1] == typeModel[1]) {
+  if (typeColl[0] === 'Rim' && typeModel[0] === 'Tire' && typeColl[1] === typeModel[1]) {
     return attachTireToRim(modelObj, intersect, dim);
   }
 
