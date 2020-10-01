@@ -496,11 +496,52 @@ function getPartGeometry(partID, onLoaded)
     }
     else
     {
-        let loader = new THREE.STLLoader();
+        let filePath = partProperties.PARTS[partID].model.filePath;
+        let fileExtension = filePath.substr(filePath.lastIndexOf('.') + 1).toLowerCase();
 
-        loader.load(allModels[partID].directory, function(geometry) {
-            geometry.scale(allModels[partID].scale, allModels[partID].scale, allModels[partID].scale);
+        let loader = null;
+
+        switch (fileExtension)
+        {
+          case 'stl':
+            loader = new THREE.STLLoader();
+            break;
+          case 'fbx':
+            loader = new THREE.FBXLoader();
+            break;
+          default:
+            throw 'Invalid file type.';
+        }
+
+        loader.load(partProperties.PARTS[partID].model.filePath, function(geometry) {
+            if(loader instanceof THREE.FBXLoader)
+            {
+              let mergedGeom = new THREE.Geometry();
+              for(let thisMesh of geometry.children)
+              {
+                let thisMeshGeom = new THREE.Geometry().fromBufferGeometry(thisMesh.geometry);
+                thisMeshGeom.applyMatrix(thisMesh.matrix);
+                // thisMeshGeom.scale(thisMesh.scale.x, thisMesh.scale.y, thisMesh.scale.z);
+                // thisMeshGeom.rotateX(thisMesh.rotation.x);
+                // thisMeshGeom.rotateY(thisMesh.rotation.y);
+                // thisMeshGeom.rotateZ(thisMesh.rotation.z);
+                // thisMeshGeom.translate(thisMesh.position.x, thisMesh.position.y, thisMesh.position.z);
+                mergedGeom.merge(thisMeshGeom);
+              }
+
+              geometry = mergedGeom;
+            }
+
+            let modelInfo = partProperties.PARTS[partID].model;
+            let modelScale = modelInfo.scale;
+
+            geometry.scale(modelScale, modelScale, modelScale);
             geometry.rotateX(- Math.PI / 2);
+
+            geometry.rotateX(modelInfo.rotationX);
+            geometry.rotateY(modelInfo.rotationY);
+            geometry.rotateZ(modelInfo.rotationZ);
+
             geometry.computeBoundingBox();
             geometry.translate(-(geometry.boundingBox.min.x + geometry.boundingBox.max.x) / 2, -geometry.boundingBox.min.y,
                 -(geometry.boundingBox.min.z + geometry.boundingBox.max.z) / 2);
@@ -609,6 +650,11 @@ function updateBinParts()
         columnGroup.userData.maxLevel = partLevel;
       });
     }
+    else
+    {
+      console.warn(`Unsupported part ID ${thisPieceInfo.partID} is present.
+This part ID may have been removed in an update.`);
+    }
   });
 }
 
@@ -620,39 +666,68 @@ function updateBinParts()
  */
 function placeLego(rolloverGroup, intersect, cb) {
   let placementPossible = true;
-  let index = allModels.indexOf(currentObj);
+  // let index = allModels.indexOf(currentObj);
 
   // getPartGeometry(index, function(geometry) {
   // i wanted to break up this function so i needed to pass these variables by reference
   let modelObj = rolloverGroup.movementBasisObj; // , size = new THREE.Vector3();
+  let intersectObj = intersect.object.parent;
   // generateObjFromModel(geometry, modelObj, size);
 
   // let box = new THREE.Box3().setFromObject(modelObj);
   // box.getSize(size);
 
-  let mName = allModels[modelObj.userData.modelType].name.split(' ');
+  // let mName = partProperties.PARTS[modelObj.userData.modelType].name.split(' ');
 
-  if (intersect.object.name === 'plane') {
-      //changeObjPosOnPlane(modelObj, intersect, size);
-
-      if (mName[0] === 'Rim' || mName[0] === 'Tire') {
-        placementPossible = false;
-      }
-  }
-  else {
+  // if (intersect.object.name === 'plane') {
+  //     //changeObjPosOnPlane(modelObj, intersect, size);
+  //
+  //     if (mName[0] === 'Rim' || mName[0] === 'Tire') {
+  //       placementPossible = false;
+  //     }
+  // }
+  if (intersect.object.name !== 'plane')
+  {
       let dim = intersect.face.normal.clone();
       dim.normalize();
-      // TODO: THERE SEEMS TO BE A PROBLEM WITH A SLIGHTLY LOWER PLACEMENT THAN IT SHOULD BE
-      let iName = allModels[intersect.object.parent.userData.modelType].name.split(' ');
 
-      // this is lazy programming. i don't want to handle the array bounds
-      // i did this all already in a better manner but it was lost with my desktop. RIP
-      if ((iName[1] === 'Pin' || iName[1] === 'Double' || iName[0] === 'Rim') && (mName[0] === 'Rim' || mName[0] === 'Tire')) {
-          placementPossible = determineWheelPosition(modelObj, intersect, dim);
+      let modelProperties = partProperties.PARTS[modelObj.userData.modelType].model;
+      let intersectProperties = partProperties.PARTS[intersectObj.userData.modelType].model;
+
+      let worldIntersectNormal = dim.clone().transformDirection(intersectObj.matrixWorld);
+      let modelFaceNormal = worldIntersectNormal.clone().multiplyScalar(-1)
+          .transformDirection((new THREE.Matrix4()).getInverse(modelObj.matrixWorld));
+
+      let modelFace = getModelFace(modelFaceNormal);
+      let intersectFace = getModelFace(dim);
+
+      if(modelProperties.pinConnectableFaces.has(modelFace) && intersectProperties.pinFaces.has(intersectFace))
+      {
+        rolloverGroup.position.copy(getPinAttachmentPosition(modelObj, intersect, worldIntersectNormal));
+        placementPossible = true;
       }
-      else {
-          placementPossible = determineModelPosition(modelObj, intersect, dim);
+      else if(modelProperties.rimConnectableFaces.has(modelFace)
+          && modelProperties.compatibleRims.has(intersectObj.userData.modelType)
+          && intersectProperties.rimFaces.has(intersectFace))
+      {
+        rolloverGroup.position.copy(getRimAttachmentPosition(modelObj, intersect));
+        placementPossible = true;
       }
+      else
+      {
+        placementPossible = determineModelPosition(modelObj, intersect, dim);
+      }
+      // TODO: THERE SEEMS TO BE A PROBLEM WITH A SLIGHTLY LOWER PLACEMENT THAN IT SHOULD BE
+      // let iName = partProperties.PARTS[intersect.object.parent.userData.modelType].name.split(' ');
+      //
+      // // this is lazy programming. i don't want to handle the array bounds
+      // // i did this all already in a better manner but it was lost with my desktop. RIP
+      // if ((iName[1] === 'Pin' || iName[1] === 'Double' || iName[0] === 'Rim') && (mName[0] === 'Rim' || mName[0] === 'Tire')) {
+      //     placementPossible = determineWheelPosition(modelObj, intersect, dim);
+      // }
+      // else {
+      //     placementPossible = determineModelPosition(modelObj, intersect, dim);
+      // }
   }
 
 
@@ -712,7 +787,7 @@ function generateCollisionCube(modelObj) {
   let box = new THREE.Box3().setFromObject(modelObj);
   box.getSize(size);
 
-  let modelInfo = allModels[modelObj.userData.modelType];
+  let modelInfo = partProperties.PARTS[modelObj.userData.modelType].model;
   // turns out these aren't 0 by default and caused me so much trouble until i did this
   let yModifier = modelInfo.collisionY ? modelInfo.collisionY : 0;
   let zModifier = modelInfo.collisionZ ? modelInfo.collisionZ : 0;
@@ -768,6 +843,29 @@ function invertRotation(eulerAngles)
 }
 
 /**
+ *
+ * @param {THREE.Vector3} faceUnitNormal
+ * @returns {Model.Faces}
+ */
+function getModelFace(faceUnitNormal)
+{
+  if(faceUnitNormal.z === 1)
+    return Model.Faces.FRONT;
+  else if(faceUnitNormal.x === 1)
+    return Model.Faces.RIGHT;
+  else if(faceUnitNormal.y === 1)
+    return Model.Faces.TOP;
+  else if(faceUnitNormal.z === -1)
+    return Model.Faces.BACK;
+  else if(faceUnitNormal.x === -1)
+    return Model.Faces.LEFT;
+  else if(faceUnitNormal.y === -1)
+    return Model.Faces.BOTTOM;
+  else
+    throw 'Face unit normal does not correspond to a standard face.';
+}
+
+/**
  * Determines which face of the model the object is being placed on
  * and then adjusts the objects position in the scene accoridingly 
  * @param {THREE.Mesh} modelObj 
@@ -777,7 +875,7 @@ function invertRotation(eulerAngles)
 function determineModelPosition(modelObj, intersect, dim) {
   // let rollPos = rollOverMesh.position;
   let interPos = intersect.object.position;
-  let collisionModel = allModels[intersect.object.parent.userData.modelType];
+  let collisionModel = partProperties.PARTS[intersect.object.parent.userData.modelType].model;
   // let rotation = (modelObj.rotation.z / (Math.PI / 2)) % 4;
   // let origModelRelativeDim = dim.applyEuler(invertRotation(modelObj.rotation));
 
@@ -845,14 +943,15 @@ function moveToSnappedPosition(objToMove)
   let partID = objToMove.movementBasisObj.userData.modelType;
   // let gridOffset = new THREE.Vector2(allModels[partID].snapOffsetX, allModels[partID].snapOffsetZ);
 
+  let moveModel = partProperties.PARTS[partID].model;
   let snapPoint = (new THREE.Vector3(
-    getSnapBasisValue(allModels[partID].snapOffsetBasisX, boundingBox.min.x, boundingBox.max.x),
+    getSnapBasisValue(moveModel.snapOffsetBasisX, boundingBox.min.x, boundingBox.max.x),
     0,
-    getSnapBasisValue(allModels[partID].snapOffsetBasisZ, boundingBox.min.z, boundingBox.max.z)
+    getSnapBasisValue(moveModel.snapOffsetBasisZ, boundingBox.min.z, boundingBox.max.z)
   )).add(new THREE.Vector3(
-    allModels[partID].snapOffsetX * TILE_DIMENSIONS.x,
+    moveModel.snapOffsetX * TILE_DIMENSIONS.x,
     0,
-    allModels[partID].snapOffsetZ * TILE_DIMENSIONS.y
+    moveModel.snapOffsetZ * TILE_DIMENSIONS.y
   )).applyEuler(objToMove.rotation);
 
   let origCornerPos = new THREE.Vector2(
@@ -872,39 +971,39 @@ function moveToSnappedPosition(objToMove)
  * @param {*} intersect
  * @param {*} dim 
  */
-function determineWheelPosition(modelObj, intersect, dim) {
-  // let interPos = intersect.object.position;
-  let collisionModel = allModels[intersect.object.parent.userData.modelType]; // intersect.object.userData.obj;
-  // let rotation = (modelObj.rotation.z / (Math.PI / 2)) % 4;
-  // let rotationMatrix = determineRotationMatrix(intersect, rotation);
-
-  let typeColl = collisionModel.name.split(' ');
-  let typeModel = allModels[modelObj.userData.modelType].name.split(' ');
-  if (typeColl.length === 1) {
-    scene.remove(modelObj);
-    return false;
-  }
-
-  if ((typeColl[1] === 'Pin' || typeColl[1] === 'Double') && typeModel[0] === 'Rim') {
-    return attachRimToPin(modelObj, intersect, dim);
-  }
-
-  if (typeColl[0] === 'Rim' && typeModel[0] === 'Tire' && typeColl[1] === typeModel[1]) {
-    return attachTireToRim(modelObj, intersect, dim);
-  }
-
-  scene.remove(modelObj);
-  return false;
-}
+// function determineWheelPosition(modelObj, intersect, dim) {
+//   // let interPos = intersect.object.position;
+//   let collisionModel = partProperties.PARTS[intersect.object.parent.userData.modelType].model; // intersect.object.userData.obj;
+//   // let rotation = (modelObj.rotation.z / (Math.PI / 2)) % 4;
+//   // let rotationMatrix = determineRotationMatrix(intersect, rotation);
+//
+//   let typeColl = collisionModel.name.split(' ');
+//   let typeModel = partProperties.PARTS[modelObj.userData.modelType].name.split(' ');
+//   if (typeColl.length === 1) {
+//     scene.remove(modelObj);
+//     return false;
+//   }
+//
+//   if ((typeColl[1] === 'Pin' || typeColl[1] === 'Double') && typeModel[0] === 'Rim') {
+//     return getPinAttachmentPosition(modelObj, intersect, dim);
+//   }
+//
+//   if (typeColl[0] === 'Rim' && typeModel[0] === 'Tire' && typeColl[1] === typeModel[1]) {
+//     return getRimAttachmentPosition(modelObj, intersect, dim);
+//   }
+//
+//   scene.remove(modelObj);
+//   return false;
+// }
 
 /**
  *
  * @param {THREE.Mesh} modelObj
  * @param {*} intersect
- * @param {THREE.Vector3} dim
+ * @param {THREE.Vector3} intersectWorldNormal
  * @returns {boolean}
  */
-function attachRimToPin(modelObj, intersect, dim) {
+function getPinAttachmentPosition(modelObj, intersect, intersectWorldNormal) {
   // modelObj.geometry.computeBoundingBox();
   // let modelDims = (new THREE.Vector3()).copy(modelObj.geometry.boundingBox.max).sub(modelObj.geometry.boundingBox.min);
   let modelDims = modelObj.userData.dimensions;
@@ -912,35 +1011,25 @@ function attachRimToPin(modelObj, intersect, dim) {
   let dimensions = intersect.object.parent.userData.dimensions;
   // let rotatedNormal = dim.clone().applyEuler(intersect.object.parent.rotation);
 
-  if (Math.abs(dim.z) === 1 || Math.abs(dim.x) === 1) {
-    let relativePos = new THREE.Vector3(dimensions.x, dimensions.y, dimensions.z).divideScalar(2).multiply(dim);
-    relativePos.y += (dimensions.y - modelDims.y) / 2;
-    relativePos.applyEuler(intersect.object.parent.rotation);
-    modelObj.position.copy(collisionPos).add(relativePos);
-  }
-  else {
-    scene.remove(modelObj);
-    return false;
-  }
-  return true;
+  let relativePos = new THREE.Vector3(dimensions.x, dimensions.y, dimensions.z).divideScalar(2)
+      .applyEuler(intersect.object.parent.rotation)
+      .multiply(intersectWorldNormal);
+  relativePos.y += (dimensions.y - modelDims.y) / 2;
+  // relativePos.applyEuler(intersect.object.parent.rotation);
+  return collisionPos.clone().add(relativePos);
 }
 
-function attachTireToRim(modelObj, intersect, dim) {
+function getRimAttachmentPosition(modelObj, intersect) {
   // modelObj.geometry.computeBoundingBox();
   // let modelDims = (new THREE.Vector3()).copy(modelObj.geometry.boundingBox.max).sub(modelObj.geometry.boundingBox.min);
   let modelDims = modelObj.userData.dimensions;
   let collisionPos = intersect.object.parent.position;
   let dimensions = intersect.object.parent.userData.dimensions;
-  if (Math.abs(dim.z) == 1 || Math.abs(dim.x) == 1) {
-    modelObj.position.y = collisionPos.y + (dimensions.y - modelDims.y) / 2;
-    modelObj.position.x = collisionPos.x;
-    modelObj.position.z = collisionPos.z;
-  }
-  else {
-    scene.remove(modelObj);
-    return false;
-  }
-  return true;
+
+  let relativePos = new THREE.Vector3();
+  relativePos.y += (dimensions.y - modelDims.y) / 2;
+  // relativePos.applyEuler(intersect.object.parent.rotation);
+  return collisionPos.clone().add(relativePos);
 }
 
 /**
