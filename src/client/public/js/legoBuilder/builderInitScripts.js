@@ -17,7 +17,7 @@ var container;
 var camera, scene, renderer, controls;
 var plane, cube;
 var mouse, raycaster, isCtrlDown = false, isShiftDown = false;
-var rollOverMesh = null, material, collisionBox;
+var /* rollOverMesh = null,*/ material, collisionBox;
 let partModelCache = {};
 let binPartIDs = [];
 const TILE_DIMENSIONS = new THREE.Vector2(24, 24);
@@ -25,6 +25,175 @@ const DEFAULT_VIEW_CAMERA_OFFSET = new THREE.Vector3(0.0, 1420.0, 2300.0);
 var objects = [], collisionObjects = [];
 var currentObj = null;
 // var group = new THREE.Group();
+
+// See https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/button for further details
+window.MouseButtons = {
+  // Main/left mouse button
+  MAIN_BUTTON: 0,
+  // Auxiliary/middle mouse button
+  AUXILIARY_BUTTON: 1,
+  // Secondary/right mouse button
+  SECONDARY_BUTTON: 2,
+  // Fourth (usually "Browser Back") mouse button
+  FOURTH_BUTTON: 3,
+  // Fifth (usually "Browser Forward") mouse button
+  FIFTH_BUTTON: 4
+};
+
+class RolloverGroup extends THREE.Group
+{
+  constructor()
+  {
+    super();
+
+    this.movementBasisObj = null;
+    this.collisionBox = null;
+
+    // Set of models in this RolloverGroup (does not include auxiliary objects
+    // such as cursor components that are also children of this RolloverGroup).
+    // Please do not modify this set directly from code external to this class;
+    // instead, use .add, .remove, and .clear on RolloverGroup.
+    this.models = new Set();
+
+    this.generateCursor();
+  }
+
+  generateCursor()
+  {
+    const CURSOR_COLOR = '#00ff00';
+    let cursorGroup = new THREE.Group();
+    let cursorSphere = new THREE.Mesh(
+        new THREE.SphereBufferGeometry(10.0),
+        new THREE.MeshPhongMaterial({ color: CURSOR_COLOR })
+    );
+
+    let cursorLineGeom = new THREE.Geometry().setFromPoints([
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(0, 100, 0),
+      new THREE.Vector3(0, 200, 0)
+    ]);
+    cursorLineGeom.faces.push(new THREE.Face3(0, 1, 2));
+    cursorLineGeom.elementsNeedUpdate = true;
+
+    let cursorLine = new THREE.Line(
+        cursorLineGeom,
+        // new THREE.EdgesGeometry(new THREE.BoxGeometry(100, 100, 100), 1),
+        // new THREE.LineBasicMaterial( {
+        //       color: 0xffffff,
+        //       linewidth: 5})
+        // new THREE.MeshBasicMaterial({color: 0x00ff00, visible: true, wireframe: true})
+        new THREE.LineDashedMaterial({ color: CURSOR_COLOR, linewidth: 2, dashSize: 20, gapSize: 6 })
+    );
+    cursorLine.computeLineDistances();
+    cursorLine.visible = false;
+
+    cursorGroup.add(cursorSphere, cursorLine);
+    super.add(cursorGroup);
+    this.cursorGroup = cursorGroup;
+    this.cursorLine = cursorLine;
+  }
+
+  /**
+   * @param {THREE.Object3D} object
+   * @returns {THREE.Mesh}
+   */
+  generateCollisionBox(object)
+  {
+    let existingCollisionBox = object.getObjectByName('CollisionBox');
+    if(existingCollisionBox !== undefined)
+    {
+      return existingCollisionBox;
+    }
+    else
+    {
+      let newCollisionBox = generateCollisionCube(object);
+      newCollisionBox.name = 'CollisionBox';
+      object.add(newCollisionBox);
+
+      return newCollisionBox;
+    }
+  }
+
+  /**
+   *
+   * @param {THREE.Mesh} objMesh
+   */
+  positionRelativeTo(objMesh)
+  {
+    if(!this.models.has(objMesh)) throw 'Cannot position relative to external object.';
+
+    this.movementBasisObj = objMesh;
+
+    let newBasePosition = objMesh.position.clone();
+
+    let minCollisionY = null;
+    for(let thisModel of this.models)
+    {
+      let collisionBox = thisModel.getObjectByName('CollisionBox');
+      collisionBox.geometry.computeBoundingBox();
+      let objBottom = thisModel.position.clone().add(collisionBox.geometry.boundingBox.min);
+
+      if(minCollisionY === null || objBottom.y < minCollisionY) minCollisionY = objBottom.y;
+    }
+    newBasePosition.y = minCollisionY;
+    this.models.forEach(thisModel => thisModel.position.sub(newBasePosition));
+
+    if(this.models.size === 1)
+    {
+      let objCollisionBox = objMesh.getObjectByName('CollisionBox');
+      objCollisionBox.geometry.computeBoundingBox();
+      this.collisionBox = objCollisionBox.geometry.boundingBox.clone();
+
+      this.cursorLine.visible = false;
+    }
+    else
+    {
+      this.collisionBox = new THREE.Box3(new THREE.Vector3(), new THREE.Vector3());
+
+      this.cursorLine.visible = true;
+      this.cursorLine.geometry.vertices[1].y = objMesh.position.y / 2;
+      this.cursorLine.geometry.vertices[2].y = objMesh.position.y;
+      this.cursorLine.geometry.verticesNeedUpdate = true;
+      this.cursorLine.geometry.lineDistancesNeedUpdate = true;
+      // this.cursorLine.scale.y = objMesh.position.y;
+      this.cursorLine.computeLineDistances();
+    }
+  }
+
+  add(...object)
+  {
+    object.forEach(thisObj => {
+      this.generateCollisionBox(thisObj);
+      this.models.add(thisObj);
+    });
+
+    super.add(...object);
+  }
+
+  remove(...object)
+  {
+    if(object.some(value => value === this.movementBasisObj))
+    {
+      this.movementBasisObj = null;
+      this.collisionBox = null;
+    }
+
+    object.forEach(value => this.models.delete(value));
+    super.remove(...object);
+  }
+
+  clear()
+  {
+    this.movementBasisObj = null;
+    this.collisionBox = null;
+
+    this.setRotationFromEuler(new THREE.Euler());
+
+    this.models.forEach(thisModel => super.remove(thisModel));
+    this.models.clear();
+    this.cursorLine.visible = false;
+  }
+}
 
 // Kicks off the program
 $(function() {
@@ -43,20 +212,25 @@ function init() {
     moveCameraToWorkbench(activeWorkbench);
   }, checkPieces);
 
+  let selectedItems = new Set();
+  let rolloverGroup = new RolloverGroup();
+  rolloverGroup.visible = false;
+  scene.add(rolloverGroup);
+
   //objects.push(plane);
   raycaster = new THREE.Raycaster();
   mouse = new THREE.Vector2();
   addSceneLights();
   initCamera();
   // Event listeners
-  document.addEventListener('mousemove', onDocumentMouseMove, false);
-  document.addEventListener('mousedown', onDocumentMouseDown, false);
-  document.addEventListener('keydown', onDocumentKeyDown, false);
+  document.addEventListener('mousemove', event => onDocumentMouseMove(event, rolloverGroup), false);
+  document.addEventListener('mousedown', event => onDocumentMouseDown(event, rolloverGroup, selectedItems), false);
+  document.addEventListener('keydown', event => onDocumentKeyDown(event, rolloverGroup), false);
   document.addEventListener('keyup', onDocumentKeyUp, false);
-  renderer.domElement.addEventListener('wheel', onRendererMouseWheel, false);
+  renderer.domElement.addEventListener('wheel', event => onRendererMouseWheel(event, rolloverGroup), false);
   window.addEventListener('resize', onWindowResize, false);
-  window.addEventListener('beforeunload', onBeforePageUnload);
-  window.addEventListener('unload', onPageUnload);
+  window.addEventListener('beforeunload', event => onBeforePageUnload(event, rolloverGroup));
+  window.addEventListener('unload', event => onPageUnload(event, rolloverGroup));
 }
 
 // Initializes the camera -- Allows to use mouse wheel to zoom

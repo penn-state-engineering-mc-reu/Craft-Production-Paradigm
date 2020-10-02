@@ -72,8 +72,13 @@
 			</div>
 		</div>
 		<!-- All the libraries I need to run the three.js stuff properly -->
-		<script src="/../js/libs/three.min.js"></script>
-		<script src="/../js/libs/loader.js"></script>
+		<script src="/../js/libs/three/build/three.min.js"></script>
+		<script src="/../js/libs/three/examples/js/loaders/STLLoader.js"></script>
+		<script src="/../js/libs/zlibjs/bin/inflate.min.js"></script>
+		<script type="text/javascript">
+			window.Inflate = Zlib.Inflate;
+		</script>
+		<script src="/../js/libs/three/examples/js/loaders/FBXLoader.js"></script>
 		<script src="/../js/libs/gltfExporter.js"></script>
 		<script src="/../js/renderers/Projector.js"></script>
 		<script src="/../js/renderers/CanvasRenderer.js"></script>
@@ -90,7 +95,6 @@
 		<script src="/../js/gameInfoWidget.js"></script>
 		<script src="/../js/shared/gameObjects.js" type="module"></script>
 		<script src="/../js/partProperties.js"></script>
-		<script src="/../js/legoBuilder/modelProperties.js"></script>
 		<script src="/../js/legoBuilder/pageScripts.js"></script>
 		<script src="/../js/legoBuilder/builderInitScripts.js"></script>
 		<script src="/../js/legoBuilder/builderScripts.js"></script>
