@@ -3,7 +3,7 @@
  */
 
 import * as mongoose from 'mongoose';
-import {GameScheme, PositionInfo} from '../models/gameSchema';
+import {GameScheme, getTypeInfoByName, IGame, PositionInfo} from '../models/gameSchema';
 import {Request, Response} from 'express';
 import {GameDatabaseConnector} from '../models/GameDatabaseConnector';
 import DatabaseConnector from "../models/database";
@@ -22,8 +22,9 @@ export class GameController {
    * @param req 
    */
   public async addNewGame(req: Request): Promise<number> {
-    let requestGame = req.body;
+    let requestGame: IGame = req.body;
     requestGame.pin = await this.generatePin();
+    requestGame.maxPlayers = Object.keys(getTypeInfoByName(requestGame.gameType).positions).length;
     let game = new Game(requestGame);
     this.db.addToDatabase(game);
     return requestGame.pin;
@@ -37,7 +38,7 @@ export class GameController {
    * Gets all of the game info from database using the pin
    * @param pin JavaScript decided for me that it will be a string
    */
-  public async getGameInfo(pin: number): Promise<any> {
+  public async getGameInfo(pin: number): Promise<IGame | null> {
     return await this.db.getGameObject(pin);
   }
 

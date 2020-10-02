@@ -15,7 +15,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const CustOrderDatabaseConnector_1 = require("../models/CustOrderDatabaseConnector");
 const orderImage_1 = require("../models/orderImage");
 const SupplierOrderDatabaseConnector_1 = require("../models/SupplierOrderDatabaseConnector");
-const gameSchema_1 = require("../models/gameSchema");
 class GameLogicController {
     constructor(dbClient, gameController) {
         this.gameController = gameController;
@@ -24,16 +23,32 @@ class GameLogicController {
     }
     placeOrder(pin, modelID) {
         return __awaiter(this, void 0, void 0, function* () {
-            let order = { pin: pin, modelID: modelID,
-                createdBy: yield this.gameController.getPlayerName(pin, gameSchema_1.PositionInfo.POSITION_NAMES.CUSTOMER) };
-            yield this.custOrderDBConnector.addOrder(order);
+            let gameObj = yield this.gameController.getGameInfo(pin);
+            if (gameObj !== null) {
+                let custPosition = gameObj.getCustomer();
+                if (custPosition !== undefined) {
+                    let order = {
+                        pin: pin, modelID: modelID,
+                        createdBy: custPosition.playerName
+                    };
+                    yield this.custOrderDBConnector.addOrder(order);
+                }
+            }
         });
     }
     placeCustomOrder(pin, orderDesc, imageData) {
         return __awaiter(this, void 0, void 0, function* () {
-            let order = { pin: pin, isCustomOrder: true, orderDesc: orderDesc, imageData: yield (new orderImage_1.OrderImage(imageData)).toBuffer(),
-                createdBy: yield this.gameController.getPlayerName(pin, gameSchema_1.PositionInfo.POSITION_NAMES.CUSTOMER) };
-            yield this.custOrderDBConnector.addOrder(order);
+            let gameObj = yield this.gameController.getGameInfo(pin);
+            if (gameObj !== null) {
+                let custPosition = gameObj.getCustomer();
+                if (custPosition !== undefined) {
+                    let order = {
+                        pin: pin, isCustomOrder: true, orderDesc: orderDesc, imageData: yield (new orderImage_1.OrderImage(imageData)).toBuffer(),
+                        createdBy: custPosition.playerName
+                    };
+                    yield this.custOrderDBConnector.addOrder(order);
+                }
+            }
         });
     }
     /*
@@ -121,7 +136,19 @@ class GameLogicController {
     addSupplyOrder(pin, request) {
         return __awaiter(this, void 0, void 0, function* () {
             console.log("At controller: " + JSON.stringify(request));
-            return this.supplierOrderDBConnector.addOrder(pin, yield this.gameController.getPlayerName(pin, gameSchema_1.PositionInfo.POSITION_NAMES.MANUFACTURER), request);
+            let gameObj = yield this.gameController.getGameInfo(pin);
+            if (gameObj !== null) {
+                let manufPosition = gameObj.getManufacturer();
+                if (manufPosition !== undefined) {
+                    return this.supplierOrderDBConnector.addOrder(pin, manufPosition.playerName, request);
+                }
+                else {
+                    return Promise.reject('No manufacturer exists for this game.');
+                }
+            }
+            else {
+                return Promise.reject('The game specified does not exist.');
+            }
         });
     }
     getSupplyOrders(pin) {

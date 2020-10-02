@@ -1,5 +1,5 @@
 let pin = -1;
-let maxPlayers = -1;
+let currentGameInfo = null;
 
 $(document).ready(() => {
   initPage();
@@ -35,18 +35,16 @@ function initProgressAndButtons() {
     }
   });
 
-  $('#start-game').click((e) => {
-    let location = '/';
-    switch(sessionStorage.position) {
-      case 'Assembler':    location = '/builder/' + pin;      break;
-      case 'Customer':     location = '/customer/' + pin;     break;
-      case 'Supplier':     location = '/supplier/' + pin;     break;
-      case 'Manufacturer': location = '/manufacturer/' + pin; break;
-    }
-    window.location.href = location;
+  $('#start-game').click(() => {
+    let gameTypeInfo = GameObjects.GameTypes[Object.keys(GameObjects.GameTypes)
+        .find(typeKey => GameObjects.GameTypes[typeKey].name === currentGameInfo.gameType)];
+    let positionInfo = gameTypeInfo.positions[Object.keys(gameTypeInfo.positions)
+        .find(typeKey => gameTypeInfo.positions[typeKey].name === sessionStorage.position)];
+
+    window.location.href = positionInfo.getURL(pin);
   });
 
-  $('#exit').click((e) => {
+  $('#exit').click(() => {
     GameAPI.removeActivePlayer().then(() => window.location.href = '/').catch((error) => console.log(error));
   });
 }
@@ -54,8 +52,9 @@ function initProgressAndButtons() {
 function updateGameInfo()
 {
   return GameAPI.getGameInfo().then((data) => {
+    currentGameInfo = data;
     applyGameInfo(data);
-    if (data.activePlayers == data.maxPlayers)
+    if (data.activePlayers === data.maxPlayers)
       $('#start-game').removeClass('disabled');
   });
 }
@@ -73,9 +72,9 @@ function applyGameInfo(result) {
     $('#game-type').text(gameType + result.gameType);
     $('#player-name').text(playerNamePrefix + result.positions.find(value => (value.positionName === sessionStorage.position)).playerName);
     $('#players').text(result.activePlayers);
-    $('#example4').attr('data-total', result.maxPlayers);
-    $('#example4').progress('set total', result.maxPlayers);
-    $('#example4').progress('update progress', result.activePlayers);
+    $('#example4').attr('data-total', result.maxPlayers)
+      .progress('set total', result.maxPlayers)
+      .progress('update progress', result.activePlayers);
   } catch (e) {
     console.log('You may need to wait a second');
     console.log(e);
@@ -89,4 +88,4 @@ Number.prototype.pad = function(size) {
   var s = String(this);
   while (s.length < (size || 2)) {s = "0" + s;}
   return s;
-}
+};

@@ -10,6 +10,7 @@
           integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
           crossorigin="anonymous"></script>
   <script src="semantic/dist/semantic.min.js"></script>
+  <script src="js/shared/gameObjects.js" type="module"></script>
   <script src="js/gameAPI.js"></script>
   <script src="js/welcome.js"></script>
   <link rel="stylesheet" type="text/css" href="css/startPage.css">
@@ -79,26 +80,10 @@
         </div>
       </div>
       <div class="field">
-        <div class="ui selection dropdown">
-          <input type="hidden" name="game-type">
-          <i class="dropdown icon"></i>
-          <div class="default text" id="game-type">Game Type</div>
-          <div class="menu">
-            <div class="item" data-value="0">Craft Production</div>
-            <div class="item" data-value="1">Mass Production</div>
-          </div>
-        </div>
+        <select id="game-type-dropdown"></select>
       </div>
-      <div class="ui selection dropdown" id="position-dropdown">
-        <input type="hidden" name="positions">
-        <i class="dropdown icon"></i>
-        <div class="default text" id="position-type">Position Type</div>
-        <div class="menu">
-          <div class="item" data-value="Customer">Customer</div>
-          <div class="item" data-value="Manufacturer">Manufacturer</div>
-          <div class="item" data-value="Supplier">Supplier</div>
-          <div class="item" data-value="Assembler">Assembler</div>
-        </div>
+      <div class="field">
+        <select id="position-dropdown"></select>
       </div>
       <div class="one field">
         <div class="field">
