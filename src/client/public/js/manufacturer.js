@@ -1,27 +1,34 @@
-let pieceOrder = [];
-let colors = [];
-orderInformation = {};
-currentOrder = {};
+let orderInformation = {},
+    currentOrder = {};
 
 $(document).ready(() => {
   $('#game-info-container').gameInfo({ positionName: 'Manufacturer' });
-  generateSupplyGrid();
-  initArray();
+
+  $('#supply-grid').partGrid()
+  .on('partGrid.partAdd', () => {
+    $('#send-supplier-order').removeClass('disabled');
+    updateCostWeight();
+  }).on('partGrid.partRemove', function() {
+    let partCount = $(this).partGrid('getCounts');
+    let partSum = 0;
+    Object.keys(partCount).forEach((elem) => {
+        partSum += partCount[elem];
+    });
+    if(partSum <= 0)
+    {
+        $('#send-supplier-order').addClass('disabled');
+    }
+    updateCostWeight();
+  });
+
   updateCostWeight();
   initButtons();
+
   $('#order').click(e => {
     openModal();
   });
   checkOrders();
 });
-
-function initArray() {
-  for (let i = 0; i < partProperties.length; i++)
-  {
-    pieceOrder[i] = 0;
-    colors[i] = BrickColors.defaultBrickColor.colorID;
-  }
-}
 
 function initButtons() {
   $('#send-manufacturing-order').on('click', () => {
@@ -29,56 +36,6 @@ function initButtons() {
       $('#ready-order').modal('hide');
     });
   });
-
-  for (let i = 0; i < partProperties.length; i++) {
-    let num = '#' + i;
-    $(num + '-plus').click(e => {
-      $('#send-supplier-order').removeClass('disabled');
-      // $('#send-manufacturing-order').removeClass('disabled');
-
-      let currentNum = parseInt($(num + '-value').html());
-      $(num + '-value').html(currentNum < 10 ? ++currentNum : 10);
-      pieceOrder[i] = currentNum;
-      updateCostWeight();
-    });
-    $(num + '-minus').click(e => {
-      let currentNum = parseInt($(num + '-value').html());
-      $(num + '-value').html(currentNum == 0 ? 0 : --currentNum);
-      pieceOrder[i] = currentNum;
-
-      let partSum = 0;
-      pieceOrder.forEach((elem) => {
-        partSum += elem;
-      });
-      if(partSum <= 0)
-      {
-        $('#send-supplier-order').addClass('disabled');
-      }
-      updateCostWeight();
-    });
-
-    (function(index) {
-      $('.' + index + '-picker').spectrum({
-        showPalette: true,
-        showPaletteOnly: true,
-        showAlpha: true,
-        containerClassName: index + '-picker-container',
-        palette: BrickColors.spectrumPalette,
-        color: BrickColors.defaultBrickColor.RGBString,
-        change: function (color) {
-          let activeElement = $('.' + index + '-picker-container').find('.sp-thumb-el.sp-thumb-active');
-          colors[index] = BrickColors.allPaletteData[$(activeElement).closest('.sp-palette-row').index()][$(activeElement).index()].colorID;
-        },
-        show: function (color) {
-          let paletteBoxes = $('.' + index + '-picker-container').find('.sp-thumb-el');
-          paletteBoxes.each(function(index, element) {
-            let colorInfo = BrickColors.allPaletteData[$(element).closest('.sp-palette-row').index()][$(element).index()];
-            $(element).attr('title', `${colorInfo.colorName} (${colorInfo.colorID})`);
-          });
-        }
-      });
-    })(i);
-  }
 
 /*  $('.sp-palette-row .sp-thumb-el').on('click.spectrum touchstart.spectrum', function(event) {
     let partNum = parseInt($(this).closest('.picker-container').data('part-number'));
@@ -101,13 +58,9 @@ function initButtons() {
     $('#send-supplier-order').addClass('loading');
 
     sendPiecesOrder().then((data) => {
-      initArray();
+      $('#supply-grid').partGrid('reset');
       $('#send-supplier-order').addClass('disabled');
-      $('.value').text('0');
-      for(let index = 0; index < partProperties.length; index++)
-      {
-        $('.' + index + '-picker').spectrum('set', BrickColors.defaultBrickColor.RGBString);
-      }
+
 
       updateCostWeight();
       $('#supply-order-sent').modal('show');
@@ -159,12 +112,15 @@ function checkOrders() {
 function sendPiecesOrder() {
   let orderData = [];
 
-  partProperties.forEach((value, index) => {
-    if(pieceOrder[index] > 0) {
+  let partCounts = $('#supply-grid').partGrid('getCounts');
+  let partColors = $('#supply-grid').partGrid('getColors');
+
+  Object.keys(partCounts).map(value => parseInt(value)).forEach((thisPartID) => {
+    if(partCounts[thisPartID] > 0) {
       orderData.push({
-        partID: index,
-        color: colors[index],
-        count: pieceOrder[index],
+        partID: thisPartID,
+        color: partColors[thisPartID],
+        count: partCounts[thisPartID],
       });
     }
   });
@@ -227,39 +183,8 @@ function updateOrderUI() {
 
 function updateCostWeight()
 {
-  $('#total-cost-text').text(`$${totalPartCost(pieceOrder).toFixed(2)}`);
-  $('#total-weight-text').text(totalPartWeight(pieceOrder).toFixed(2));
-}
+  let partCounts = $('#supply-grid').partGrid('getCounts');
 
-/**
- * Dynamically generate all the squares to add to a supply order
- * This would have been terrible to do by hand
- */
-function generateSupplyGrid() {
-  let html = "";
-  for (let i = 0; i < partProperties.length / 4; i++) {
-    html += '<div class="row">';
-    for (let j = 0; j < 4; j++) {
-      let partNumber = i * 4 + j;
-      if (partNumber < partProperties.length) {
-        html += '<div class="four wide column">';
-        html += `<p align="left">${partProperties[partNumber].name}</p>`;
-        html += `<p align="left">$${partProperties[partNumber].price.toFixed(2)} each</p>`;
-        html += `<p align="left">${partProperties[partNumber].weight.toFixed(2)} grams</p>`;
-        html += `<p> <img class = "piece" src= "/../images/Lego pieces/${partProperties[partNumber].name}.jpg"> </p>`;
-        // Start off each piece with an order of 0
-        html += `<div class="row"><div class="ui statistic"><div id="${partNumber}-value" class="value">0</div></div></div>`;
-        html += `<div class="row picker"><input type="text" class="${partNumber}-picker" value="${BrickColors.defaultBrickColor.RGBString}"/></div>`;
-        // Adds the plus and minus buttons to each piece
-        html += '<div class="row"><div class="ui icon buttons">' +
-          `<button id="${partNumber}-minus" class="ui button"><i class="minus icon"></i></button>` +
-          `<button id="${partNumber}-plus" class="ui button"><i class="plus icon"></i></button></div></div></div>`;
-      }
-    }
-    // I want there to be vertical lines between each cube so I need to add a blank space 
-    if (i + 1 >= partProperties.length / 4) html += '<div class="five wide column"></div>';
-    html += '</div>';
-  }
-
-  $('#supply-grid').html(html);
+  $('#total-cost-text').text(`$${partProperties.totalPartCost(partCounts).toFixed(2)}`);
+  $('#total-weight-text').text(partProperties.totalPartWeight(partCounts).toFixed(2));
 }

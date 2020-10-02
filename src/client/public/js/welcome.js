@@ -5,7 +5,30 @@
 
 $(document).ready(() => {
   initButtons();
+  initNewGameForm();
 });
+
+function initNewGameForm()
+{
+  $('#position-dropdown').dropdown({
+    placeholder: 'Position Type'
+  });
+
+  $('#game-type-dropdown').dropdown({
+    placeholder: 'Game Type',
+    values: Object.keys(GameObjects.GameTypes).map((value, index) => {
+      return {value: value, name: GameObjects.GameTypes[value].name, selected: (index === 0)};
+    }),
+    onChange: value => {
+      if(value !== '')
+      {
+        $('#position-dropdown').dropdown('change values',
+            Object.keys(GameObjects.GameTypes[value].positions)
+                .map(posID => { return {value: posID, name: GameObjects.GameTypes[value].positions[posID].name }}));
+      }
+    }
+  });
+}
 
 function initButtons() {
   $('#new-game').click((e) => {
@@ -127,18 +150,19 @@ function getPossiblePositions(pin) {
  */
 function getPostData() {
   let name = $('#group-name').val();
-  let gameType = $('#game-type').html();
-  let position = $("#position-dropdown").dropdown('get value');
-  position = position === '' ? 'Assembler' : position;
+  let gameTypeText = $('#game-type-dropdown').dropdown('get text');
+  let gameTypeKey = Object.keys(GameObjects.GameTypes).find(
+      thisKey => GameObjects.GameTypes[thisKey].name === gameTypeText);
+  let position = $("#position-dropdown").dropdown('get text');
+  // position = position === '' ? 'Assembler' : position;
 
   let data = {
     positions: [{positionName: position, playerName: $('#your-name').val()}],
-    pin: null,
-    groupName: (name == null || name == '') ? 'Default' : name,
+    groupName: name,
     activePlayers: 1,
     status: 'waiting',
-    gameType: gameType == 'Game Type' ? 'Craft Production' : gameType,
-    maxPlayers: 4 // TODO: Add support for a variable number of players?
+    gameType: gameTypeText
+    // maxPlayers: 4 // TODO: Add support for a variable number of players?
   };
 
   sessionStorage.position = position;

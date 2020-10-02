@@ -62,7 +62,6 @@ typings/
 
 #binarys
 data
-semantic/
 
 #vscode
 .vscode/*

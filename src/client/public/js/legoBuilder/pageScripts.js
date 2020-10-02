@@ -5,7 +5,9 @@ let currentOrder = {};
 // let colors = [];
 
 $(document).ready(() => {
-  $('#game-info-container').gameInfo({ positionName: 'Assembler', orientation: $.gameInfo.Orientation.HORIZONTAL});
+  let currentStation = getStation();
+  let positionName = (currentStation === null ? 'Assembler' : currentStation.getPlayerPosition().name);
+  $('#game-info-container').gameInfo({ positionName: positionName, orientation: $.gameInfo.Orientation.HORIZONTAL});
   initButtons();
   checkOrders();
   setInterval(checkPieces, 3000);
@@ -240,6 +242,31 @@ function updatePieces(pageUnloading) {
   });
 }
 
+function getStation()
+{
+  let urlFragment = window.location.hash;
+
+  if(urlFragment.length >= 1)
+  {
+    urlFragment = urlFragment.slice(1);
+  }
+
+  let stationObj = null;
+
+  Object.keys(partProperties.STATIONS).find(value => {
+        if(partProperties.STATIONS[value].internalName === urlFragment)
+        {
+          stationObj = partProperties.STATIONS[value];
+          return true;
+        }
+        else
+        {
+          return false;
+        }
+  });
+
+  return stationObj;
+}
 /*
 function initSupplyButtons() {
   for (let i = 0; i < pieces.length; i++) {

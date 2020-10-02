@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+    db:
+        image: manuf-sim-database
+        build:
+            context: ..
+            dockerfile: ./docker/database/Dockerfile
+        volumes:
+            - manuf-sim-db-vol:/root/data
+        restart: unless-stopped
+        
+    backend-server:
+        depends_on:
+            - "db"
+        image: manuf-sim-backend-server
+        build:
+            context: ..
+            dockerfile: ./docker/backend-server/Dockerfile
+        ports:
+            - "3000:3000"
+        restart: unless-stopped
+    
+    frontend-server:
+        depends_on:
+            - "backend-server"
+        image: manuf-sim-frontend-server
+        build:
+            context: ..
+            dockerfile: ./docker/frontend-server/Dockerfile
+        ports:
+            - "80:8080"
+        restart: unless-stopped
+
+volumes:
+    manuf-sim-db-vol:

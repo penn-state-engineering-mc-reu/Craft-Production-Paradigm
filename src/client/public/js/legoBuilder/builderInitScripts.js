@@ -17,12 +17,183 @@ var container;
 var camera, scene, renderer, controls;
 var plane, cube;
 var mouse, raycaster, isCtrlDown = false, isShiftDown = false;
-var rollOverMesh = null, material, collisionBox;
+var /* rollOverMesh = null,*/ material, collisionBox;
 let partModelCache = {};
+let binPartIDs = [];
 const TILE_DIMENSIONS = new THREE.Vector2(24, 24);
+const DEFAULT_VIEW_CAMERA_OFFSET = new THREE.Vector3(0.0, 1420.0, 2300.0);
 var objects = [], collisionObjects = [];
 var currentObj = null;
 // var group = new THREE.Group();
+
+// See https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/button for further details
+window.MouseButtons = {
+  // Main/left mouse button
+  MAIN_BUTTON: 0,
+  // Auxiliary/middle mouse button
+  AUXILIARY_BUTTON: 1,
+  // Secondary/right mouse button
+  SECONDARY_BUTTON: 2,
+  // Fourth (usually "Browser Back") mouse button
+  FOURTH_BUTTON: 3,
+  // Fifth (usually "Browser Forward") mouse button
+  FIFTH_BUTTON: 4
+};
+
+class RolloverGroup extends THREE.Group
+{
+  constructor()
+  {
+    super();
+
+    this.movementBasisObj = null;
+    this.collisionBox = null;
+
+    // Set of models in this RolloverGroup (does not include auxiliary objects
+    // such as cursor components that are also children of this RolloverGroup).
+    // Please do not modify this set directly from code external to this class;
+    // instead, use .add, .remove, and .clear on RolloverGroup.
+    this.models = new Set();
+
+    this.generateCursor();
+  }
+
+  generateCursor()
+  {
+    const CURSOR_COLOR = '#00ff00';
+    let cursorGroup = new THREE.Group();
+    let cursorSphere = new THREE.Mesh(
+        new THREE.SphereBufferGeometry(10.0),
+        new THREE.MeshPhongMaterial({ color: CURSOR_COLOR })
+    );
+
+    let cursorLineGeom = new THREE.Geometry().setFromPoints([
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(0, 100, 0),
+      new THREE.Vector3(0, 200, 0)
+    ]);
+    cursorLineGeom.faces.push(new THREE.Face3(0, 1, 2));
+    cursorLineGeom.elementsNeedUpdate = true;
+
+    let cursorLine = new THREE.Line(
+        cursorLineGeom,
+        // new THREE.EdgesGeometry(new THREE.BoxGeometry(100, 100, 100), 1),
+        // new THREE.LineBasicMaterial( {
+        //       color: 0xffffff,
+        //       linewidth: 5})
+        // new THREE.MeshBasicMaterial({color: 0x00ff00, visible: true, wireframe: true})
+        new THREE.LineDashedMaterial({ color: CURSOR_COLOR, linewidth: 2, dashSize: 20, gapSize: 6 })
+    );
+    cursorLine.computeLineDistances();
+    cursorLine.visible = false;
+
+    cursorGroup.add(cursorSphere, cursorLine);
+    super.add(cursorGroup);
+    this.cursorGroup = cursorGroup;
+    this.cursorLine = cursorLine;
+  }
+
+  /**
+   * @param {THREE.Object3D} object
+   * @returns {THREE.Mesh}
+   */
+  generateCollisionBox(object)
+  {
+    let existingCollisionBox = object.getObjectByName('CollisionBox');
+    if(existingCollisionBox !== undefined)
+    {
+      return existingCollisionBox;
+    }
+    else
+    {
+      let newCollisionBox = generateCollisionCube(object);
+      newCollisionBox.name = 'CollisionBox';
+      object.add(newCollisionBox);
+
+      return newCollisionBox;
+    }
+  }
+
+  /**
+   *
+   * @param {THREE.Mesh} objMesh
+   */
+  positionRelativeTo(objMesh)
+  {
+    if(!this.models.has(objMesh)) throw 'Cannot position relative to external object.';
+
+    this.movementBasisObj = objMesh;
+
+    let newBasePosition = objMesh.position.clone();
+
+    let minCollisionY = null;
+    for(let thisModel of this.models)
+    {
+      let collisionBox = thisModel.getObjectByName('CollisionBox');
+      collisionBox.geometry.computeBoundingBox();
+      let objBottom = thisModel.position.clone().add(collisionBox.geometry.boundingBox.min);
+
+      if(minCollisionY === null || objBottom.y < minCollisionY) minCollisionY = objBottom.y;
+    }
+    newBasePosition.y = minCollisionY;
+    this.models.forEach(thisModel => thisModel.position.sub(newBasePosition));
+
+    if(this.models.size === 1)
+    {
+      let objCollisionBox = objMesh.getObjectByName('CollisionBox');
+      objCollisionBox.geometry.computeBoundingBox();
+      this.collisionBox = objCollisionBox.geometry.boundingBox.clone();
+
+      this.cursorLine.visible = false;
+    }
+    else
+    {
+      this.collisionBox = new THREE.Box3(new THREE.Vector3(), new THREE.Vector3());
+
+      this.cursorLine.visible = true;
+      this.cursorLine.geometry.vertices[1].y = objMesh.position.y / 2;
+      this.cursorLine.geometry.vertices[2].y = objMesh.position.y;
+      this.cursorLine.geometry.verticesNeedUpdate = true;
+      this.cursorLine.geometry.lineDistancesNeedUpdate = true;
+      // this.cursorLine.scale.y = objMesh.position.y;
+      this.cursorLine.computeLineDistances();
+    }
+  }
+
+  add(...object)
+  {
+    object.forEach(thisObj => {
+      this.generateCollisionBox(thisObj);
+      this.models.add(thisObj);
+    });
+
+    super.add(...object);
+  }
+
+  remove(...object)
+  {
+    if(object.some(value => value === this.movementBasisObj))
+    {
+      this.movementBasisObj = null;
+      this.collisionBox = null;
+    }
+
+    object.forEach(value => this.models.delete(value));
+    super.remove(...object);
+  }
+
+  clear()
+  {
+    this.movementBasisObj = null;
+    this.collisionBox = null;
+
+    this.setRotationFromEuler(new THREE.Euler());
+
+    this.models.forEach(thisModel => super.remove(thisModel));
+    this.models.clear();
+    this.cursorLine.visible = false;
+  }
+}
 
 // Kicks off the program
 $(function() {
@@ -35,9 +206,16 @@ function init() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0xf0f0f0);
   createEnvironment(() => {
-    createGridAndPlane(scene.getObjectByName('Environment').getObjectByName('Room')
-      .getObjectByName('Workbenches').children[0]);
+    let activeWorkbench = getActiveWorkbench();
+    createGridAndPlane(activeWorkbench);
+    createSigns();
+    moveCameraToWorkbench(activeWorkbench);
   }, checkPieces);
+
+  let selectedItems = new Set();
+  let rolloverGroup = new RolloverGroup();
+  rolloverGroup.visible = false;
+  scene.add(rolloverGroup);
 
   //objects.push(plane);
   raycaster = new THREE.Raycaster();
@@ -45,21 +223,21 @@ function init() {
   addSceneLights();
   initCamera();
   // Event listeners
-  document.addEventListener('mousemove', onDocumentMouseMove, false);
-  document.addEventListener('mousedown', onDocumentMouseDown, false);
-  document.addEventListener('keydown', onDocumentKeyDown, false);
+  document.addEventListener('mousemove', event => onDocumentMouseMove(event, rolloverGroup), false);
+  document.addEventListener('mousedown', event => onDocumentMouseDown(event, rolloverGroup, selectedItems), false);
+  document.addEventListener('keydown', event => onDocumentKeyDown(event, rolloverGroup), false);
   document.addEventListener('keyup', onDocumentKeyUp, false);
-  renderer.domElement.addEventListener('wheel', onRendererMouseWheel, false);
+  renderer.domElement.addEventListener('wheel', event => onRendererMouseWheel(event, rolloverGroup), false);
   window.addEventListener('resize', onWindowResize, false);
-  window.addEventListener('beforeunload', onBeforePageUnload);
-  window.addEventListener('unload', onPageUnload);
+  window.addEventListener('beforeunload', event => onBeforePageUnload(event, rolloverGroup));
+  window.addEventListener('unload', event => onPageUnload(event, rolloverGroup));
 }
 
 // Initializes the camera -- Allows to use mouse wheel to zoom
 function initCamera() {
   //camera = new THREE.PerspectiveCamera(60, window.innerWidth / (window.innerHeight + (window.innerHeight * .1)), 1, 10000);
   camera = new THREE.PerspectiveCamera(60, $(renderer.domElement).width() / $(renderer.domElement).height(), 1, 100000);
-  camera.position.set(0, 500, 800);
+  camera.position.copy(DEFAULT_VIEW_CAMERA_OFFSET);
   camera.lookAt(new THREE.Vector3());
   controls = new THREE.OrbitControls(camera, renderer.domElement);
   // controls.addEventListener( 'change', render );
@@ -72,6 +250,18 @@ function initCamera() {
   controls.dampingFactor = 0.75;
   controls.minDistance = 200;
 	controls.maxDistance = 10000;
+}
+
+function moveCameraToWorkbench(workbench)
+{
+  workbench.geometry.computeBoundingBox();
+  let avgX = workbench.position.x +
+      (workbench.geometry.boundingBox.min.x + workbench.geometry.boundingBox.max.x) / 2.0,
+    avgXVector = new THREE.Vector3(avgX, 0.0, 0.0);
+  camera.position.copy(DEFAULT_VIEW_CAMERA_OFFSET);
+  camera.position.add(avgXVector);
+  controls.target.copy(avgXVector);
+  controls.update();
 }
 
 function computeRendererSize()
@@ -113,6 +303,68 @@ function addSceneLights() {
 
   let initialRendererSize = computeRendererSize();
   renderer.setSize(initialRendererSize.width, initialRendererSize.height);
+}
+
+function createTextTexture(text, font, width, height, padX, padY)
+{
+  let renderingCanvas = document.createElement('canvas');
+  renderingCanvas.width = width + 2 * padX;
+  renderingCanvas.height = height + 2 * padY;
+
+  let context2D = renderingCanvas.getContext('2d');
+  context2D.font = height + 'px ' + font;
+  context2D.fillStyle = '#ffffff';
+  context2D.fillRect(0, 0, renderingCanvas.width, renderingCanvas.height);
+  context2D.fillStyle = '#000000';
+  context2D.textAlign = 'center';
+  context2D.fillText(text, renderingCanvas.width / 2, padY + height, width);
+
+  // document.body.appendChild(renderingCanvas);
+
+  return new THREE.CanvasTexture(renderingCanvas);
+}
+
+function createSigns()
+{
+  const SIGN_DIMS = new THREE.Vector3(1000.0, 500.0, 30.0);
+  let signGeometry = new THREE.BoxGeometry(SIGN_DIMS.x, SIGN_DIMS.y, SIGN_DIMS.z);
+  let signTemplateMatPlain = new THREE.MeshPhongMaterial({
+    color: '#deb887',
+    shininess: 30,
+    specular: '#ffdcac'
+  });
+
+  let roomObj = scene.getObjectByName('Environment').getObjectByName('Room');
+  let workbenchGroup = roomObj.getObjectByName('Workbenches');
+
+  for(let stationOrder = 0; stationOrder < Object.keys(partProperties.STATIONS).length; stationOrder++)
+  {
+    let thisWorkbench = workbenchGroup.children[stationOrder];
+    let signText;
+
+    if(getStation() !== null)
+    {
+      let thisStation = partProperties.STATIONS[Object.keys(partProperties.STATIONS)
+          .find(key => partProperties.STATIONS[key].order === stationOrder)];
+
+      signText = thisStation.dispName;
+    }
+    else
+    {
+      signText = "Craft Station #" + (stationOrder + 1);
+    }
+
+    let newSignMatImg = signTemplateMatPlain.clone();
+    newSignMatImg.map = createTextTexture(signText, 'sans-serif', 800, 200, 112, 156);
+    let newSignMesh = new THREE.Mesh(signGeometry,
+        [signTemplateMatPlain, signTemplateMatPlain, signTemplateMatPlain, signTemplateMatPlain,
+          newSignMatImg, signTemplateMatPlain]);
+
+    thisWorkbench.geometry.computeBoundingBox();
+    let avgX = (thisWorkbench.geometry.boundingBox.min.x + thisWorkbench.geometry.boundingBox.max.x) / 2.0;
+    newSignMesh.position.set(avgX, 1000.0, thisWorkbench.geometry.boundingBox.min.z + SIGN_DIMS.z / 2.0);
+    thisWorkbench.add(newSignMesh);
+  }
 }
 
 function makeGrid(startX, startZ, endX, endZ, elemSizeX, elemSizeZ)
@@ -172,6 +424,13 @@ function addMeshRow(templateMesh, newMeshParent, startX, yPos, zPos, spacing, nu
   }
 }
 
+function getActiveWorkbench()
+{
+  let pageStation = getStation();
+  return scene.getObjectByName('Environment').getObjectByName('Room')
+      .getObjectByName('Workbenches').children[pageStation !== null ? pageStation.order : 0];
+}
+
 function createEnvironment(onRoomCompleted, onBinsCompleted)
 {
   let modelLoader = new THREE.STLLoader();
@@ -209,14 +468,22 @@ function createEnvironment(onRoomCompleted, onBinsCompleted)
     workbenchGroup.name = 'Workbenches';
     roomGroup.add(workbenchGroup);
 
-    const cornerWorkbenchPos = new THREE.Vector3(-(bboxSize.x / 2), 925, -1000);
-    addMeshRow(workbenchTemplateMesh, workbenchGroup, cornerWorkbenchPos.x, cornerWorkbenchPos.y, cornerWorkbenchPos.z, 200, 3);
+    const cornerWorkbenchPos = new THREE.Vector3(-(bboxSize.x / 2), 925, -1000),
+      pageStation = getStation(),
+      workbenchSpacing = 200;
+
+    addMeshRow(workbenchTemplateMesh, workbenchGroup, cornerWorkbenchPos.x, cornerWorkbenchPos.y, cornerWorkbenchPos.z,
+        workbenchSpacing, Object.keys(partProperties.STATIONS).length);
+
+    let activeWorkbench = getActiveWorkbench();
+
     // scene.add(workbenchTemplateMesh);
 
     modelLoader.load('../objects/environment/part_bin.stl', function(binGeometry) {
-      let binStartX = 175; // -(bboxSize.x / 2) + 175;
-      let backBinZ = -450,
-      frontBinZ = 75;
+      const binStartX = 175, // -(bboxSize.x / 2) + 175;
+        backBinZ = -450,
+        frontBinZ = 75,
+        maxBinsPerRow = 12;
 
       let binMaterial = new THREE.MeshPhongMaterial({
         color: "#0000ff",
@@ -224,12 +491,33 @@ function createEnvironment(onRoomCompleted, onBinsCompleted)
         specular: "#d6d0ff"
       });
 
+      if(pageStation !== null)
+      {
+        binPartIDs = partProperties.getPartIDsByStation(pageStation.order);
+      }
+      else
+      {
+        binPartIDs = Object.keys(partProperties.PARTS).map(value => parseInt(value));
+      }
+
       let binTemplateMesh = new THREE.Mesh(binGeometry, binMaterial);
       binTemplateMesh.name = "partBin";
 
-      addMeshRow(binTemplateMesh, workbenchGroup.children[0], binStartX, -cornerWorkbenchPos.y, frontBinZ, 50, 12);
-      addMeshRow(binTemplateMesh, workbenchGroup.children[0], binStartX, -cornerWorkbenchPos.y, backBinZ, 50, 12);
-      addMeshRow(binTemplateMesh, workbenchGroup.children[0], binStartX, 0, backBinZ, 50, 7);
+      let binGroup = new THREE.Group();
+      binGroup.name = 'Bins';
+      activeWorkbench.add(binGroup);
+
+      for(let partRowNum = 0; partRowNum < (binPartIDs.length / maxBinsPerRow); partRowNum++)
+      {
+        let binsRemaining = binPartIDs.length - (partRowNum * maxBinsPerRow);
+
+        addMeshRow(binTemplateMesh, binGroup, binStartX,
+            cornerWorkbenchPos.y * (Math.floor(partRowNum / 2) - 1), // Starting at -cornerWorkbenchPos.y,
+                                                                              // move up cornerWorkbenchPos.y every two rows
+            (partRowNum === 1 ? frontBinZ : backBinZ), // Even rows in the front, odd rows in the back
+            50,
+            Math.min(binsRemaining, maxBinsPerRow));
+      }
 
       if(onBinsCompleted) {
         onBinsCompleted();

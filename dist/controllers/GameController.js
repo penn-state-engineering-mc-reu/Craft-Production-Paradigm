@@ -27,6 +27,7 @@ class GameController {
         return __awaiter(this, void 0, void 0, function* () {
             let requestGame = req.body;
             requestGame.pin = yield this.generatePin();
+            requestGame.maxPlayers = Object.keys(gameSchema_1.getTypeInfoByName(requestGame.gameType).positions).length;
             let game = new Game(requestGame);
             this.db.addToDatabase(game);
             return requestGame.pin;
