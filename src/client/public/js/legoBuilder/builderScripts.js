@@ -520,7 +520,7 @@ function getPartGeometry(partID, onLoaded)
               for(let thisMesh of geometry.children)
               {
                 let thisMeshGeom = new THREE.Geometry().fromBufferGeometry(thisMesh.geometry);
-                thisMeshGeom.applyMatrix(thisMesh.matrix);
+                thisMeshGeom.applyMatrix4(thisMesh.matrix);
                 // thisMeshGeom.scale(thisMesh.scale.x, thisMesh.scale.y, thisMesh.scale.z);
                 // thisMeshGeom.rotateX(thisMesh.rotation.x);
                 // thisMeshGeom.rotateY(thisMesh.rotation.y);
@@ -708,7 +708,7 @@ function placeLego(rolloverGroup, intersect, cb) {
       }
       else if(modelProperties.rimConnectableFaces.has(modelFace)
           && modelProperties.compatibleRims.has(intersectObj.userData.modelType)
-          && intersectProperties.rimFaces.has(intersectFace))
+          && intersectProperties.tireConnectableFaces.has(intersectFace))
       {
         rolloverGroup.position.copy(getRimAttachmentPosition(modelObj, intersect));
         placementPossible = true;
@@ -796,7 +796,7 @@ function generateCollisionCube(modelObj) {
   // Create the collision cube
   let geo = new THREE.BoxGeometry(size.x, size.y - yModifier, size.z - zModifier);
   geo.translate(0, (size.y - yModifier) / 2, 0);
-  let mat = new THREE.MeshBasicMaterial({color: 0x00ff00, visible: true, wireframe: true});
+  let mat = new THREE.MeshBasicMaterial({color: 0x00ff00, visible: false});
   let cube = new THREE.Mesh(geo, mat);
   // cube.position.copy(modelObj.position);
   // scene.add(cube);

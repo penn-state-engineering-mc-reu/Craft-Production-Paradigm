@@ -20,7 +20,7 @@ function Model(options) {
         pinFaces: new Set(),
         pinConnectableFaces: new Set(),
         compatibleRims: new Set(),
-        rimFaces: new Set(),
+        tireConnectableFaces: new Set(),
         rimConnectableFaces: new Set()
     };
 
@@ -169,41 +169,6 @@ Model.Faces = {
             }),
             stations: [stationList.WHEEL_AXLE_STATION]
         },
-        13: {
-            name: 'Tire 2',
-            price: 0.15,
-            weight: 0.65,
-            model: new Model({filePath: '../objects/tire2.stl', scale: 3, front: 1, back: 1}),
-            stations: [stationList.WHEEL_AXLE_STATION]
-        },
-        14: {
-            name: 'Tire 3',
-            price: 0.61,
-            weight: 5.45,
-            model: new Model({filePath: '../objects/tire3.stl', scale: 1, front: 1, back: 1}),
-            stations: [stationList.WHEEL_AXLE_STATION]
-        },
-        15: {
-            name: 'Rim 1',
-            price: 0.25,
-            weight: 0.7,
-            model: new Model({filePath: '../objects/rim1.stl', scale: 1.45, front: 1, back: 1, pinConnectableFaces: new Set([Model.Faces.BACK])}),
-            stations: [stationList.WHEEL_AXLE_STATION]
-        },
-        16: {
-            name: 'Rim 2',
-            price: 0.20,
-            weight: 0.25,
-            model: new Model({filePath: '../objects/rim2.stl', scale: 3, back: 1, pinConnectableFaces: new Set([Model.Faces.BACK])}),
-            stations: [stationList.WHEEL_AXLE_STATION]
-        },
-        17: {
-            name: 'Rim 3',
-            price: 0.30,
-            weight: 1.55,
-            model: new Model({filePath: '../objects/rim3.stl', scale: 1, back: 1, pinConnectableFaces: new Set([Model.Faces.BACK])}),
-            stations: [stationList.WHEEL_AXLE_STATION]
-        },
         18: {
             name: '1x2',
             price: 0.11,
@@ -306,7 +271,7 @@ Model.Faces = {
             name: 'Small Soft Rim',
             price: 0.20,
             weight: 0.25,
-            model: new Model({filePath: '../objects/rim2.stl', scale: 3, back: 1, rimFaces: new Set([Model.Faces.FRONT, Model.Faces.BACK]),
+            model: new Model({filePath: '../objects/rim2.stl', scale: 3, back: 1, tireConnectableFaces: new Set([Model.Faces.FRONT, Model.Faces.BACK]),
                 pinConnectableFaces: new Set([Model.Faces.BACK])
             }),
             stations: [stationList.WHEEL_AXLE_STATION]
@@ -324,7 +289,7 @@ Model.Faces = {
             name: 'Large Soft Rim',
             price: 0.20,
             weight: 0.25,
-            model: new Model({filePath: '../objects/BigWheelRim.fbx', scale: 3, back: 1, rotationX: Math.PI / 2.0, rimFaces: new Set([Model.Faces.FRONT, Model.Faces.BACK]),
+            model: new Model({filePath: '../objects/BigWheelRim.fbx', scale: 3, back: 1, rotationX: Math.PI / 2.0, tireConnectableFaces: new Set([Model.Faces.FRONT, Model.Faces.BACK]),
                 pinConnectableFaces: new Set([Model.Faces.BACK])
             }),
             stations: [stationList.WHEEL_AXLE_STATION]
